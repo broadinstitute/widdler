@@ -16,7 +16,7 @@ def call_run(args):
 
 def call_query(args):
     cromwell = Cromwell(host=args.server)
-    query = []
+    queries = []
     if args.status:
         status = cromwell.query_status(args.workflow_id)
         query.append(status)
@@ -26,7 +26,7 @@ def call_query(args):
     if args.logs:
         logs = cromwell.query_logs(args.workflow_id)
         query.append(logs)
-    return query
+    return queries
 
 
 def call_abort(args):
