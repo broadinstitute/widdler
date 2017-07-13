@@ -26,7 +26,7 @@ class Cromwell:
 
     def post(self, workflow_id, action):
         workflow_url = self.url + '/' + workflow_id + '/' + action
-        r = requests.get(workflow_url)
+        r = requests.post(workflow_url)
         return json.loads(r.text)
 
     def start_workflow(self, wdl_file, workflow_name, workflow_args):

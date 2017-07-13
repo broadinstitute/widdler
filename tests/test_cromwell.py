@@ -7,13 +7,14 @@ from widdler.Cromwell import Cromwell
 
 
 class CromwellUnitTests(unittest.TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         self.logger = logging.getLogger('test_cromwell')
         hdlr = logging.FileHandler('test_cromwell.log')
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         hdlr.setFormatter(formatter)
         self.logger.addHandler(hdlr)
-        self.logger.setLevel(logging.WARNING)
+        self.logger.setLevel(logging.INFO)
         self.cromwell = Cromwell(host='btl-cromwell')
         resources = os.path.join(os.path.abspath(os.path.dirname(__file__)).replace('tests', ''), 'resources')
         self.json = os.path.join(resources, 'test.json')
@@ -53,5 +54,6 @@ class CromwellUnitTests(unittest.TestCase):
         result = self.cromwell.stop_workflow(self.workflow_id)
         self.logger.info('Result: {}'.format(result))
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(self):
         self.logger.info("Test done!")
