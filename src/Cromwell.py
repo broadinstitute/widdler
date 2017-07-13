@@ -4,8 +4,6 @@ import json
 import urllib3
 import requests
 
-logging.basicConfig(level=logging.DEBUG)
-
 
 class Cromwell:
     """ Module to interact with Cromwell Pipeline workflow manager. Example usage:
@@ -18,14 +16,18 @@ class Cromwell:
 
     def __init__(self, host='btl-cromwell', port=9000):
         self.url = 'http://' + host + ':' + str(port) + '/api/workflows/v1'
+        self.logger = logging.getLogger('widdler.Cromwell.Cromwell')
+        self.logger.info('URL:{}'.format(self.url))
 
     def get(self, workflow_id, action):
         workflow_url = self.url + '/' + workflow_id + '/' + action
+        self.logger.debug("GET REQUEST:{}".format(workflow_url))
         r = requests.get(workflow_url)
         return json.loads(r.text)
 
     def post(self, workflow_id, action):
         workflow_url = self.url + '/' + workflow_id + '/' + action
+        self.logger.debug("POST REQUEST:{}".format(workflow_url))
         r = requests.post(workflow_url)
         return json.loads(r.text)
 

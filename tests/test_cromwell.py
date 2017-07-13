@@ -3,20 +3,21 @@ import unittest
 import os
 import time
 import logging
-from widdler.Cromwell import Cromwell
+from src.Cromwell import Cromwell
+import src.config as c
 
 
 class CromwellUnitTests(unittest.TestCase):
     @classmethod
     def setUpClass(self):
+        resources = c.resource_dir
         self.logger = logging.getLogger('test_cromwell')
-        hdlr = logging.FileHandler('test_cromwell.log')
+        hdlr = logging.FileHandler(os.path.join(c.log_dir, 'test_cromwell.log'))
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         hdlr.setFormatter(formatter)
         self.logger.addHandler(hdlr)
         self.logger.setLevel(logging.INFO)
         self.cromwell = Cromwell(host='btl-cromwell')
-        resources = os.path.join(os.path.abspath(os.path.dirname(__file__)).replace('tests', ''), 'resources')
         self.json = os.path.join(resources, 'test.json')
         self.wdl = os.path.join(resources, 'test.wdl')
         self.logger.info('Resources: {}, {}'.format(self.wdl, self.json))
