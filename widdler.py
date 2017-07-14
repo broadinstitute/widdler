@@ -47,7 +47,7 @@ run = sub.add_parser(name='run',
 run.add_argument('wdl', action='store', help='Path to the WDL to be executed.')
 run.add_argument('json', action='store', help='Path the json inputs file.')
 run.add_argument('-v', '--validate', action='store_true', default=True,
-                 help='Validate WDL and JSON files before execution. On by default.')
+                 help=argparse.SUPPRESS)
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                  help='Choose a cromwell server from {}'.format(c.servers))
 run.set_defaults(func=call_run)
