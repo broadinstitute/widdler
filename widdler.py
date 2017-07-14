@@ -79,17 +79,25 @@ args = parser.parse_args()
 
 
 def main():
-    logger = logging.getLogger('widdlier')
+    logger = logging.getLogger('widdler')
     logger.setLevel(logging.DEBUG)
-    log_file = os.path.join(c.log_dir, 'widdler.log')
-    fh = logging.FileHandler(log_file)
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler(os.path.join(c.log_dir, 'widdler.log'))
     fh.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('[%(asctime)s | %(name)s | %(levelname)s] %(message)s')
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.ERROR)
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    # add the handlers to the logger
     logger.addHandler(fh)
+    logger.addHandler(ch)
     logger.info("\n-------------New Widdler Execution-------------")
     logger.info("Parameters chosen: {}".format(vars(args)))
     result = args.func(args)
+    logger.info("Result: {}".format(result))
     print(result)
     logger.info("\n-------------End Widdler Execution-------------")
 

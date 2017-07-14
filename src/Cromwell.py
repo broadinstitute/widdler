@@ -3,6 +3,7 @@ import logging
 import json
 import urllib3
 import requests
+module_logger = logging.getLogger('widdler.Cromwell')
 
 
 class Cromwell:
@@ -16,18 +17,18 @@ class Cromwell:
 
     def __init__(self, host='btl-cromwell', port=9000):
         self.url = 'http://' + host + ':' + str(port) + '/api/workflows/v1'
-        self.logger = logging.getLogger('widdler.Cromwell.Cromwell')
+        self.logger = logging.getLogger('widdler.cromwell.Cromwell')
         self.logger.info('URL:{}'.format(self.url))
 
     def get(self, workflow_id, action):
         workflow_url = self.url + '/' + workflow_id + '/' + action
-        self.logger.debug("GET REQUEST:{}".format(workflow_url))
+        self.logger.info("GET REQUEST:{}".format(workflow_url))
         r = requests.get(workflow_url)
         return json.loads(r.text)
 
     def post(self, workflow_id, action):
         workflow_url = self.url + '/' + workflow_id + '/' + action
-        self.logger.debug("POST REQUEST:{}".format(workflow_url))
+        self.logger.info("POST REQUEST:{}".format(workflow_url))
         r = requests.post(workflow_url)
         return json.loads(r.text)
 
@@ -59,15 +60,19 @@ class Cromwell:
         return json.loads(r.text)
 
     def stop_workflow(self, workflow_id):
+        self.logger.info('Aborting workflow {}'.format(workflow_id))
         return self.post(workflow_id, 'abort')
 
     def query_metadata(self, workflow_id):
+        self.logger.info('Querying metadata for workflow {}'.format(workflow_id))
         return self.get(workflow_id, 'metadata')
 
     def query_status(self, workflow_id):
+        self.logger.info('Querying status for workflow {}'.format(workflow_id))
         return self.get(workflow_id, 'status')
 
     def query_logs(self, workflow_id):
+        self.logger.info('Querying logs for workflow {}'.format(workflow_id))
         return self.get(workflow_id, 'logs')
 
 
