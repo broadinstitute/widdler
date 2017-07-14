@@ -3,8 +3,8 @@ import unittest
 import os
 import time
 import logging
-from src.Cromwell import Cromwell
-import src.config as c
+from Cromwell import Cromwell
+import config as c
 
 
 class CromwellUnitTests(unittest.TestCase):
