@@ -136,3 +136,21 @@ will return:
 ## Validation
 
 TBD
+
+## Logging
+
+Widdler logs information in the application's logs directory in a file called widdler.log.
+This can be useful to find information on widdler executions including workflow id and query
+results and can help users locate workflow IDs if they've been lost. Each execution in the log
+is presented like so, with the user's username indicated in the start/stop separators for 
+convenient identification.
+
+```-------------New Widdler Execution by amr-------------
+   2017-07-14 12:10:44,746 - widdler - INFO - Parameters chosen: {'logs': False, 'func': <function call_query at 0x00000000040B8378>, 'status': True, 'workflow_id': '7ff17cb3-12f1-4bf0-8754-e3a0d39178ea', 'server': 'btl-cromwell', 'metadata': False}
+   2017-07-14 12:10:44,746 - widdler.cromwell.Cromwell - INFO - URL:http://btl-cromwell:9000/api/workflows/v1
+   2017-07-14 12:10:44,746 - widdler.cromwell.Cromwell - INFO - Querying status for workflow 7ff17cb3-12f1-4bf0-8754-e3a0d39178ea
+   2017-07-14 12:10:44,747 - widdler.cromwell.Cromwell - INFO - GET REQUEST:http://btl-cromwell:9000/api/workflows/v1/7ff17cb3-12f1-4bf0-8754-e3a0d39178ea/status
+   2017-07-14 12:10:44,812 - widdler - INFO - Result: [{'id': '7ff17cb3-12f1-4bf0-8754-e3a0d39178ea', 'status': 'Running'}]
+   2017-07-14 12:10:44,813 - widdler - INFO - 
+   -------------End Widdler Execution by amr-------------
+   ```

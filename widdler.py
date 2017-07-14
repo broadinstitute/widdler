@@ -5,8 +5,7 @@ import os
 import src.config as c
 from src.Cromwell import Cromwell
 import logging
-
-
+import getpass
 
 
 def call_run(args):
@@ -88,18 +87,19 @@ def main():
     ch = logging.StreamHandler()
     ch.setLevel(logging.ERROR)
     # create formatter and add it to the handlers
+    user = getpass.getuser()
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     fh.setFormatter(formatter)
     ch.setFormatter(formatter)
     # add the handlers to the logger
     logger.addHandler(fh)
     logger.addHandler(ch)
-    logger.info("\n-------------New Widdler Execution-------------")
+    logger.info("\n-------------New Widdler Execution by {}-------------".format(user))
     logger.info("Parameters chosen: {}".format(vars(args)))
     result = args.func(args)
     logger.info("Result: {}".format(result))
     print(result)
-    logger.info("\n-------------End Widdler Execution-------------")
+    logger.info("\n-------------End Widdler Execution by {}-------------".format(user))
 
 if __name__ == "__main__":
     sys.exit(main())
