@@ -19,13 +19,13 @@ def call_query(args):
     queries = []
     if args.status:
         status = cromwell.query_status(args.workflow_id)
-        query.append(status)
+        queries.append(status)
     if args.metadata:
         metadata = cromwell.query_metadata(args.workflow_id)
-        query.append(metadata)
+        queries.append(metadata)
     if args.logs:
         logs = cromwell.query_logs(args.workflow_id)
-        query.append(logs)
+        queries.append(logs)
     return queries
 
 
@@ -54,8 +54,8 @@ run.add_argument('-S', '--server', action='store', required=True, type=str, choi
 run.set_defaults(func=call_run)
 
 query = sub.add_parser(name='query',
-                       description='Check the status of a submitted workflow.',
-                       usage='widdler.py query <workflow id>',
+                       description='Query cromwell for information on the submitted workflow.',
+                       usage='widdler.py query <workflow id> [<args>]',
                        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 query.add_argument('workflow_id', action='store', help='workflow id for workflow execution of interest.')
 query.add_argument('-s', '--status', action='store_true', default=False, help='Print status for workflow to stdout')
