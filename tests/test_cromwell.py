@@ -3,8 +3,8 @@ import unittest
 import os
 import time
 import logging
-from src.Cromwell import Cromwell
-import src.config as c
+from Cromwell import Cromwell
+import config as c
 
 
 class CromwellUnitTests(unittest.TestCase):
@@ -13,7 +13,7 @@ class CromwellUnitTests(unittest.TestCase):
         resources = c.resource_dir
         self.logger = logging.getLogger('test_cromwell')
         hdlr = logging.FileHandler(os.path.join(c.log_dir, 'test_cromwell.log'))
-        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         hdlr.setFormatter(formatter)
         self.logger.addHandler(hdlr)
         self.logger.setLevel(logging.INFO)
