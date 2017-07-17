@@ -7,8 +7,6 @@ from src.Cromwell import Cromwell
 import logging
 
 
-
-
 def call_run(args):
     cromwell = Cromwell(host=args.server)
     return cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json)
