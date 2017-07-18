@@ -1,9 +1,9 @@
 __author__ = 'Amr Abouelleil'
 import unittest
 import logging
-import config as c
+import src.config as c
 import os
-from Validator import Validator
+from src.Validator import Validator
 
 
 class ValidatorUnitTests(unittest.TestCase):
@@ -73,6 +73,7 @@ class ValidatorUnitTests(unittest.TestCase):
     def test_validate_samples_file(self):
         samples_file = os.path.join(c.resource_dir, 'test.tsv')
         result = self.validator.validate_samples_file(samples_file)
+        print(result)
         self.assertEqual(6, len(result))
 
     @classmethod
