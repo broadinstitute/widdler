@@ -1,0 +1,9 @@
+{
+  "gatk.bad_file": "/cil/shed/sandboxes/amr/dev/gatk_pipeline/data/pfal_5.tsv",
+  "gatk.picard": "/cil/shed/apps/external/picard/current/bin/picard.jar",
+  "gatk.tcir": "False",
+  "gatk.bqsr": false,
+  "gatk.ploidy": 2.0,
+  "gatk.indel_annotation": ["QD", "MQ", "FS"],
+  "gatk.ts_filter_snp": 99
+}
