@@ -70,11 +70,17 @@ class ValidatorUnitTests(unittest.TestCase):
         self.assertIs(self.validator.validate_file(self.wdl), True)
         self.assertIs(self.validator.validate_file('notexists.txt'), False)
 
-    def test_validate_samples_file(self):
-        samples_file = os.path.join(c.resource_dir, 'test.tsv')
-        result = self.validator.validate_samples_file(samples_file)
-        print(result)
-        self.assertEqual(6, len(result))
+    def test_validate_samples_array(self):
+        samples_array = [
+            ['S1', self.wdl],
+            ['S2', self.json],
+            ['S3', 'not_exists.txt']
+        ]
+        result = self.validator.validate_samples_array(samples_array)
+        self.assertEqual(1, len(result))
+
+    def test_validate_json(self):
+        self.validator.validate_json()
 
     @classmethod
     def tearDownClass(self):

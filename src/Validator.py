@@ -1,11 +1,12 @@
 __author__= 'Amr Abouelleil'
 import logging
 import json
-import config as c
+import src.config as c
 import os
 import subprocess
 module_logger = logging.getLogger('widdler.Validator')
 import csv
+
 
 class Validator:
     """
@@ -47,9 +48,32 @@ class Validator:
             if self.validate_param(param, wdict):
                 # param is valid
                 print(param, wdict[param])
+                if 'File' in val:
+                    if not self.validate_file(val):
+                        errors.append('{} is not a valid file path.'.format(val))
+                elif 'Array' in val:
+                    if not self.validate_array(val):
+                        errors.append('{} is not a valid array.'.format(val))
+                elif 'String' in val:
+                    if not self.validate_string(val):
+                        errors.append('{} is not a valid String.'.format(val))
+                elif 'Int' in val:
+                    if not self.validate_int(val):
+                        errors.append('{} is not a valid Int.'.format(val))
+                elif 'Float' in val:
+                    if not self.validate_float(val):
+                        errors.append('{} is not a valid Float.'.format(val))
+                elif 'Boolean' in val:
+                    if not self.validate_boolean(val):
+                        errors.append('{} is not a valid Float.'.format(val))
+                else:
+                    errors.append('{} is not a recognized parameter value'.format(val))
             else:
                 # param doesn't exist, add it to errors.
                 errors.append('{} is not a valid WDL parameter.'.format(param))
+
+    def validate_array(self, array):
+        isinstance(array, list)
 
     def validate_param(self, param, wdict):
         """
@@ -72,26 +96,19 @@ class Validator:
         return isinstance(i, str)
 
     def validate_file(self, f):
-        return os.path.exists(f)
+        return os.path.isfile(f.rstrip())
 
-    def validate_samples_file(self, samples_file):
+    def validate_samples_array(self, samples_array):
         """
-        Validates a TSV sample file used in WDL inputs. Assumes that last column of each row contains an absolute
-        path to a file.
+        Validates a TSV sample file array (passed as an array) used in WDL inputs.
+        Assumes that last column of each row contains an absolute path to a file.
         :param samples_file: a tab-delimitted file with the last column of each row containing a file path.
         :return: A list of errors. If list is empty, there were no errors.
         """
         errors = []
-        try:
-            with open(samples_file) as fh:
-                reader = csv.reader(fh, delimiter='\t')
-                for row in reader:
-                    if not self.validate_file(row[-1]):
-                        errors.append('File path {} does not exist.'.format(row[-1]))
-            fh.close()
-        except FileNotFoundError as e:
-            self.logger.error(e)
-            errors.append(e)
+        for row in samples_array:
+            if not self.validate_file(row[-1]):
+                errors.append('File path {} does not exist.'.format(row[-1]))
         return errors
 
     def validate_boolean(self, i):
