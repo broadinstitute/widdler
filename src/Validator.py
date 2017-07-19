@@ -67,7 +67,7 @@ class Validator:
                     if not self.validate_boolean(val):
                         errors.append('{} is not a valid Float.'.format(val))
                 else:
-                    errors.append('{} is not a recognized parameter value'.format(val))
+                    errors.append('{} is not a recognized parameteree value'.format(val))
             else:
                 # param doesn't exist, add it to errors.
                 errors.append('{} is not a valid WDL parameter.'.format(param))
