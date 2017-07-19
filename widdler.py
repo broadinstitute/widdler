@@ -4,11 +4,18 @@ import sys
 import os
 import src.config as c
 from src.Cromwell import Cromwell
+from src.Validator import Validator
 import logging
 import getpass
 
 
 def call_run(args):
+    if args.validate:
+        validator = Validator(wdl=args.wdl, json=args.json)
+        result = validator.validate_json()
+        if result is False:
+            # graceful exit
+            pass
     cromwell = Cromwell(host=args.server)
     return cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json)
 
