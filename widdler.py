@@ -8,14 +8,13 @@ from src.Validator import Validator
 import logging
 import getpass
 
-
 def call_run(args):
     if args.validate:
         validator = Validator(wdl=args.wdl, json=args.json)
         result = validator.validate_json()
-        if result is False:
-            # graceful exit
-            pass
+        if len(result) != 0:
+            print("{} input file contains the following errors:\n{}".format(args.json, "\n".join(result)))
+            sys.exit(-1)
     cromwell = Cromwell(host=args.server)
     return cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json)
 
@@ -53,7 +52,7 @@ run = sub.add_parser(name='run',
 
 run.add_argument('wdl', action='store', help='Path to the WDL to be executed.')
 run.add_argument('json', action='store', help='Path the json inputs file.')
-run.add_argument('-v', '--validate', action='store_true', default=True,
+run.add_argument('-v', '--validate', action='store_true', default=False,
                  help=argparse.SUPPRESS)
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                  help='Choose a cromwell server from {}'.format(c.servers))
@@ -78,7 +77,6 @@ abort = sub.add_parser(name='abort',
 abort.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
 abort.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                    help='Choose a cromwell server from {}'.format(c.servers))
-
 abort.set_defaults(func=call_abort)
 
 args = parser.parse_args()

@@ -47,23 +47,22 @@ class Validator:
         for param, val in jdict.items():
             if self.validate_param(param, wdict):
                 # param is valid
-                print(param, wdict[param])
-                if 'File' in val:
+                if 'File' in wdict[param]:
                     if not self.validate_file(val):
                         errors.append('{} is not a valid file path.'.format(val))
-                elif 'Array' in val:
+                elif 'Array' in wdict[param]:
                     if not self.validate_array(val):
-                        errors.append('{} is not a valid array.'.format(val))
-                elif 'String' in val:
+                        errors.append('{} is not a valid array/list.'.format(val))
+                elif 'String' in wdict[param]:
                     if not self.validate_string(val):
                         errors.append('{} is not a valid String.'.format(val))
-                elif 'Int' in val:
+                elif 'Int' in wdict[param]:
                     if not self.validate_int(val):
                         errors.append('{} is not a valid Int.'.format(val))
-                elif 'Float' in val:
+                elif 'Float' in wdict[param]:
                     if not self.validate_float(val):
                         errors.append('{} is not a valid Float.'.format(val))
-                elif 'Boolean' in val:
+                elif 'Boolean' in wdict[param]:
                     if not self.validate_boolean(val):
                         errors.append('{} is not a valid Float.'.format(val))
                 else:
@@ -71,8 +70,10 @@ class Validator:
             else:
                 # param doesn't exist, add it to errors.
                 errors.append('{} is not a valid WDL parameter.'.format(param))
+        return errors
 
     def validate_array(self, array):
+        print(type(array))
         isinstance(array, list)
 
     def validate_param(self, param, wdict):

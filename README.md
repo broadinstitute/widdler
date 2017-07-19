@@ -43,8 +43,8 @@ validates both the WDL and the JSON file submitted and is on by default.
    
    optional arguments:
      -h, --help            show this help message and exit
-     -v, --validate        Validate WDL and JSON files before execution. On by
-                           default. (default: True)
+     -v, --validate        Validate WDL and JSON files before execution. Off by
+                           default. (default: False)
      -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
                            Choose a cromwell server from ['ale', 'btl-cromwell']
                            (default: None)
