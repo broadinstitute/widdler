@@ -4,6 +4,7 @@ import json
 import src.config as c
 import os
 import subprocess
+import csv
 module_logger = logging.getLogger('widdler.Validator')
 
 
@@ -66,6 +67,12 @@ class Validator:
                         errors.append('{} is not a valid Boolean.'.format(val))
                 else:
                     errors.append('{} is not a recognized parameter value'.format(val))
+                if 'samples_file' in param:
+                    fh = open(val, 'r')
+                    s_reader = csv.reader(fh, delimiter='\t')
+                    errors += self.validate_samples_array(s_reader)
+
+                    fh.close()
                 # Once a parameter is processed we delete it from wdict so we can see if any parameters were not
                 # checked. This indicates the user didn't specify the parameter. If the param is optional that's ok
                 # but if it isn't, we should add it to errors.
@@ -73,7 +80,7 @@ class Validator:
             else:
                 # param doesn't exist, add it to errors.
                 errors.append('{} is not a valid WDL parameter.'.format(param))
-        for k,v in wdict.items():
+        for k, v in wdict.items():
             if 'optional' not in v:
                 errors.append('Required parameter {} is missing from input json.'.format(k))
         return errors
@@ -123,7 +130,7 @@ class Validator:
         errors = []
         for row in samples_array:
             if not self.validate_file(row[-1]):
-                errors.append('File path {} does not exist.'.format(row[-1]))
+                errors.append('File path {} found in samples file does not exist.'.format(row[-1]))
         return errors
 
     def validate_boolean(self, i):

@@ -8,7 +8,7 @@ Features include:
 * Workflow execution
 * Workflow queries: status, metadata, logs
 * Workflow abortion
-* WDL and JSON validation (in progress).
+* WDL and JSON validation.
 
 ## Usage
 
@@ -135,7 +135,24 @@ will return:
 ```
 ## Validation
 
-TBD
+Widdler validation attempts to validate the inputs in the user's supplied json file against the WDL
+arguments in the supplied WDL file. Validation is OFF by default and so users must specify it using
+the -v flag. 
+
+It will validate the following:
+* That the value of a parameter in the json matches the same type of value the WDL expects. For example
+if the WDL expects an integer and the parameter supplies a float, this will be flagged as an error.
+* That if the parameter is of type File, that the file exists on the file system.
+* If a parameter specified in the json is not expected by the WDL.
+* If a parameter contains the string 'samples_file' it's value will be interpreted as an input TSV file in which
+the last column of every row indicates a sample file. In this case, an existence check will be made on each
+sample file.
+
+It will NOT validate the following:
+* The contents of arrays. It can't tell the difference between an array of strings and an array of integers, but
+it can tell they are arrays, and if a parameter expects an array but is provided something else this will
+be logged as an error.
+
 
 ## Logging
 
