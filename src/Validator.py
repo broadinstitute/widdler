@@ -72,9 +72,17 @@ class Validator:
                 errors.append('{} is not a valid WDL parameter.'.format(param))
         return errors
 
-    def validate_array(self, array):
-        print(type(array))
-        isinstance(array, list)
+    def validate_array(self, i):
+        """
+        Returns true if the input value is of class list, false if not. Note that isinstance does not behave as
+        expected here, hence why I use type instead.
+        :param i: input parameter
+        :return: Boolean
+        """
+        if type(i) is list:
+            return True
+        else:
+            return False
 
     def validate_param(self, param, wdict):
         """
