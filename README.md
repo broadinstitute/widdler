@@ -8,7 +8,7 @@ Features include:
 * Workflow execution
 * Workflow queries: status, metadata, logs
 * Workflow abortion
-* WDL and JSON validation.
+* JSON validation.
 
 ## Usage
 
