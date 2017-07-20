@@ -5,7 +5,6 @@ import src.config as c
 import os
 import subprocess
 module_logger = logging.getLogger('widdler.Validator')
-import csv
 
 
 class Validator:
