@@ -63,12 +63,19 @@ class Validator:
                         errors.append('{} is not a valid Float.'.format(val))
                 elif 'Boolean' in wdict[param]:
                     if not self.validate_boolean(val):
-                        errors.append('{} is not a valid Float.'.format(val))
+                        errors.append('{} is not a valid Boolean.'.format(val))
                 else:
                     errors.append('{} is not a recognized parameter value'.format(val))
+                # Once a parameter is processed we delete it from wdict so we can see if any parameters were not
+                # checked. This indicates the user didn't specify the parameter. If the param is optional that's ok
+                # but if it isn't, we should add it to errors.
+                del wdict[param]
             else:
                 # param doesn't exist, add it to errors.
                 errors.append('{} is not a valid WDL parameter.'.format(param))
+        for k,v in wdict.items():
+            if 'optional' not in v:
+                errors.append('Required parameter {} is missing from input json.'.format(k))
         return errors
 
     def validate_array(self, i):
