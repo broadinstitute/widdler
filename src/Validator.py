@@ -68,11 +68,13 @@ class Validator:
                 else:
                     errors.append('{} is not a recognized parameter value'.format(val))
                 if 'samples_file' in param:
-                    fh = open(val, 'r')
-                    s_reader = csv.reader(fh, delimiter='\t')
-                    errors += self.validate_samples_array(s_reader)
-
-                    fh.close()
+                    try:
+                        fh = open(val, 'r')
+                        s_reader = csv.reader(fh, delimiter='\t')
+                        errors += self.validate_samples_array(s_reader)
+                        fh.close()
+                    except FileNotFoundError as e:
+                        errors.append(str(e))
                 # Once a parameter is processed we delete it from wdict so we can see if any parameters were not
                 # checked. This indicates the user didn't specify the parameter. If the param is optional that's ok
                 # but if it isn't, we should add it to errors.
