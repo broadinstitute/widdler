@@ -10,9 +10,20 @@ import getpass
 import json
 
 
+def is_valid(validator, path):
+    if not validator.validate_file(path):
+        print("{} is not a valid file path.\n".format(path))
+        sys.exit(-1)
+
+
 def call_run(args):
+    validator = Validator(wdl=args.wdl, json=args.json)
+    is_valid(validator, args.wdl)
+    is_valid(validator, args.json)
     if args.validate:
-        validator = Validator(wdl=args.wdl, json=args.json)
+        if not validator.validate_file(args.wdl):
+            print("{} is not a valid file path.\n".format(args.wdl))
+            sys.exit(-1)
         result = validator.validate_json()
         if len(result) != 0:
             print("{} input file contains the following errors:\n{}".format(args.json, "\n".join(result)))
