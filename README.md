@@ -82,7 +82,7 @@ arguments to request basic status, metadata, and/or logs.
 ```
 
 For example:
-```widdler.py query -s -s ale```
+```widdler.py 2f8bb5c6-8254-4d38-b010-620913dd325e query -s -S ale```
 
 will return something like this:
 
@@ -90,7 +90,7 @@ will return something like this:
 
 and:
 
-```widdler.py query -m -s ale```
+```widdler.py query 2f8bb5c6-8254-4d38-b010-620913dd325e -m -s ale```
 
 will return a ton of information like so (truncated for viewability):
 ```
@@ -101,7 +101,7 @@ ssion': '2017-07-14T11:26:05.931-04:00', 'workflowName': 'gatk', 'outputs': {}, 
 
 and:
 
-```widdler.py query -l -s ale```
+```widdler.py query 2f8bb5c6-8254-4d38-b010-620913dd325e -l -s ale```
 
 ```
 [{'id': '2f8bb5c6-8254-4d38-b010-620913dd325e', 'calls': {'gatk.MakeSampleDir': [{'shardIndex': 0, 'attempt': 1, 'stderr': '/cil/shed/apps/internal/cromwell_new/cromwell-executions/ga
