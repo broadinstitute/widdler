@@ -129,7 +129,7 @@ class Validator:
         :return: Boolean
         """
         print(type(i))
-        return isinstance(i, str)
+        return isinstance(i, unicode)
 
     def validate_file(self, f):
         return os.path.exists(f.rstrip())
