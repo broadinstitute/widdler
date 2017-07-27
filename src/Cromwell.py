@@ -4,7 +4,7 @@ import json
 import urllib3
 import requests
 import datetime
-from urllib import parse
+#from urllib import parse
 import getpass
 
 module_logger = logging.getLogger('widdler.Cromwell')
@@ -102,7 +102,7 @@ class Cromwell:
                 base_url += '&'
             if isinstance(value, datetime.datetime):
                 dt = value.strftime('%Y-%m-%dT%H%%3A%S%%3A%f')
-                test = parse.quote_plus(dt)
+                #test = parse.quote_plus(dt)
                 value = test
             if isinstance(value, list):
                 for item in value:
