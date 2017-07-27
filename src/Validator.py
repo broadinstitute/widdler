@@ -128,11 +128,8 @@ class Validator:
         :param i: input object
         :return: Boolean
         """
-        #return isinstance(i, str)
-        if type(i) is str:
-            return True
-        else:
-            return False
+        print(type(i))
+        return isinstance(i, str)
 
     def validate_file(self, f):
         return os.path.exists(f.rstrip())
