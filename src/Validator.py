@@ -6,6 +6,7 @@ import os
 import subprocess
 import csv
 import sys
+
 module_logger = logging.getLogger('widdler.Validator')
 
 
@@ -129,7 +130,7 @@ class Validator:
         :return: Boolean
         """
         print(type(i))
-        return isinstance(i, unicode)
+        return isinstance(i, str)
 
     def validate_file(self, f):
         return os.path.exists(f.rstrip())
