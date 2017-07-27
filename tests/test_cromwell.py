@@ -5,6 +5,7 @@ import time
 import logging
 from src.Cromwell import Cromwell
 import src.config as c
+import datetime
 
 
 class CromwellUnitTests(unittest.TestCase):
@@ -50,10 +51,20 @@ class CromwellUnitTests(unittest.TestCase):
         self.logger.info('Result: {}'.format(result))
         self.assertTrue('id' in result)
 
+    def test_build_long_url(self):
+        url_dict = {
+            'name': 'gatk',
+            'id': [self.workflow_id],
+            'start': datetime.datetime.now() - datetime.timedelta(days=1),
+            'end': datetime.datetime.now()
+        }
+        print(self.cromwell.build_long_query_url('http://btl-cromwell:9000/api/workflows/v1/query?', url_dict))
+
     def test_stop_workflow(self):
         self.logger.info('Testing stop_workflow...')
         result = self.cromwell.stop_workflow(self.workflow_id)
         self.logger.info('Result: {}'.format(result))
+
 
     @classmethod
     def tearDownClass(self):

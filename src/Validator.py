@@ -34,7 +34,10 @@ class Validator:
         Uses wdl-tool to get the expected arguments from the WDL file.
         :return: Returns a dictionary of wdl arguments as keys and expected type as as value.
         """
-        os.chdir(os.path.dirname(self.wdl))
+        try:
+            os.chdir(os.path.dirname(self.wdl))
+        except OSError:
+            print('Warning: Could not navigate to WDL directory.')
         cmd = ['java', '-jar', self.wdl_tool, 'inputs', self.wdl]
         run = subprocess.check_output(cmd).decode("utf-8")
         try:

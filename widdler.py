@@ -77,7 +77,7 @@ def call_validate(args):
         sys.exit(-1)
     else:
         print('No errors found in {}'.format(args.wdl))
-        sys.exit(0)
+
 
 
 def call_abort(args):
