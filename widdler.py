@@ -8,46 +8,77 @@ from src.Validator import Validator
 import logging
 import getpass
 import json
+import zipfile
 
 
-def is_valid(validator, path):
-    if not validator.validate_file(path):
-        print("{} is not a valid file path.\n".format(path))
-        sys.exit(-1)
+def is_valid(path):
+    """
+    Integrates with ArgParse to validate a file path.
+    :param path: Path to a file.
+    :return: The path if it exists, otherwise raises an error.
+    """
+    if not os.path.exists(path):
+        raise argparse.ArgumentTypeError(("{} is not a valid file path.\n".format(path)))
+    else:
+        return path
+
+
+def is_valid_zip(path):
+    """
+    Integrates with argparse to validate a file path and verify that the file is a zip file.
+    :param path: Path to a file.
+    :return: The path if it exists and is a zip file, otherwise raises an error.
+    """
+    is_valid(path)
+    if not zipfile.is_zipfile(path):
+        raise argparse.ArgumentTypeError("{} is not a valid zip file.\n".format(path))
+    else:
+        return path
 
 
 def call_run(args):
+    """
+    Optionally validates inputs and starts a workflow on the Cromwell execution engine if validation passes. Validator
+    returns an empty list if valid, otherwise, a list of errors discovered.
+    :param args: run subparser arguments.
+    :return: JSON response with Cromwell workflow ID.
+    """
     validator = Validator(wdl=args.wdl, json=args.json)
-    is_valid(validator, args.wdl)
-    is_valid(validator, args.json)
     if args.validate:
-        if not validator.validate_file(args.wdl):
-            print("{} is not a valid file path.\n".format(args.wdl))
-            sys.exit(-1)
         result = validator.validate_json()
         if len(result) != 0:
             print("{} input file contains the following errors:\n{}".format(args.json, "\n".join(result)))
             sys.exit(-1)
     cromwell = Cromwell(host=args.server)
-    return cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json)
+    return cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies)
 
 
 def call_query(args):
+    """
+    Get various types of data on a particular workflow ID.
+    :param args:  query subparser arguments.
+    :return: A list of json responses based on queries selected by the user.
+    """
     cromwell = Cromwell(host=args.server)
-    queries = []
+    responses = []
     if args.status:
         status = cromwell.query_status(args.workflow_id)
-        queries.append(status)
+        responses.append(status)
     if args.metadata:
         metadata = cromwell.query_metadata(args.workflow_id)
-        queries.append(metadata)
+        responses.append(metadata)
     if args.logs:
         logs = cromwell.query_logs(args.workflow_id)
-        queries.append(logs)
-    return queries
+        responses.append(logs)
+    return responses
 
 
 def call_abort(args):
+    """
+    Abort a workflow with a given workflow id.
+    :param args: abort subparser args.
+    :return: JSON containing abort response.
+    """
     cromwell = Cromwell(host=args.server)
     return cromwell.stop_workflow(args.workflow_id)
 
@@ -63,10 +94,12 @@ run = sub.add_parser(name='run',
                      usage='widdler.py run <wdl file> <json file> [<args>]',
                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-run.add_argument('wdl', action='store', help='Path to the WDL to be executed.')
-run.add_argument('json', action='store', help='Path the json inputs file.')
+run.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL to be executed.')
+run.add_argument('json', action='store', type=is_valid, help='Path the json inputs file.')
 run.add_argument('-v', '--validate', action='store_true', default=False,
                  help='Validate WDL inputs in json file.')
+run.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
+                 help='A zip file containing one or more WDL files that the main WDL imports.')
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                  help='Choose a cromwell server from {}'.format(c.servers))
 run.set_defaults(func=call_run)
@@ -82,6 +115,15 @@ query.add_argument('-l', '--logs', action='store_true', default=False, help='Pri
 query.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                    help='Choose a cromwell server from {}'.format(c.servers))
 query.set_defaults(func=call_query)
+
+validate = sub.add_parser(name='validate',
+                          description='Validate (but do not run) a json for a specific WDL file.',
+                          usage='widdler.py validate <wdl_file> <json_file>',
+                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+validate.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL to be executed.')
+validate.add_argument('json', action='store', type=is_valid, help='Path the json inputs file.')
+
 
 abort = sub.add_parser(name='abort',
                        description='Abort a submitted workflow.',

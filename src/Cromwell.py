@@ -1,4 +1,4 @@
-__author__ = 'paulcao'
+__author__ = 'paulcao, amr'
 import logging
 import json
 import urllib3
@@ -32,7 +32,7 @@ class Cromwell:
         r = requests.post(workflow_url)
         return json.loads(r.text)
 
-    def start_workflow(self, wdl_file, workflow_name, workflow_args):
+    def start_workflow(self, wdl_file, workflow_name, workflow_args, dependencies=None):
 
         json_workflow_args = {}
         for key in workflow_args.keys():
@@ -45,17 +45,22 @@ class Cromwell:
 
         files = {'wdlSource': (wdl_file, open(wdl_file, 'rb'), 'application/octet-stream'),
                  'workflowInputs': ('report.csv', args_string, 'application/json')}
-
+        if dependencies:
+            # add dependency as zip file
+            files['wdlDependencies'] = (dependencies, open(dependencies, 'rb'), 'application/zip')
         r = requests.post(self.url, files=files)
         return json.loads(r.text)
 
-    def jstart_workflow(self, wdl_file, json_file):
+    def jstart_workflow(self, wdl_file, json_file,  dependencies=None):
         with open(json_file) as fh:
             args = json.load(fh)
         fh.close()
         j_args = json.dumps(args)
         files = {'wdlSource': (wdl_file, open(wdl_file, 'rb'), 'application/octet-stream'),
                  'workflowInputs': ('report.csv', j_args, 'application/json')}
+        if dependencies:
+            # add dependency as zip file
+            files['wdlDependencies'] = (dependencies, open(dependencies, 'rb'), 'application/zip')
         r = requests.post(self.url, files=files)
         return json.loads(r.text)
 

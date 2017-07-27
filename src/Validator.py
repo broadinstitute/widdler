@@ -5,6 +5,7 @@ import src.config as c
 import os
 import subprocess
 import csv
+import sys
 module_logger = logging.getLogger('widdler.Validator')
 
 
@@ -33,9 +34,16 @@ class Validator:
         Uses wdl-tool to get the expected arguments from the WDL file.
         :return: Returns a dictionary of wdl arguments as keys and expected type as as value.
         """
+        os.chdir(os.path.dirname(self.wdl))
         cmd = ['java', '-jar', self.wdl_tool, 'inputs', self.wdl]
         run = subprocess.check_output(cmd).decode("utf-8")
-        return json.loads(run)
+        try:
+            return json.loads(run)
+        except json.JSONDecodeError:
+            print("Something went wrong with getting args. Note that if using validation, unzipped WDL dependencies "
+                  "must be in same directory as main WDL.\n "
+                  "Alternatively, turn off validation or use widdler.py validate")
+            sys.exit(-1)
 
     def validate_json(self):
         errors = list()

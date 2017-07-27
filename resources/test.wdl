@@ -1,5 +1,5 @@
-# GATK WDL
-# import "hc_scatter.wdl" as sub
+# GATK WDL V1.0
+import "hc_scatter.wdl" as sub
 
 task VersionCheck {
     String gatk
@@ -465,6 +465,7 @@ task GenotypeGVCFs {
 	String ? intervals
 	Array[String] variant_files
     String output_dir
+    Boolean ? all_sites
     String gcvf_out = "${output_dir}/genotypeGVCFs.vcf"
 	command {
         source /broad/software/scripts/useuse
@@ -475,6 +476,7 @@ task GenotypeGVCFs {
 			${sep=" --intervals " "--intervals " + intervals} \
 			-o ${gcvf_out} \
 			-V ${sep=" -V " variant_files} \
+			-allSites ${default="false" all_sites}
 			${default="\n" extra_gg_params}
 	}
 	output {
@@ -489,6 +491,7 @@ task GenotypeGVCFs {
 		ploidy: "Ploidy (number of chromosomes) per sample. For pooled data, set to (Number of samples in each pool * Sample Ploidy)."
 		variant_files: "One or more input gVCF files"
 		intervals: "One or more genomic intervals over which to operate"
+		all_sites: "Include loci found to be non-variant after genotyping"
 		gcvf_out: "The output vcf of GenotypeGVCFs"
 	}
 }
@@ -723,6 +726,7 @@ workflow gatk {
     String ? bqsr_recal_report
     # GenotypeGVCF parameters
     String ? extra_gg_params
+    Boolean ? all_sites
     # VQSR selection and relevant parameters
     Boolean vqsr
     Array[String] snp_resource
@@ -909,36 +913,36 @@ workflow gatk {
         }
 
         String hc_bam = select_first([PrintReads.bam, IndelRealigner.bam, ReorderSAM.bam])
-        #call sub.hc_scatter {
-            #input:
-            #intervals_file = CreateIntervalsList.out,
-            #gatk = gatk,
-            #ref = CheckIndex.out,
-            #sample_name = sample[0],
-            #sample_dir = MakeSampleDir.out,
-            #in_bam = hc_bam,
-            #bqsr_recal_report = bqsr_recal_report,
-            #ploidy = ploidy,
-            #erc = erc,
-            #extra_hc_params = extra_hc_params
-            #}
-            #output {
-            #    String hc_scatter_output = hc_scatter.out
-            #}
-
-        call HaplotypeCaller {
+        call sub.hc_scatter {
             input:
+            intervals = CreateIntervalsList.out,
             gatk = gatk,
             ref = CheckIndex.out,
             sample_name = sample[0],
             sample_dir = MakeSampleDir.out,
             in_bam = hc_bam,
-            intervals = CreateIntervalsList.out,
-            bqsr_file = bqsr_recal_report,
+            bqsr_recal_report = bqsr_recal_report,
             ploidy = ploidy,
             erc = erc,
             extra_hc_params = extra_hc_params
-        }
+            }
+            output {
+                String hc_scatter_output = hc_scatter.vcf
+            }
+
+#        call HaplotypeCaller {
+#            input:
+#            gatk = gatk,
+#            ref = CheckIndex.out,
+#            sample_name = sample[0],
+#            sample_dir = MakeSampleDir.out,
+#            in_bam = hc_bam,
+#            intervals = CreateIntervalsList.out,
+#            bqsr_file = bqsr_recal_report,
+#            ploidy = ploidy,
+#            erc = erc,
+#            extra_hc_params = extra_hc_params
+#        }
     # Scatter block ends
     }
 
@@ -947,8 +951,9 @@ workflow gatk {
         gatk = gatk,
         ref = CheckIndex.out,
         extra_gg_params = extra_gg_params,
+        all_sites = all_sites,
         intervals = CreateIntervalsList.out,
-        variant_files = HaplotypeCaller.vcf,
+        variant_files = hc_scatter_output,
         output_dir = MakeOutputDir.out
     }
     if (vqsr == true) {
