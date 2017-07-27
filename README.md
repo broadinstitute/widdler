@@ -5,10 +5,11 @@
 Widdler is a command-line tool for executing WDL workflows on Cromwell servers.
 Features include:
 
-* Workflow execution
-* Workflow queries: status, metadata, logs
-* Workflow abortion
-* JSON validation.
+* Workflow execution: Execute a workflow on a specified Cromwell server.
+* Workflow queries: Get the status, metadata, or logs for a specific workflow.
+* Workflow monitoring: Monitor a specific workflow to completion.
+* Workflow abortion: Abort a running workflow.
+* JSON validation: Validate a JSON input file against the WDL file intended for use.
 
 ## Usage
 
@@ -41,13 +42,16 @@ validates both the WDL and the JSON file submitted and is on by default.
      wdl                   Path to the WDL to be executed.
      json                  Path the json inputs file.
    
-   optional arguments:
-     -h, --help            show this help message and exit
-     -v, --validate        Validate WDL and JSON files before execution. Off by
-                           default. (default: False)
-     -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
-                           Choose a cromwell server from ['ale', 'btl-cromwell']
-                           (default: None)
+    optional arguments:
+      -h, --help            show this help message and exit
+      -v, --validate        Validate WDL inputs in json file. (default: False)
+      -d DEPENDENCIES, --dependencies DEPENDENCIES
+                            A zip file containing one or more WDL files that the
+                            main WDL imports. (default: None)
+      -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
+                            Choose a cromwell server from ['ale', 'btl-cromwell']
+                            (default: None)
+
 ```
 
 For example:
@@ -137,7 +141,8 @@ will return:
 
 Widdler validation attempts to validate the inputs in the user's supplied json file against the WDL
 arguments in the supplied WDL file. Validation is OFF by default and so users must specify it using
-the -v flag. 
+the -v flag if using widdler.py run. Validaton can also be performed using widdler.py validate if you
+wish to validate inputs without executing the workflow.
 
 It will validate the following:
 * That the value of a parameter in the json matches the same type of value the WDL expects. For example
@@ -153,6 +158,9 @@ It will NOT validate the following:
 it can tell they are arrays, and if a parameter expects an array but is provided something else this will
 be logged as an error.
 
+A note on validating WDL files with dependencies: due to the limitations of the current implementation
+of depedency validation, WDL file dependencies must be present in the same directory as the main WDL file
+and must be unzipped. Otherwise validation may not work.
 
 ## Logging
 

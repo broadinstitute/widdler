@@ -43,12 +43,8 @@ def call_run(args):
     :param args: run subparser arguments.
     :return: JSON response with Cromwell workflow ID.
     """
-    validator = Validator(wdl=args.wdl, json=args.json)
     if args.validate:
-        result = validator.validate_json()
-        if len(result) != 0:
-            print("{} input file contains the following errors:\n{}".format(args.json, "\n".join(result)))
-            sys.exit(-1)
+        call_validate(args)
     cromwell = Cromwell(host=args.server)
     return cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies)
 
@@ -73,6 +69,17 @@ def call_query(args):
     return responses
 
 
+def call_validate(args):
+    validator = Validator(wdl=args.wdl, json=args.json)
+    result = validator.validate_json()
+    if len(result) != 0:
+        print("{} input file contains the following errors:\n{}".format(args.json, "\n".join(result)))
+        sys.exit(-1)
+    else:
+        print('No errors found in {}'.format(args.wdl))
+        sys.exit(0)
+
+
 def call_abort(args):
     """
     Abort a workflow with a given workflow id.
@@ -89,6 +96,27 @@ parser = argparse.ArgumentParser(
 
 sub = parser.add_subparsers()
 
+abort = sub.add_parser(name='abort',
+                       description='Abort a submitted workflow.',
+                       usage='widdler.py abort <workflow id>',
+                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+abort.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
+abort.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
+                   help='Choose a cromwell server from {}'.format(c.servers))
+abort.set_defaults(func=call_abort)
+
+query = sub.add_parser(name='query',
+                       description='Query cromwell for information on the submitted workflow.',
+                       usage='widdler.py query <workflow id> [<args>]',
+                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+query.add_argument('workflow_id', action='store', help='workflow id for workflow execution of interest.')
+query.add_argument('-s', '--status', action='store_true', default=False, help='Print status for workflow to stdout')
+query.add_argument('-m', '--metadata', action='store_true', default=False, help='Print metadata for workflow to stdout')
+query.add_argument('-l', '--logs', action='store_true', default=False, help='Print logs for workflow to stdout')
+query.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
+                   help='Choose a cromwell server from {}'.format(c.servers))
+query.set_defaults(func=call_query)
+
 run = sub.add_parser(name='run',
                      description='Submit a WDL & JSON for execution on a Cromwell VM.',
                      usage='widdler.py run <wdl file> <json file> [<args>]',
@@ -104,35 +132,14 @@ run.add_argument('-S', '--server', action='store', required=True, type=str, choi
                  help='Choose a cromwell server from {}'.format(c.servers))
 run.set_defaults(func=call_run)
 
-query = sub.add_parser(name='query',
-                       description='Query cromwell for information on the submitted workflow.',
-                       usage='widdler.py query <workflow id> [<args>]',
-                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-query.add_argument('workflow_id', action='store', help='workflow id for workflow execution of interest.')
-query.add_argument('-s', '--status', action='store_true', default=False, help='Print status for workflow to stdout')
-query.add_argument('-m', '--metadata', action='store_true', default=False, help='Print metadata for workflow to stdout')
-query.add_argument('-l', '--logs', action='store_true', default=False, help='Print logs for workflow to stdout')
-query.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
-                   help='Choose a cromwell server from {}'.format(c.servers))
-query.set_defaults(func=call_query)
-
 validate = sub.add_parser(name='validate',
                           description='Validate (but do not run) a json for a specific WDL file.',
                           usage='widdler.py validate <wdl_file> <json_file>',
                           formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+validate.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL associated with the json file.')
+validate.add_argument('json', action='store', type=is_valid, help='Path the json inputs file to validate.')
+validate.set_defaults(func=call_validate)
 
-validate.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL to be executed.')
-validate.add_argument('json', action='store', type=is_valid, help='Path the json inputs file.')
-
-
-abort = sub.add_parser(name='abort',
-                       description='Abort a submitted workflow.',
-                       usage='widdler.py abort <workflow id>',
-                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-abort.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
-abort.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
-                   help='Choose a cromwell server from {}'.format(c.servers))
-abort.set_defaults(func=call_abort)
 
 args = parser.parse_args()
 
