@@ -103,7 +103,7 @@ class Cromwell:
             if isinstance(value, datetime.datetime):
                 dt = value.strftime('%Y-%m-%dT%H%%3A%S%%3A%f')
                 #test = parse.quote_plus(dt)
-                value = test
+                #value = test
             if isinstance(value, list):
                 for item in value:
                     base_url += '{}={}'.format(key, item)

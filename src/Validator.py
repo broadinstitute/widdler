@@ -131,7 +131,7 @@ class Validator:
         return isinstance(i, str)
 
     def validate_file(self, f):
-        return os.path.isfile(f.rstrip())
+        return os.path.exists(f.rstrip())
 
     def validate_samples_array(self, samples_array):
         """
