@@ -58,13 +58,12 @@ class CromwellUnitTests(unittest.TestCase):
             'start': datetime.datetime.now() - datetime.timedelta(days=1),
             'end': datetime.datetime.now()
         }
-        print(self.cromwell.build_long_query_url('http://btl-cromwell:9000/api/workflows/v1/query?', url_dict))
+        print(self.cromwell.build_query_url('http://btl-cromwell:9000/api/workflows/v1/query?', url_dict))
 
     def test_stop_workflow(self):
         self.logger.info('Testing stop_workflow...')
         result = self.cromwell.stop_workflow(self.workflow_id)
         self.logger.info('Result: {}'.format(result))
-
 
     @classmethod
     def tearDownClass(self):

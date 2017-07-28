@@ -33,7 +33,7 @@ class Cromwell:
         r = requests.get(workflow_url)
         return json.loads(r.text)
 
-    def post(self, workflow_id, action):
+    def post(self, action, workflow_id=None):
         if workflow_id:
             workflow_url = self.url + '/' + workflow_id + '/' + action
         else:
@@ -77,7 +77,7 @@ class Cromwell:
 
     def stop_workflow(self, workflow_id):
         self.logger.info('Aborting workflow {}'.format(workflow_id))
-        return self.post( 'abort', workflow_id)
+        return self.post('abort', workflow_id)
 
     def query_metadata(self, workflow_id):
         self.logger.info('Querying metadata for workflow {}'.format(workflow_id))

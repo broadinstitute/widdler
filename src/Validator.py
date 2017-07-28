@@ -6,6 +6,7 @@ import os
 import subprocess
 import csv
 import sys
+import types
 
 module_logger = logging.getLogger('widdler.Validator')
 
@@ -85,55 +86,16 @@ class Validator:
                         s_reader = csv.reader(fh, delimiter='\t')
                         errors += self.validate_samples_array(s_reader)
                         fh.close()
-                    except FileNotFoundError as e:
+                    except IOError as e:
                         errors.append(str(e))
                 # Once a parameter is processed we delete it from wdict so we can see if any parameters were not
                 # checked. This indicates the user didn't specify the parameter. If the param is optional that's ok
                 # but if it isn't, we should add it to errors.
                 del wdict[param]
-            # else:
-            #     # param doesn't exist, add it to errors.
-            #     errors.append('{} is not a valid WDL parameter.'.format(param))
         for k, v in wdict.items():
             if 'optional' not in v:
                 errors.append('Required parameter {} is missing from input json.'.format(k))
         return errors
-
-    def validate_array(self, i):
-        """
-        Returns true if the input value is of class list, false if not. Note that isinstance does not behave as
-        expected here, hence why I use type instead.
-        :param i: input parameter
-        :return: Boolean
-        """
-        if type(i) is list:
-            return True
-        else:
-            return False
-
-    def validate_param(self, param, wdict):
-        """
-        Returns true if the param exists in WDL, false if not.
-        :param param: the param to evaluate
-        :param wdict: dictionary of wdl args
-        :return: Boolean
-        """
-        if param in wdict:
-            return True
-        else:
-            return False
-
-    def validate_string(self, i):
-        """
-        Returns true if object is string, false if not.
-        :param i: input object
-        :return: Boolean
-        """
-        print(type(i))
-        return isinstance(i, str)
-
-    def validate_file(self, f):
-        return os.path.exists(f.rstrip())
 
     def validate_samples_array(self, samples_array):
         """
@@ -148,7 +110,48 @@ class Validator:
                 errors.append('File path {} found in samples file does not exist.'.format(row[-1]))
         return errors
 
-    def validate_boolean(self, i):
+    @staticmethod
+    def validate_array(i):
+        """
+        Returns true if the input value is of class list, false if not. Note that isinstance does not behave as
+        expected here, hence why I use type instead.
+        :param i: input parameter
+        :return: Boolean
+        """
+        if type(i) is list:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def validate_param(param, wdict):
+        """
+        Returns true if the param exists in WDL, false if not.
+        :param param: the param to evaluate
+        :param wdict: dictionary of wdl args
+        :return: Boolean
+        """
+        if param in wdict:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def validate_string(i):
+        """
+        Returns true if object is string, false if not.
+        :param i: input object
+        :return: Boolean
+        """
+        print(type(i))
+        return isinstance(i, basestring)
+
+    @staticmethod
+    def validate_file(f):
+        return os.path.exists(f.rstrip())
+
+    @staticmethod
+    def validate_boolean(i):
         """
         Returns true if object is a boolean, false if not.
         :param i: input object
@@ -156,7 +159,8 @@ class Validator:
         """
         return isinstance(i, bool)
 
-    def validate_int(self, i):
+    @staticmethod
+    def validate_int(i):
         """
         Returns true if object is an int, false if not.
         :param i: input object
@@ -164,7 +168,8 @@ class Validator:
         """
         return isinstance(i, int)
 
-    def validate_float(self, i):
+    @staticmethod
+    def validate_float(i):
         """
         Returns true if object is a float, false if not.
         :param i: input object
