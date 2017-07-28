@@ -9,7 +9,7 @@ import logging
 import getpass
 import json
 import zipfile
-print('gaagbot test')
+
 
 def is_valid(path):
     """
