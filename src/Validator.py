@@ -143,7 +143,6 @@ class Validator:
         :param i: input object
         :return: Boolean
         """
-        print(type(i))
         return isinstance(i, basestring)
 
     @staticmethod
