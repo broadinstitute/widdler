@@ -10,6 +10,15 @@ import getpass
 import json
 import zipfile
 
+__author__ = "Amr Abouelleil, Paul Cao"
+__copyright__ = "Copyright 2017, The Broad Institute"
+__credits__ = ["Amr Abouelleil", "Paul Cao", "Jean Chang"]
+__license__ = "GPL"
+__version__ = "1.0"
+__maintainer__ = "Amr Abouelleil"
+__email__ = "amr@broadinstitute.org"
+__status__ = "Production"
+
 
 def is_valid(path):
     """
