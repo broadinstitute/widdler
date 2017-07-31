@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""
+Widdler is a tool for submitting workflows via command-line to the cromwell execution engine servers. For more
+info, visit https://github.com/broadinstitute/widdler/blob/master/README.md.
+"""
 import argparse
 import sys
 import os
