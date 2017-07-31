@@ -6,7 +6,6 @@ import os
 import subprocess
 import csv
 import sys
-import types
 
 module_logger = logging.getLogger('widdler.Validator')
 

@@ -6,6 +6,7 @@ import logging
 from src.Cromwell import Cromwell
 import src.config as c
 import datetime
+import requests
 
 
 class CromwellUnitTests(unittest.TestCase):
@@ -58,7 +59,21 @@ class CromwellUnitTests(unittest.TestCase):
             'start': datetime.datetime.now() - datetime.timedelta(days=1),
             'end': datetime.datetime.now()
         }
-        print(self.cromwell.build_query_url('http://btl-cromwell:9000/api/workflows/v1/query?', url_dict))
+        query_url = self.cromwell.build_query_url('http://btl-cromwell:9000/api/workflows/v1/query?', url_dict)
+        r = requests.get(query_url)
+        self.assertEquals(r.status_code, 200)
+
+    def test_query(self):
+        url_dict = {
+            'name': 'gatk',
+            'id': [self.workflow_id],
+            'start': datetime.datetime.now() - datetime.timedelta(days=1),
+            'end': datetime.datetime.now()
+        }
+        self.assertTrue('result' in self.cromwell.query(url_dict))
+
+    def test_query_backend(self):
+        self.assertTrue('defaultBackend' in self.cromwell.query_backend())
 
     def test_stop_workflow(self):
         self.logger.info('Testing stop_workflow...')
