@@ -70,7 +70,8 @@ class CromwellUnitTests(unittest.TestCase):
             'start': datetime.datetime.now() - datetime.timedelta(days=1),
             'end': datetime.datetime.now()
         }
-        self.assertTrue('result' in self.cromwell.query(url_dict))
+        result = self.cromwell.query(url_dict)
+        self.assertTrue(isinstance(result['results'], list), True)
 
     def test_query_backend(self):
         self.assertTrue('defaultBackend' in self.cromwell.query_backend())

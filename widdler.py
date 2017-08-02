@@ -8,6 +8,7 @@ import sys
 import os
 import src.config as c
 from src.Cromwell import Cromwell
+from src.Monitor import Monitor
 from src.Validator import Validator
 import logging
 import getpass
@@ -92,7 +93,6 @@ def call_validate(args):
         print('No errors found in {}'.format(args.wdl))
 
 
-
 def call_abort(args):
     """
     Abort a workflow with a given workflow id.
@@ -100,7 +100,12 @@ def call_abort(args):
     :return: JSON containing abort response.
     """
     cromwell = Cromwell(host=args.server)
-    return cromwell.stop_workflow(args.workflow_id)
+    return cromwell.stop_workflow(workflow_id=args.workflow_id)
+
+
+def call_monitor(args):
+    m = Monitor(host=args.server, user=getpass.getuser())
+    m.monitor_workflow(workflow_id=args.workflow_id, interval=args.interval)
 
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
@@ -117,6 +122,17 @@ abort.add_argument('workflow_id', action='store', help='workflow id of workflow 
 abort.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                    help='Choose a cromwell server from {}'.format(c.servers))
 abort.set_defaults(func=call_abort)
+
+monitor = sub.add_parser(name='monitor',
+                         description='Monitor a particular workflow and notify user via e-mail upon completion.',
+                         usage='widdler.py monitor <workflow_id> [<args>]',
+                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+monitor.add_argument('workflow_id', action='store', help='workflow id for workflow to monitor.')
+monitor.add_argument('-i', '--interval', action='store', default=30, type=int,
+                     help='Amount of time in seconds to elapse between status checks.')
+monitor.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
+                     help='Choose a cromwell server from {}'.format(c.servers))
+monitor.set_defaults(func=call_monitor)
 
 query = sub.add_parser(name='query',
                        description='Query cromwell for information on the submitted workflow.',
@@ -139,6 +155,8 @@ run.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL to 
 run.add_argument('json', action='store', type=is_valid, help='Path the json inputs file.')
 run.add_argument('-v', '--validate', action='store_true', default=False,
                  help='Validate WDL inputs in json file.')
+run.add_argument('-m', '--monitor', action='store_true', default=False,
+                 help='Monitor the workflow and receive an e-mail notification when it terminates.')
 run.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
                  help='A zip file containing one or more WDL files that the main WDL imports.')
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
@@ -152,7 +170,6 @@ validate = sub.add_parser(name='validate',
 validate.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL associated with the json file.')
 validate.add_argument('json', action='store', type=is_valid, help='Path the json inputs file to validate.')
 validate.set_defaults(func=call_validate)
-
 
 args = parser.parse_args()
 

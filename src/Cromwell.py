@@ -3,7 +3,6 @@ import logging
 import json
 import requests
 import datetime
-import sys
 import getpass
 from requests.utils import quote
 
@@ -156,7 +155,7 @@ class Cromwell:
         query_url = self.build_query_url(base_url, query_dict)
         self.logger.info("QUERY REQUEST:{}".format(query_url))
         r = requests.get(query_url)
-        return json.dumps(r.text)
+        return json.loads(r.content)
 
     @staticmethod
     def build_query_url(base_url, url_dict):
