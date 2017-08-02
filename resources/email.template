@@ -1,4 +1,4 @@
-Dear {user},
+Dear ${user},
 
 Your workflow with ${workflow_id} has finished with a status of ${status}. Here's some information you might find useful:
 
