@@ -19,9 +19,7 @@ class Messenger(object):
         self.sender = "widdler@broadinstitute.org"
 
     def compose_email(self, content_dict):
-        subject = "{} Workflow ({}) {}".format(content_dict['name'],
-                                               content_dict['workflow_id'],
-                                               content_dict['status'])
+        subject = "Workflow ({}) {}".format(content_dict['workflow_id'], content_dict['status'])
         msg = MIMEMultipart(From=self.sender, To=self.user_email, Date=formatdate(localtime=True),
                             Subject=subject)
         msg["Subject"] = subject
