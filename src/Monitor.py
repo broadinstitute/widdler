@@ -2,7 +2,7 @@
 """Module for persistent monitoring of workflows."""
 import logging
 import time
-import getpass
+import json
 from Cromwell import Cromwell
 from Messenger import Messenger
 __author__ = "Amr Abouelleil"
@@ -33,14 +33,12 @@ class Monitor:
         finished = False
         while not finished:
             query_status = self.cromwell.query_status(workflow_id)
-            print(query_status)
             if query_status['status'] not in run_states:
                 email_content = {
                     'user': self.user,
-                    'name': 'test',
                     'workflow_id': query_status['id'],
                     'status': query_status['status'],
-                    'metadata': self.cromwell.query_metadata(workflow_id)
+                    'metadata': json.dumps(self.cromwell.query_metadata(workflow_id), indent=4)
                 }
                 msg = self.messenger.compose_email(email_content)
                 self.messenger.send_email(msg)
