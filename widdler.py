@@ -133,8 +133,8 @@ monitor.add_argument('-i', '--interval', action='store', default=30, type=int,
                      help='Amount of time in seconds to elapse between status checks.')
 monitor.add_argument('-V', '--verbose', action='store_true', default=False,
                      help='When selected, widdler will write the current status to STDOUT until completion.')
-monitor.add_argument('-n', '--no_notify', action='store_false', default=True,
-                     help='When selected, disable widdler e-mail notification of workflow completion.')
+monitor.add_argument('-n', '--notify', action='store_true', default=True,
+                     help='When selected, enable widdler e-mail notification of workflow completion.')
 monitor.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                      help='Choose a cromwell server from {}'.format(c.servers))
 monitor.set_defaults(func=call_monitor)
@@ -166,12 +166,13 @@ run.add_argument('-i', '--interval', action='store', default=30, type=int,
                  help='If --monitor is selected, the amount of time in seconds to elapse between status checks.')
 run.add_argument('-V', '--verbose', action='store_true', default=False,
                  help='If selected, widdler will write the current status to STDOUT until completion while monitoring.')
-run.add_argument('-n', '--no_notify', action='store_false', default=True,
-                 help='If selected, disable widdler monitoring e-mail notification of workflow completion.')
+run.add_argument('-n', '--notify', action='store_false', default=True,
+                 help='If selected, enable widdler monitoring e-mail notification of workflow completion.')
 run.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
                  help='A zip file containing one or more WDL files that the main WDL imports.')
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                  help='Choose a cromwell server from {}'.format(c.servers))
+run.add_argument('-w', '--workflow_id', help=argparse.SUPPRESS)
 run.set_defaults(func=call_run)
 
 validate = sub.add_parser(name='validate',
@@ -208,7 +209,8 @@ def main():
     logger.info("Result: {}".format(result))
     print(json.dumps(result, indent=4))
     if args.watch:
-        args.workflow_id = result['workflow_id']
+        print(type(result))
+        args.workflow_id = result['id']
         call_monitor(args)
     logger.info("\n-------------End Widdler Execution by {}-------------".format(user))
 

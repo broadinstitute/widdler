@@ -3,8 +3,8 @@
 import logging
 import time
 import json
-from Cromwell import Cromwell
-from Messenger import Messenger
+from src.Cromwell import Cromwell
+from src.Messenger import Messenger
 __author__ = "Amr Abouelleil"
 
 module_logger = logging.getLogger('widdler.Monitor')
@@ -14,11 +14,12 @@ class Monitor:
     """
     A class for monitoring a user's workflows, providing status reports at regular intervals.
     """
-    def __init__(self, user, host, port=9000):
+    def __init__(self, user, host, notify, verbose, port=9000):
         self.user = user
         self.cromwell = Cromwell(host=host, port=port)
         self.messenger = Messenger(self.user)
-
+        self.notify = notify
+        self.verbose = verbose
     # def get_user_workflows(self, user, query_dict):
     #     result = self.cromwell.query(query_dict)
     #     user_results = dict()
@@ -33,15 +34,18 @@ class Monitor:
         finished = False
         while not finished:
             query_status = self.cromwell.query_status(workflow_id)
+            if self.verbose:
+                print(query_status)
             if query_status['status'] not in run_states:
-                email_content = {
-                    'user': self.user,
-                    'workflow_id': query_status['id'],
-                    'status': query_status['status'],
-                    'metadata': json.dumps(self.cromwell.query_metadata(workflow_id), indent=4)
-                }
-                msg = self.messenger.compose_email(email_content)
-                self.messenger.send_email(msg)
+                if self.notify:
+                    email_content = {
+                        'user': self.user,
+                        'workflow_id': query_status['id'],
+                        'status': query_status['status'],
+                        'metadata': json.dumps(self.cromwell.query_metadata(workflow_id), indent=4)
+                    }
+                    msg = self.messenger.compose_email(email_content)
+                    self.messenger.send_email(msg)
                 finished = True
             time.sleep(interval)
 

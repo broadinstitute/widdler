@@ -4,7 +4,7 @@ from email.mime.text import MIMEText
 from string import Template
 from email.mime.multipart import MIMEMultipart
 from email.utils import formatdate
-import config as c
+import src.config as c
 
 __author__ = "Amr Abouelleil"
 
