@@ -34,7 +34,7 @@ class Monitor:
         while 0:
             query_status = self.cromwell.query_status(workflow_id)
             if self.verbose:
-                print('Workflow {} is {}'.format(query_status['id'], query_status['status']))
+                print('Workflow {} | {}'.format(query_status['id'], query_status['status']))
 
             if query_status['status'] not in run_states:
                 if self.notify:
