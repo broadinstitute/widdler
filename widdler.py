@@ -60,7 +60,8 @@ def call_run(args):
     if args.validate:
         call_validate(args)
     cromwell = Cromwell(host=args.server)
-    return cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies)
+    return cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json,
+                                    dependencies=args.dependencies)
 
 
 def call_query(args):
@@ -155,8 +156,10 @@ run.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL to 
 run.add_argument('json', action='store', type=is_valid, help='Path the json inputs file.')
 run.add_argument('-v', '--validate', action='store_true', default=False,
                  help='Validate WDL inputs in json file.')
-run.add_argument('-m', '--monitor', action='store_true', default=False,
+run.add_argument('-m', '--monitor', action='store_true', default=False, dest='watch',
                  help='Monitor the workflow and receive an e-mail notification when it terminates.')
+run.add_argument('-i', '--interval', action='store', default=30, type=int,
+                 help='If --monitor is selcted, the amount of time in seconds to elapse between status checks.')
 run.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
                  help='A zip file containing one or more WDL files that the main WDL imports.')
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
@@ -196,6 +199,9 @@ def main():
     result = args.func(args)
     logger.info("Result: {}".format(result))
     print(json.dumps(result, indent=4))
+    if args.watch:
+        args.workflow_id = result['workflow_id']
+        call_monitor(args)
     logger.info("\n-------------End Widdler Execution by {}-------------".format(user))
 
 if __name__ == "__main__":
