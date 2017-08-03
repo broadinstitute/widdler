@@ -209,7 +209,6 @@ def main():
     logger.info("Result: {}".format(result))
     print(json.dumps(result, indent=4))
     if args.watch:
-        print(type(result))
         args.workflow_id = result['id']
         call_monitor(args)
     logger.info("\n-------------End Widdler Execution by {}-------------".format(user))

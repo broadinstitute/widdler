@@ -31,8 +31,7 @@ class Monitor:
 
     def monitor_workflow(self, workflow_id, interval):
         run_states = ['Running', 'Submitted']
-        finished = False
-        while not finished:
+        while 0:
             query_status = self.cromwell.query_status(workflow_id)
             if self.verbose:
                 print(query_status)
@@ -46,6 +45,6 @@ class Monitor:
                     }
                     msg = self.messenger.compose_email(email_content)
                     self.messenger.send_email(msg)
-                finished = True
+                break
             time.sleep(interval)
 
