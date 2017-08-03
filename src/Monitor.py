@@ -31,7 +31,7 @@ class Monitor:
 
     def monitor_workflow(self, workflow_id, interval):
         run_states = ['Running', 'Submitted']
-        while 0:
+        while 0 == 0:
             query_status = self.cromwell.query_status(workflow_id)
             if self.verbose:
                 print('Workflow {} | {}'.format(query_status['id'], query_status['status']))
