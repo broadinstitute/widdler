@@ -105,9 +105,10 @@ def call_abort(args):
 
 
 def call_monitor(args):
-    m = Monitor(host=args.server, user=getpass.getuser(), notify=args.notify, verbose=args.verbose)
+    m = Monitor(host=args.server, user=args.username, notify=args.notify, verbose=args.verbose,
+                interval=args.interval)
     if args.workflow_id:
-        m.monitor_workflow(workflow_id=args.workflow_id, interval=args.interval)
+        m.monitor_workflow(workflow_id=args.workflow_id)
     else:
         m.monitor_user_workflows()
 
@@ -140,7 +141,7 @@ monitor.add_argument('-i', '--interval', action='store', default=30, type=int,
                      help='Amount of time in seconds to elapse between status checks.')
 monitor.add_argument('-V', '--verbose', action='store_true', default=False,
                      help='When selected, widdler will write the current status to STDOUT until completion.')
-monitor.add_argument('-n', '--notify', action='store_true', default=True,
+monitor.add_argument('-n', '--notify', action='store_true', default=False,
                      help='When selected, enable widdler e-mail notification of workflow completion.')
 monitor.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                      help='Choose a cromwell server from {}'.format(c.servers))
