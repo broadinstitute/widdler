@@ -22,7 +22,7 @@ usage: widdler.py <run | query | abort> [<args>]
 Description: A tool for executing and monitoring WDLs to Cromwell instances.
 
 positional arguments:
-  {run,query,abort}
+  {query,validate,abort,run,monitor}
 
 optional arguments:
   -h, --help         show this help message and exit
@@ -34,33 +34,50 @@ Below is widdler's run help text. It expects the user to provide a wdl file,
 json file, and to indicate one of the available servers for execution. The validate option
 validates both the WDL and the JSON file submitted and is on by default. 
 
-```usage: widdler.py run <wdl file> <json file> [<args>]
-   
-   Submit a WDL & JSON for execution on a Cromwell VM.
-   
-   positional arguments:
-     wdl                   Path to the WDL to be executed.
-     json                  Path the json inputs file.
-   
-    optional arguments:
-      -h, --help            show this help message and exit
-      -v, --validate        Validate WDL inputs in json file. (default: False)
-      -d DEPENDENCIES, --dependencies DEPENDENCIES
-                            A zip file containing one or more WDL files that the
-                            main WDL imports. (default: None)
-      -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
-                            Choose a cromwell server from ['ale', 'btl-cromwell']
-                            (default: None)
+```
+usage: widdler.py run <wdl file> <json file> [<args>]
 
+Submit a WDL & JSON for execution on a Cromwell VM.
+
+positional arguments:
+  wdl                   Path to the WDL to be executed.
+  json                  Path the json inputs file.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --validate        Validate WDL inputs in json file. (default: False)
+  -m, --monitor         Monitor the workflow and receive an e-mail
+                        notification when it terminates. (default: False)
+  -i INTERVAL, --interval INTERVAL
+                        If --monitor is selected, the amount of time in
+                        seconds to elapse between status checks. (default: 30)
+  -V, --verbose         If selected, widdler will write the current status to
+                        STDOUT until completion while monitoring. (default:
+                        False)
+  -n, --notify          If selected, enable widdler monitoring e-mail
+                        notification of workflow completion. (default: True)
+  -d DEPENDENCIES, --dependencies DEPENDENCIES
+                        A zip file containing one or more WDL files that the
+                        main WDL imports. (default: None)
+  -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
+                        Choose a cromwell server from ['ale', 'btl-cromwell']
+                        (default: None)
 ```
 
 For example:
 
 ```widdler.py run myworkflow.wdl myinput.json -S ale```
 
-This will return a workflow ID and status if successful, for example:
+This will return a workflow ID and status if successfully submitted, for example:
 
 ```{'id': '2f8bb5c6-8254-4d38-b010-620913dd325e', 'status': 'Submitted'}```
+
+This will execute a workflow that uses subworkflows:
+
+```widdler.py run myworkflow.wdl myinput.json -S ale -d mydependencies.zip```
+
+Users may also invoke Widdler's monitoring capabilities when initiating a workflow. See below for an 
+explanation of monitoring options.
 
 ### widdler.py query
 
@@ -161,6 +178,37 @@ be logged as an error.
 A note on validating WDL files with dependencies: due to the limitations of the current implementation
 of depedency validation, WDL file dependencies must be present in the same directory as the main WDL file
 and must be unzipped. Otherwise validation may not work.
+
+### widdler.py monitor
+
+Widdler allows the monitoring of workflow(s). Unlike the query options, monitoring persists until a workflow reaches
+a terminal state (any state besides 'Running' or 'Submitted'). While monitoring, it can optionally print the status of
+a workflow to the screen, and when a terminal state is reached, it can optionally e-mail the user (users are assumed
+to be of the broadinstitute.org domain) when the workflow is finished.
+
+Monitoring is as follows:
+
+```
+usage: widdler.py monitor <workflow_id> [<args>]
+
+Monitor a particular workflow and notify user via e-mail upon completion.
+
+positional arguments:
+  workflow_id           workflow id for workflow to monitor.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INTERVAL, --interval INTERVAL
+                        Amount of time in seconds to elapse between status
+                        checks. (default: 30)
+  -V, --verbose         When selected, widdler will write the current status
+                        to STDOUT until completion. (default: False)
+  -n, --notify          When selected, enable widdler e-mail notification of
+                        workflow completion. (default: True)
+  -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
+                        Choose a cromwell server from ['ale', 'btl-cromwell']
+                        (default: None)
+```
 
 ## Logging
 

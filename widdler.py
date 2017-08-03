@@ -106,7 +106,10 @@ def call_abort(args):
 
 def call_monitor(args):
     m = Monitor(host=args.server, user=getpass.getuser(), notify=args.notify, verbose=args.verbose)
-    m.monitor_workflow(workflow_id=args.workflow_id, interval=args.interval)
+    if args.workflow_id:
+        m.monitor_workflow(workflow_id=args.workflow_id, interval=args.interval)
+    else:
+        m.monitor_user_workflows()
 
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
@@ -125,10 +128,14 @@ abort.add_argument('-S', '--server', action='store', required=True, type=str, ch
 abort.set_defaults(func=call_abort)
 
 monitor = sub.add_parser(name='monitor',
-                         description='Monitor a particular workflow and notify user via e-mail upon completion.',
+                         description='Monitor a particular workflow and notify user via e-mail upon completion. If a'
+                                     'workflow ID is not provided, user-level monitoring is assumed.',
                          usage='widdler.py monitor <workflow_id> [<args>]',
                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-monitor.add_argument('workflow_id', action='store', help='workflow id for workflow to monitor.')
+monitor.add_argument('workflow_id', action='store', nargs='?',
+                     help='workflow id for workflow to monitor. Do not specify if user-level monitoring is desired.')
+monitor.add_argument('-u', '--username', action='store', default=getpass.getuser(),
+                     help='Owner of workflows to monitor.')
 monitor.add_argument('-i', '--interval', action='store', default=30, type=int,
                      help='Amount of time in seconds to elapse between status checks.')
 monitor.add_argument('-V', '--verbose', action='store_true', default=False,
@@ -208,9 +215,12 @@ def main():
     result = args.func(args)
     logger.info("Result: {}".format(result))
     print(json.dumps(result, indent=4))
-    if args.watch:
-        args.workflow_id = result['id']
-        call_monitor(args)
+    try:
+        if args.watch:
+            args.workflow_id = result['id']
+            call_monitor(args)
+    except AttributeError:
+        logger.debug("No monitoring attribute specified.")
     logger.info("\n-------------End Widdler Execution by {}-------------".format(user))
 
 if __name__ == "__main__":

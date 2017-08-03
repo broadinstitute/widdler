@@ -149,13 +149,13 @@ class Cromwell:
         """
         A function for performing a qet query given a dictionary of query terms.
         :param query_dict: Dictionary of query terms.
-        :return:
+        :return: A dictionary of the json content.
         """
         base_url = self.url + '/query?'
         query_url = self.build_query_url(base_url, query_dict)
         self.logger.info("QUERY REQUEST:{}".format(query_url))
         r = requests.get(query_url)
-        return json.loads(r.content)
+        return json.loads(r.text)
 
     @staticmethod
     def build_query_url(base_url, url_dict):
