@@ -105,7 +105,7 @@ def call_abort(args):
 
 
 def call_monitor(args):
-    m = Monitor(host=args.server, user=getpass.getuser())
+    m = Monitor(host=args.server, user=getpass.getuser(), notify=args.notify, verbose=args.verbose)
     m.monitor_workflow(workflow_id=args.workflow_id, interval=args.interval)
 
 parser = argparse.ArgumentParser(
