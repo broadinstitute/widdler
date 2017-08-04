@@ -61,24 +61,25 @@ class Validator:
                 # param is valid
                 if 'File' in wdict[param]:
                     if not self.validate_file(val):
-                        errors.append('{} is not a valid file path.'.format(val))
+                        errors.append('{}: {} is not a valid file path.'.format(param, val))
                 elif 'Array' in wdict[param]:
                     if not self.validate_array(val):
-                        errors.append('{} is not a valid array/list.'.format(val))
+                        errors.append('{}: {} is not a valid array/list.'.format(param, val))
                 elif 'String' in wdict[param]:
                     if not self.validate_string(val):
-                        errors.append('{} is not a valid String.'.format(val))
+                        errors.append('{}: {} is not a valid String.'.format(param, val))
                 elif 'Int' in wdict[param]:
                     if not self.validate_int(val):
-                        errors.append('{} is not a valid Int.'.format(val))
+                        errors.append('{}: {} is not a valid Int.'.format(param, val))
                 elif 'Float' in wdict[param]:
                     if not self.validate_float(val):
-                        errors.append('{} is not a valid Float.'.format(val))
+                        errors.append('{}: {} is not a valid Float.'.format(param, val))
                 elif 'Boolean' in wdict[param]:
                     if not self.validate_boolean(val):
-                        errors.append('{} is not a valid Boolean.'.format(val))
+                        msg = "Note that JSON boolean values must not be quoted."
+                        errors.append('{}: {} is not a valid Boolean. {}'.format(param, val, msg))
                 else:
-                    errors.append('{} is not a recognized parameter value'.format(val))
+                    errors.append('{}: {} is not a recognized parameter value'.format(param, val))
                 if 'samples_file' in param:
                     try:
                         fh = open(val, 'r')

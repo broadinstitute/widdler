@@ -114,7 +114,7 @@ def call_monitor(args):
 
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
-    usage='widdler.py <run | query | abort> [<args>]',
+    usage='widdler.py <run | monitor | query | abort | validate> [<args>]',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 sub = parser.add_subparsers()

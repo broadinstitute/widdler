@@ -7,7 +7,7 @@ Features include:
 
 * Workflow execution: Execute a workflow on a specified Cromwell server.
 * Workflow queries: Get the status, metadata, or logs for a specific workflow.
-* Workflow monitoring: Monitor a specific workflow to completion.
+* Workflow monitoring: Monitor a specific workflow or set of user-specific workflows to completion.
 * Workflow abortion: Abort a running workflow.
 * JSON validation: Validate a JSON input file against the WDL file intended for use.
 
@@ -22,10 +22,11 @@ usage: widdler.py <run | query | abort> [<args>]
 Description: A tool for executing and monitoring WDLs to Cromwell instances.
 
 positional arguments:
-  {query,validate,abort,run,monitor}
+  {abort,monitor,query,run,validate}
 
 optional arguments:
-  -h, --help         show this help message and exit
+  -h, --help            show this help message and exit
+
 ```
 
 ### widdler.py run
@@ -179,6 +180,37 @@ A note on validating WDL files with dependencies: due to the limitations of the 
 of depedency validation, WDL file dependencies must be present in the same directory as the main WDL file
 and must be unzipped. Otherwise validation may not work.
 
+Validation may also be run as a stand-alone operation using widdler.py validate. Usage is as follows:
+
+```
+usage: widdler.py validate <wdl_file> <json_file>
+
+Validate (but do not run) a json for a specific WDL file.
+
+positional arguments:
+  wdl         Path to the WDL associated with the json file.
+  json        Path the json inputs file to validate.
+
+optional arguments:
+  -h, --help  show this help message and exit
+```
+
+For example:
+
+```widdler.py mywdl.wdl myjson.json```
+
+If the json file has errors, a list of errors will be reported in the same way that the runtime validation reports.
+For example:
+```
+bad.json input file contains the following errors:
+gatk.ts_filter_snp: 99 is not a valid Float.
+gatk.tcir: False is not a valid Boolean. Note that JSON boolean values must not be quoted.
+gatk.ploidy: 2.0 is not a valid Int.
+Required parameter gatk.snp_annotation is missing from input json.
+Required parameter gatk.ref_file is missing from input json.
+```
+
+
 ### widdler.py monitor
 
 Widdler allows the monitoring of workflow(s). Unlike the query options, monitoring persists until a workflow reaches
@@ -186,29 +218,64 @@ a terminal state (any state besides 'Running' or 'Submitted'). While monitoring,
 a workflow to the screen, and when a terminal state is reached, it can optionally e-mail the user (users are assumed
 to be of the broadinstitute.org domain) when the workflow is finished.
 
-Monitoring is as follows:
+Monitoring usage is as follows:
 
 ```
 usage: widdler.py monitor <workflow_id> [<args>]
 
-Monitor a particular workflow and notify user via e-mail upon completion.
+Monitor a particular workflow and notify user via e-mail upon completion. If
+aworkflow ID is not provided, user-level monitoring is assumed.
 
 positional arguments:
-  workflow_id           workflow id for workflow to monitor.
+  workflow_id           workflow id for workflow to monitor. Do not specify if
+                        user-level monitoring is desired. (default: None)
 
 optional arguments:
   -h, --help            show this help message and exit
+  -u USERNAME, --username USERNAME
+                        Owner of workflows to monitor. (default: <your user name>)
   -i INTERVAL, --interval INTERVAL
                         Amount of time in seconds to elapse between status
                         checks. (default: 30)
   -V, --verbose         When selected, widdler will write the current status
                         to STDOUT until completion. (default: False)
   -n, --notify          When selected, enable widdler e-mail notification of
-                        workflow completion. (default: True)
+                        workflow completion. (default: False)
   -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
                         Choose a cromwell server from ['ale', 'btl-cromwell']
                         (default: None)
 ```
+
+#### Single Workflow Monitoring
+
+Aside from monitoring of a single workflow with widdler's run command, you can also execute a monitor as in the 
+following example:
+ 
+```
+widdler.py monitor 7ff17cb3-12f1-4bf0-8754-e3a0d39178ea -n -S btl-cromwell
+```
+
+In this case, widdler will continue to silently monitor this workflow until it detects a terminal status. Since the user 
+selected -n, an e-mail will be sent to <user>@broadinstitute.org when a terminal status is detected, which will include
+the metadata of the workflow.
+
+If --verbose were selected, the user would have seen a STDOUT message indicating the workflows status at intervals 
+defined by the --interval parameter, which has a default of 30 seconds. 
+
+#### User Workflow Monitoring
+(Note this feature is still under active development and is currently quite primitive)
+
+User's may also monitor all workflows for a given user name by omitting the workflow_id parameter and specifying the
+--user parameter like so:
+
+```
+widdler.py monitor -u amr -n -S btl-cromwell
+```
+
+Here, the user 'amr' is monitoring all workflows ever executed by him using widdler. Any workflows not executed by 
+widdler will not be monitored. Workflows in a terminal state prior to execution will have an e-mail sent immediately
+regarding their status, and any running workflows will result in an e-mail once they terminate. Using the --verbose
+option here would result in STDOUT output for each workflow that is monitored at intervals specified by --interval.
 
 ## Logging
 
