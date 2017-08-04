@@ -50,6 +50,10 @@ class Validator:
             sys.exit(-1)
 
     def validate_json(self):
+        """
+        A function for validating a json file intended for WDL execution against the WDL file.
+        :return: A list of errors found with the json file.
+        """
         errors = list()
         jdict = self.get_json()
         wdict = self.get_wdl_args()
@@ -147,6 +151,11 @@ class Validator:
 
     @staticmethod
     def validate_file(f):
+        """
+        Validates that a particular file exists in the file system.
+        :param f:
+        :return: Boolean
+        """
         return os.path.exists(f.rstrip())
 
     @staticmethod

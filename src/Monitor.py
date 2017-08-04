@@ -14,9 +14,13 @@ module_logger = logging.getLogger('widdler.Monitor')
 
 def is_user_workflow(host, user, workflow_id):
     """
-     A top-level function that returns a workflow if it matches the user workflow. This can't be an instance method
+    A top-level function that returns a workflow if it matches the user workflow. This can't be an instance method
      of Monitor because we run into serializing issues otherwise. See:
      https://stackoverflow.com/questions/26249442/can-i-use-multiprocessing-pool-in-a-method-of-a-class
+    :param host: cromwell server
+    :param user: user name to monitor
+    :param workflow_id: workflow
+    :return:  The workflow_id if it's the user owns the workflow. Otherwise None.
     """
     metadata = Cromwell(host=host).query_metadata(workflow_id)
 
@@ -30,7 +34,8 @@ def is_user_workflow(host, user, workflow_id):
 
 class Monitor:
     """
-    A class for monitoring a user's workflows, providing status reports at regular intervals.
+    A class for monitoring a user's workflows, providing status reports at regular intervals
+    as well as e-mail notification.
     """
     def __init__(self, user, host, notify, verbose, interval):
         self.host = host
@@ -42,6 +47,10 @@ class Monitor:
         self.verbose = verbose
 
     def get_user_workflows(self):
+        """
+        A function for creating a list of workflows owned by a particular user.
+        :return: A list of workflow IDs owned by the user.
+        """
         print('Determining {}\'s workflows. This could take a while...'.format(self.user))
         workflows = []
         results = self.cromwell.query(query_dict={})
@@ -57,12 +66,21 @@ class Monitor:
         return user_workflows
 
     def monitor_user_workflows(self):
+        """
+        A function for monitoring a several workflows.
+        :return:
+        """
         print('Monitoring {}\'s workflows.')
         user_workflows = self.get_user_workflows()
         for workflow in user_workflows:
             self.monitor_workflow(workflow)
 
     def monitor_workflow(self, workflow_id):
+        """
+        Monitor the status of a single workflow.
+        :param workflow_id: Workflow ID of workflow to monitor.
+        :return: returns 0 when workflow reaches terminal state.
+        """
         run_states = ['Running', 'Submitted']
         while 0 == 0:
             query_status = self.cromwell.query_status(workflow_id)
