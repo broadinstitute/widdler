@@ -21,7 +21,7 @@ Below is widdler's basic help text. Widdler expects one of three usage modes to
 be indicated as it's first argument: run, query, or abort.
 
 ```
-usage: widdler.py <run | query | abort> [<args>]
+usage: widdler.py <run | monitor | query | abort | validate> [<args>]
 
 Description: A tool for executing and monitoring WDLs to Cromwell instances.
 
