@@ -11,6 +11,10 @@ Features include:
 * Workflow abortion: Abort a running workflow.
 * JSON validation: Validate a JSON input file against the WDL file intended for use.
 
+## Dependencies
+
+Widdler requires Python 2.7 and Java-1.8 to be loaded in your environment in order for full functionality to work.
+
 ## Usage
 
 Below is widdler's basic help text. Widdler expects one of three usage modes to
@@ -156,6 +160,7 @@ will return:
 {'status': 'Aborted', 'id': '2f8bb5c6-8254-4d38-b010-620913dd325e'}
 ```
 ## Validation
+(Requires Java-1.8, so make sure to 'use Java-1.8' before trying validation)
 
 Widdler validation attempts to validate the inputs in the user's supplied json file against the WDL
 arguments in the supplied WDL file. Validation is OFF by default and so users must specify it using
