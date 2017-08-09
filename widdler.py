@@ -76,7 +76,6 @@ def call_run(args):
     if args.validate:
         call_validate(args)
     cromwell = Cromwell(host=args.server)
-
     result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies)
     if args.monitor:
         retry = 4
@@ -202,7 +201,7 @@ run.add_argument('-i', '--interval', action='store', default=30, type=int,
 run.add_argument('-V', '--verbose', action='store_true', default=False,
                  help='If selected, widdler will write the current status to STDOUT until completion while monitoring.')
 run.add_argument('-n', '--no_notify', action='store_true', default=False,
-                 help='If selected, disables widdler monitoring e-mail notification of workflow completion.')
+                     help='When selected, disable widdler e-mail notification of workflow completion.')
 run.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
                  help='A zip file containing one or more WDL files that the main WDL imports.')
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
