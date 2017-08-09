@@ -59,7 +59,7 @@ optional arguments:
   -V, --verbose         If selected, widdler will write the current status to
                         STDOUT until completion while monitoring. (default:
                         False)
-  -n, --notify          If selected, enable widdler monitoring e-mail
+  -n, --no_notify       If selected, disnable widdler monitoring e-mail
                         notification of workflow completion. (default: True)
   -d DEPENDENCIES, --dependencies DEPENDENCIES
                         A zip file containing one or more WDL files that the
@@ -244,7 +244,7 @@ optional arguments:
                         checks. (default: 30)
   -V, --verbose         When selected, widdler will write the current status
                         to STDOUT until completion. (default: False)
-  -n, --notify          When selected, enable widdler e-mail notification of
+  -n, --no_notify       When selected, disable widdler e-mail notification of
                         workflow completion. (default: False)
   -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
                         Choose a cromwell server from ['ale', 'btl-cromwell']
@@ -257,15 +257,17 @@ Aside from monitoring of a single workflow with widdler's run command, you can a
 following example:
  
 ```
-widdler.py monitor 7ff17cb3-12f1-4bf0-8754-e3a0d39178ea -n -S btl-cromwell
+widdler.py monitor 7ff17cb3-12f1-4bf0-8754-e3a0d39178ea -S btl-cromwell
 ```
 
-In this case, widdler will continue to silently monitor this workflow until it detects a terminal status. Since the user 
-selected -n, an e-mail will be sent to <user>@broadinstitute.org when a terminal status is detected, which will include
+In this case, widdler will continue to silently monitor this workflow until it detects a terminal status. An 
+ e-mail will be sent to <user>@broadinstitute.org when a terminal status is detected, which will include
 the metadata of the workflow.
 
 If --verbose were selected, the user would have seen a STDOUT message indicating the workflows status at intervals 
 defined by the --interval parameter, which has a default of 30 seconds. 
+
+If --no_notify were selected, an e-mail would not be sent.
 
 #### User Workflow Monitoring
 (Note this feature is still under active development and is currently quite primitive)
