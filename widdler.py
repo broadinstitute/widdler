@@ -105,7 +105,7 @@ def call_abort(args):
 
 
 def call_monitor(args):
-    m = Monitor(host=args.server, user=args.username, notify=args.notify, verbose=args.verbose,
+    m = Monitor(host=args.server, user=args.username, no_notify=args.no_notify, verbose=args.verbose,
                 interval=args.interval)
     if args.workflow_id:
         m.monitor_workflow(workflow_id=args.workflow_id)
@@ -141,8 +141,8 @@ monitor.add_argument('-i', '--interval', action='store', default=30, type=int,
                      help='Amount of time in seconds to elapse between status checks.')
 monitor.add_argument('-V', '--verbose', action='store_true', default=False,
                      help='When selected, widdler will write the current status to STDOUT until completion.')
-monitor.add_argument('-n', '--notify', action='store_true', default=False,
-                     help='When selected, enable widdler e-mail notification of workflow completion.')
+monitor.add_argument('-n', '--no_notify', action='store_true', default=False,
+                     help='When selected, disable widdler e-mail notification of workflow completion.')
 monitor.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                      help='Choose a cromwell server from {}'.format(c.servers))
 monitor.set_defaults(func=call_monitor)
@@ -168,14 +168,14 @@ run.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL to 
 run.add_argument('json', action='store', type=is_valid, help='Path the json inputs file.')
 run.add_argument('-v', '--validate', action='store_true', default=False,
                  help='Validate WDL inputs in json file.')
-run.add_argument('-m', '--monitor', action='store_true', default=False, dest='watch',
+run.add_argument('-m', '--monitor', action='store_true', default=False,
                  help='Monitor the workflow and receive an e-mail notification when it terminates.')
 run.add_argument('-i', '--interval', action='store', default=30, type=int,
                  help='If --monitor is selected, the amount of time in seconds to elapse between status checks.')
 run.add_argument('-V', '--verbose', action='store_true', default=False,
                  help='If selected, widdler will write the current status to STDOUT until completion while monitoring.')
-run.add_argument('-n', '--notify', action='store_false', default=True,
-                 help='If selected, enable widdler monitoring e-mail notification of workflow completion.')
+run.add_argument('-n', '--no_notify', action='store_true', default=False,
+                 help='If selected, disables widdler monitoring e-mail notification of workflow completion.')
 run.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
                  help='A zip file containing one or more WDL files that the main WDL imports.')
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
@@ -216,12 +216,16 @@ def main():
     result = args.func(args)
     logger.info("Result: {}".format(result))
     print(json.dumps(result, indent=4))
-    try:
-        if args.watch:
-            args.workflow_id = result['id']
-            call_monitor(args)
-    except AttributeError:
-        logger.debug("No monitoring attribute specified.")
+    if args.monitor:
+        retry = 4
+        while retry != 0:
+            try:
+                args.workflow_id = result['id']
+                args.username = None
+                call_monitor(args)
+                break
+            except KeyError as e:
+                logger.debug(e)
     logger.info("\n-------------End Widdler Execution by {}-------------".format(user))
 
 if __name__ == "__main__":

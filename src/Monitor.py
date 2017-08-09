@@ -37,13 +37,13 @@ class Monitor:
     A class for monitoring a user's workflows, providing status reports at regular intervals
     as well as e-mail notification.
     """
-    def __init__(self, user, host, notify, verbose, interval):
+    def __init__(self, user, host, no_notify, verbose, interval):
         self.host = host
         self.user = user
         self.interval = interval
         self.cromwell = Cromwell(host=host)
         self.messenger = Messenger(self.user)
-        self.notify = notify
+        self.no_notify = no_notify
         self.verbose = verbose
 
     def get_user_workflows(self):
@@ -81,13 +81,13 @@ class Monitor:
         :param workflow_id: Workflow ID of workflow to monitor.
         :return: returns 0 when workflow reaches terminal state.
         """
-        run_states = ['Running', 'Submitted']
+        run_states = ['Running', 'Submitted', 'QueuedInCromwell']
         while 0 == 0:
             query_status = self.cromwell.query_status(workflow_id)
             if self.verbose:
                 print('Workflow {} | {}'.format(query_status['id'], query_status['status']))
             if query_status['status'] not in run_states:
-                if self.notify:
+                if not self.no_notify:
                     email_content = {
                         'user': self.user,
                         'workflow_id': query_status['id'],
