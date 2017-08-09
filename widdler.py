@@ -24,6 +24,22 @@ __maintainer__ = "Amr Abouelleil"
 __email__ = "amr@broadinstitute.org"
 __status__ = "Production"
 
+# Logging setup
+logger = logging.getLogger('widdler')
+logger.setLevel(logging.DEBUG)
+# create file handler which logs even debug messages
+fh = logging.FileHandler(os.path.join(c.log_dir, 'widdler.log'))
+fh.setLevel(logging.DEBUG)
+# create console handler with a higher log level
+ch = logging.StreamHandler()
+ch.setLevel(logging.ERROR)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# add the handlers to the logger
+logger.addHandler(fh)
+logger.addHandler(ch)
+
 
 def is_valid(path):
     """
@@ -60,8 +76,19 @@ def call_run(args):
     if args.validate:
         call_validate(args)
     cromwell = Cromwell(host=args.server)
-    return cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json,
-                                    dependencies=args.dependencies)
+
+    result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies)
+    if args.monitor:
+        retry = 4
+        while retry != 0:
+            try:
+                args.workflow_id = result['id']
+                args.username = None
+                call_monitor(args)
+                break
+            except KeyError as e:
+                logger.debug(e)
+    return result
 
 
 def call_query(args):
@@ -195,37 +222,13 @@ args = parser.parse_args()
 
 
 def main():
-    logger = logging.getLogger('widdler')
-    logger.setLevel(logging.DEBUG)
-    # create file handler which logs even debug messages
-    fh = logging.FileHandler(os.path.join(c.log_dir, 'widdler.log'))
-    fh.setLevel(logging.DEBUG)
-    # create console handler with a higher log level
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.ERROR)
-    # create formatter and add it to the handlers
     user = getpass.getuser()
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
-    # add the handlers to the logger
-    logger.addHandler(fh)
-    logger.addHandler(ch)
     logger.info("\n-------------New Widdler Execution by {}-------------".format(user))
     logger.info("Parameters chosen: {}".format(vars(args)))
     result = args.func(args)
     logger.info("Result: {}".format(result))
-    print(json.dumps(result, indent=4))
-    if args.monitor:
-        retry = 4
-        while retry != 0:
-            try:
-                args.workflow_id = result['id']
-                args.username = None
-                call_monitor(args)
-                break
-            except KeyError as e:
-                logger.debug(e)
+    if not args.monitor:
+        print(json.dumps(result, indent=4))
     logger.info("\n-------------End Widdler Execution by {}-------------".format(user))
 
 if __name__ == "__main__":
