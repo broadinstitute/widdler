@@ -82,7 +82,7 @@ def call_run(args):
         while retry != 0:
             try:
                 args.workflow_id = result['id']
-                args.username = None
+                args.username = getpass.getuser()
                 call_monitor(args)
                 break
             except KeyError as e:

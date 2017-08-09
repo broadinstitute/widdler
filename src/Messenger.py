@@ -45,5 +45,5 @@ class Messenger(object):
         :param msg: A MIMEMultipart message object.
         :return: 
         """
-        mailer = smtplib.SMTP('localhost')
+        mailer = smtplib.SMTP('smtp.broadinstitute.org')
         mailer.sendmail(self.sender, self.user_email, msg.as_string())
