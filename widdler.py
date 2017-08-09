@@ -227,8 +227,7 @@ def main():
     logger.info("Parameters chosen: {}".format(vars(args)))
     result = args.func(args)
     logger.info("Result: {}".format(result))
-    if not args.monitor:
-        print(json.dumps(result, indent=4))
+    print(json.dumps(result, indent=4))
     logger.info("\n-------------End Widdler Execution by {}-------------".format(user))
 
 if __name__ == "__main__":
