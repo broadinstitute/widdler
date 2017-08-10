@@ -3,10 +3,14 @@
 import logging
 import time
 import json
+import os
 from multiprocessing import Pool
 from functools import partial
+import src.config as c
 from src.Cromwell import Cromwell
 from src.Messenger import Messenger
+from email.mime.text import MIMEText
+
 __author__ = "Amr Abouelleil"
 
 module_logger = logging.getLogger('widdler.Monitor')
@@ -88,13 +92,37 @@ class Monitor:
                 print('Workflow {} | {}'.format(query_status['id'], query_status['status']))
             if query_status['status'] not in run_states:
                 if not self.no_notify:
+                    filename = '{}.metadata.json'.format(query_status['id'])
+                    filepath = os.path.join(c.log_dir, '{}.metadata.json'.format(query_status['id']))
+                    jdata = self.cromwell.query_metadata(workflow_id)
+
+                    metadata = open(filepath, 'w+')
+                    json.dump(self.cromwell.query_metadata(workflow_id), indent=4, fp=metadata)
+                    metadata.close()
+                    read_data = open(filepath, 'r')
+                    attachment = MIMEText(read_data.read())
+                    read_data.close()
+                    os.unlink(filepath)
+                    attachment.add_header('Content-Disposition', 'attachment', filename=filename)
+                    summary = ""
+                    if 'start' in jdata:
+                        summary += "Started: {}\n".format(jdata['start'])
+                    if 'end' in jdata:
+                        summary += "Ended: {}\n".format(jdata['end'])
+                    if 'Failed' in query_status['status']:
+                        summary += "\nFailures: {}".format(json.dumps(jdata['failures'], indent=4))
+                    if 'workflowName' in jdata:
+                        summary = "Workflow Name: {}\n{}".format(jdata['workflowName'], summary)
+                    if 'workflowRoot' in jdata:
+                        summary += "\nworkflowRoot: {}".format(jdata['workflowRoot'])
                     email_content = {
                         'user': self.user,
                         'workflow_id': query_status['id'],
                         'status': query_status['status'],
-                        'metadata': json.dumps(self.cromwell.query_metadata(workflow_id), indent=4)
+                        'summary': summary,
                     }
                     msg = self.messenger.compose_email(email_content)
+                    msg.attach(attachment)
                     self.messenger.send_email(msg)
                 return 0
             time.sleep(self.interval)

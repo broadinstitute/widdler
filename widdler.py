@@ -87,6 +87,7 @@ def call_run(args):
                 break
             except KeyError as e:
                 logger.debug(e)
+                retry = retry - 1
     return result
 
 
