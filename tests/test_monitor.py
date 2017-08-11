@@ -22,7 +22,7 @@ class MyTestCase(unittest.TestCase):
         self.cromwell = Cromwell(host='btl-cromwell')
         self.json = os.path.join(resources, 'test.json')
         self.wdl = os.path.join(resources, 'test.wdl')
-        self.m = Monitor(user='amr', host='btl-cromwell', notify=True, verbose=True, interval=5)
+        self.m = Monitor(user='amr', host='btl-cromwell', no_notify=False, verbose=True, interval=5)
         self.wf = self.cromwell.jstart_workflow(self.wdl, self.json)
         self.workflow_id = self.wf['id']
         time.sleep(2)
