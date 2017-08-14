@@ -28,8 +28,8 @@ def is_user_workflow(host, user, workflow_id):
     """
     metadata = Cromwell(host=host).query_metadata(workflow_id)
 
-    j_input = json.loads(metadata['submittedFiles']['inputs'])
     try:
+        j_input = json.loads(metadata['submittedFiles']['inputs'])
         if j_input['user'] == user:
             return workflow_id
     except KeyError:
@@ -74,7 +74,7 @@ class Monitor:
         A function for monitoring a several workflows.
         :return:
         """
-        print('Monitoring {}\'s workflows.')
+        print('Monitoring {}\'s workflows.'.format(self.user))
         user_workflows = self.get_user_workflows()
         for workflow in user_workflows:
             self.monitor_workflow(workflow)

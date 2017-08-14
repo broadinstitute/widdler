@@ -9,6 +9,7 @@
   "gatk.tcir": true,
   "gatk.bqsr": true,
   "gatk.ploidy": 2,
+  "gatk.clean": true,
   "gatk.vqsr": true,
   "gatk.use_snpeff": true,
   "gatk.all_sites": true,
