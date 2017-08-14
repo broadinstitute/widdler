@@ -8,6 +8,7 @@
   "gatk.output_dir": "/cil/shed/sandboxes/amr/dev/gatk_pipeline/output/pfal_5",
   "gatk.tcir": true,
   "gatk.bqsr": true,
+  "gatk.clean": true,
   "gatk.ploidy": 2,
   "gatk.vqsr": true,
   "gatk.use_snpeff": true,
