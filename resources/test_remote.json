@@ -12,7 +12,7 @@
   "gatk.ploidy": 2,
   "gatk.vqsr": true,
   "gatk.use_snpeff": true,
-  "gatk.all_sites": true,
+  "gatk.all_sites": false,
   "gatk.snpeff_db": "Pf3D7v90",
   "gatk.variant_filtration": true,
   "gatk.interval_size": 1.5,
