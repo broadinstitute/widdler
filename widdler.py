@@ -171,6 +171,7 @@ monitor.add_argument('-n', '--no_notify', action='store_true', default=False,
                      help='When selected, disable widdler e-mail notification of workflow completion.')
 monitor.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                      help='Choose a cromwell server from {}'.format(c.servers))
+monitor.add_argument('-M', '--monitor', action='store_true', default=True, help=argparse.SUPPRESS)
 monitor.set_defaults(func=call_monitor)
 
 query = sub.add_parser(name='query',
@@ -227,7 +228,8 @@ def main():
     logger.info("Parameters chosen: {}".format(vars(args)))
     result = args.func(args)
     logger.info("Result: {}".format(result))
-    print(json.dumps(result, indent=4))
+    if not args.monitor:
+        print(json.dumps(result, indent=4))
     logger.info("\n-------------End Widdler Execution by {}-------------".format(user))
 
 if __name__ == "__main__":
