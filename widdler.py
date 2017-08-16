@@ -152,6 +152,8 @@ abort = sub.add_parser(name='abort',
 abort.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
 abort.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                    help='Choose a cromwell server from {}'.format(c.servers))
+abort.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
+
 abort.set_defaults(func=call_abort)
 
 monitor = sub.add_parser(name='monitor',
@@ -184,6 +186,8 @@ query.add_argument('-m', '--metadata', action='store_true', default=False, help=
 query.add_argument('-l', '--logs', action='store_true', default=False, help='Print logs for workflow to stdout')
 query.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                    help='Choose a cromwell server from {}'.format(c.servers))
+query.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
+
 query.set_defaults(func=call_query)
 
 run = sub.add_parser(name='run',
@@ -217,6 +221,7 @@ validate = sub.add_parser(name='validate',
                           formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 validate.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL associated with the json file.')
 validate.add_argument('json', action='store', type=is_valid, help='Path the json inputs file to validate.')
+validate.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 validate.set_defaults(func=call_validate)
 
 args = parser.parse_args()

@@ -305,5 +305,3 @@ convenient identification.
 ## Known Issues
 
 * Widdler will sometimes print 'null' to stdout. This does not impact proper operation of widdler.
-* When using widdler run command with -m, user is not notified via e-mail when they should be. This does not effect
-widdler.py monitor (e-mails are properly sent when using this command).

@@ -4,6 +4,8 @@ import logging
 import time
 import json
 import os
+from datetime import datetime, timedelta
+from dateutil.parser import parse
 from multiprocessing import Pool
 from functools import partial
 import src.config as c
@@ -106,15 +108,24 @@ class Monitor:
                     attachment.add_header('Content-Disposition', 'attachment', filename=filename)
                     summary = ""
                     if 'start' in jdata:
-                        summary += "Started: {}\n".format(jdata['start'])
+                        summary += "\nStarted: {}".format(jdata['start'])
                     if 'end' in jdata:
-                        summary += "Ended: {}\n".format(jdata['end'])
+                        summary += "\nEnded: {}".format(jdata['end'])
+                    if 'start' in jdata and 'end' in jdata:
+                        start = parse(jdata['start'])
+                        end = parse(jdata['end'])
+                        duration = (end - start)
+                        hours, remainder = divmod(duration.seconds, 3600)
+                        minutes, seconds = divmod(remainder, 60)
+                        summary += '\nDuration: {} hours, {} minutes, {} seconds'.format(hours, minutes, seconds)
                     if 'Failed' in query_status['status']:
                         summary += "\nFailures: {}".format(json.dumps(jdata['failures'], indent=4))
                     if 'workflowName' in jdata:
                         summary = "Workflow Name: {}\n{}".format(jdata['workflowName'], summary)
                     if 'workflowRoot' in jdata:
                         summary += "\nworkflowRoot: {}".format(jdata['workflowRoot'])
+                    summary += "\nTiming graph: http://:9000/api/workflows/v2/{}/{}/timing".format(self.host,
+                                                                                                   query_status['id'])
                     email_content = {
                         'user': self.user,
                         'workflow_id': query_status['id'],

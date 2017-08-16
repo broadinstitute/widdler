@@ -1,5 +1,5 @@
 # GATK WDL V1.0
-import "hc_scatter.wdl" as sub
+#import "hc_scatter.wdl" as sub
 
 task VersionCheck {
     String gatk
@@ -913,36 +913,20 @@ workflow gatk {
         }
 
         String hc_bam = select_first([PrintReads.bam, IndelRealigner.bam, ReorderSAM.bam])
-        call sub.hc_scatter {
+
+        call HaplotypeCaller {
             input:
-            intervals = CreateIntervalsList.out,
             gatk = gatk,
             ref = CheckIndex.out,
             sample_name = sample[0],
             sample_dir = MakeSampleDir.out,
             in_bam = hc_bam,
-            bqsr_recal_report = bqsr_recal_report,
+            intervals = CreateIntervalsList.out,
+            bqsr_file = bqsr_recal_report,
             ploidy = ploidy,
             erc = erc,
             extra_hc_params = extra_hc_params
-            }
-            output {
-                String hc_scatter_output = hc_scatter.vcf
-            }
-
-#        call HaplotypeCaller {
-#            input:
-#            gatk = gatk,
-#            ref = CheckIndex.out,
-#            sample_name = sample[0],
-#            sample_dir = MakeSampleDir.out,
-#            in_bam = hc_bam,
-#            intervals = CreateIntervalsList.out,
-#            bqsr_file = bqsr_recal_report,
-#            ploidy = ploidy,
-#            erc = erc,
-#            extra_hc_params = extra_hc_params
-#        }
+        }
     # Scatter block ends
     }
 
