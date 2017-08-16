@@ -124,7 +124,7 @@ class Monitor:
                         summary = "Workflow Name: {}\n{}".format(jdata['workflowName'], summary)
                     if 'workflowRoot' in jdata:
                         summary += "\nworkflowRoot: {}".format(jdata['workflowRoot'])
-                    summary += "\nTiming graph: http://:9000/api/workflows/v2/{}/{}/timing".format(self.host,
+                    summary += "\nTiming graph: http://{}:9000/api/workflows/v2/{}/timing".format(self.host,
                                                                                                    query_status['id'])
                     email_content = {
                         'user': self.user,
