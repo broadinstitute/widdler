@@ -1,11 +1,11 @@
-Dear ${user},
+Dear ${user},<br><br>
 
-Your workflow with ID ${workflow_id} has finished with a status of ${status}. Attached are some files you might find useful.
-Here's a brief summary:
-
-${summary}
-
-Sincerely,
+Your workflow with ID ${workflow_id} has finished with a status of ${status}. Attached are some files you might find useful.<br>
+Here's a brief summary:<br>
+<br>
+${summary}<br>
+<br>
+Sincerely,<br>
 The Widdler
 
 

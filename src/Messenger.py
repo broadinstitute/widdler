@@ -35,7 +35,7 @@ class Messenger(object):
         template = open(os.path.join(c.resource_dir, 'email.template'), 'r')
         src = Template(template.read())
         text = src.safe_substitute(content_dict)
-        msg.attach(MIMEText(text))
+        msg.attach(MIMEText(text, 'html'))
         template.close()
         return msg
 

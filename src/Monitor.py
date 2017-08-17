@@ -108,23 +108,24 @@ class Monitor:
                     attachment.add_header('Content-Disposition', 'attachment', filename=filename)
                     summary = ""
                     if 'start' in jdata:
-                        summary += "\nStarted: {}".format(jdata['start'])
+                        summary += "<br><b>Started:</b> {}".format(jdata['start'])
                     if 'end' in jdata:
-                        summary += "\nEnded: {}".format(jdata['end'])
+                        summary += "<br><b>Ended:</b> {}".format(jdata['end'])
                     if 'start' in jdata and 'end' in jdata:
                         start = parse(jdata['start'])
                         end = parse(jdata['end'])
                         duration = (end - start)
                         hours, remainder = divmod(duration.seconds, 3600)
                         minutes, seconds = divmod(remainder, 60)
-                        summary += '\nDuration: {} hours, {} minutes, {} seconds'.format(hours, minutes, seconds)
+                        summary += '<br><b>Duration:</b> {} hours, {} minutes, {} seconds'.format(hours, minutes, seconds)
                     if 'Failed' in query_status['status']:
-                        summary += "\nFailures: {}".format(json.dumps(jdata['failures'], indent=4))
+                        summary += "<br><b>Failures:</b> {}".format(json.dumps(jdata['failures'], indent=4))\
+                            .replace(',', '<br>')
                     if 'workflowName' in jdata:
-                        summary = "Workflow Name: {}\n{}".format(jdata['workflowName'], summary)
+                        summary = "<b>Workflow Name:</b> {}{}".format(jdata['workflowName'], summary)
                     if 'workflowRoot' in jdata:
-                        summary += "\nworkflowRoot: {}".format(jdata['workflowRoot'])
-                    summary += "\nTiming graph: http://{}:9000/api/workflows/v2/{}/timing".format(self.host,
+                        summary += "<br><b>workflowRoot:</b> {}".format(jdata['workflowRoot'])
+                    summary += "<br><b>Timing graph:</b> http://{}:9000/api/workflows/v2/{}/timing".format(self.host,
                                                                                                    query_status['id'])
                     email_content = {
                         'user': self.user,
