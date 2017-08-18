@@ -1,0 +1,28 @@
+{
+  "gatk.samples_file": "/cil/shed/sandboxes/amr/dev/gatk_pipeline/data/small/input.tsv",
+  "gatk.picard": "/cil/shed/apps/external/picard/current/bin/picard.jar",
+  "gatk.gatk_3_7": "/humgen/gsa-hpprojects/GATK/bin/current/GenomeAnalysisTK.jar",
+  "gatk.snpeff": "/cil/shed/apps/external/snpEff/snpEff-4.1g/snpEff.jar",
+  "gatk.ref_path": "/gsap/garage-fungal/Cryptococcus_U19_B625/snps/gatk_test",
+  "gatk.ref_file": "CneoH99.fasta",
+  "gatk.output_dir": "/cil/shed/sandboxes/amr/dev/gatk_pipeline/output/widdler_test",
+  "gatk.tcir": true,
+  "gatk.bqsr": false,
+  "gatk.ploidy": 2,
+  "gatk.vqsr": false,
+  "gatk.use_snpeff": true,
+  "gatk.snpeff_db": "CNA2",
+  "gatk.variant_filtration": true,
+  "gatk.interval_size": 1.5,
+  "gatk.filter_expression": "AB < 0.2 || MQ0 > 50",
+  "gatk.snp_resource": [],
+  "gatk.indel_resource": [],
+  "gatk.snp_annotation": [],
+  "gatk.known_sites": [],
+  "gatk.indel_annotation": [],
+  "gatk.ts_filter_snp": 99.0,
+  "gatk.combined_filtration": false,
+  "gatk.clean": false,
+  "gatk.ts_filter_indel": 99.0
+
+}
