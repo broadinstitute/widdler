@@ -138,12 +138,32 @@ def call_monitor(args):
     else:
         m.monitor_user_workflows()
 
+def call_restart(args):
+    cromwell = Cromwell(host=args.server)
+    result = cromwell.restart_workflow(workflow_id=args.workflow_id)
+
+    if result != None and "id" in result:
+        print "Workflow restarted successfully; new workflow-id: " + str(result['id'])
+    else:
+        print "Workflow was not restarted successfully; server response: " + str(result)
+
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
-    usage='widdler.py <run | monitor | query | abort | validate> [<args>]',
+    usage='widdler.py <run | monitor | query | abort | validate |restart> [<args>]',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 sub = parser.add_subparsers()
+restart = sub.add_parser(name='restart',
+                       description='Restart a submitted workflow.',
+                       usage='widdler.py restart <workflow id>',
+                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+restart.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
+restart.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
+                   help='Choose a cromwell server from {}'.format(c.servers))
+restart.add_argument('-M', '--monitor', action='store_true', default=True, help=argparse.SUPPRESS)
+restart.set_defaults(func=call_restart)
+
+#sub = su.add_subparsers()
 
 abort = sub.add_parser(name='abort',
                        description='Abort a submitted workflow.',

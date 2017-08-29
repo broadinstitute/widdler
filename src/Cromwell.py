@@ -53,6 +53,22 @@ class Cromwell:
         r = requests.post(workflow_url)
         return json.loads(r.text)
 
+    def restart_workflow(self, workflow_id):
+        """
+        Restart a workflow given an existing workflow id.
+        :param workflow_id: the id of the existing workflow
+        :return: Request response json.
+        """
+        metadata = self.query_metadata(workflow_id)
+
+        try:
+            workflow_input = metadata['submittedFiles']['inputs']
+            wdl = metadata['submittedFiles']['workflow']
+
+            return self.jstart_workflow(wdl, workflow_input, wdl_string=True)
+        except KeyError:
+            return None
+
     def start_workflow(self, wdl_file, workflow_name, workflow_args, dependencies=None):
         """
         Start a workflow using a dictionary of arguments.
@@ -73,27 +89,39 @@ class Cromwell:
 
         files = {'wdlSource': (wdl_file, open(wdl_file, 'rb'), 'application/octet-stream'),
                  'workflowInputs': ('report.csv', args_string, 'application/json')}
+
         if dependencies:
             # add dependency as zip file
             files['wdlDependencies'] = (dependencies, open(dependencies, 'rb'), 'application/zip')
         r = requests.post(self.url, files=files)
         return json.loads(r.text)
 
-    def jstart_workflow(self, wdl_file, json_file,  dependencies=None):
+    def jstart_workflow(self, wdl_file, json_file, dependencies=None, wdl_string=False):
         """
         Start a workflow using json file for argument inputs.
-        :param wdl_file: Workflow description file.
-        :param json_file: JSON file containing arguments.
+        :param wdl_file: Workflow description file or WDL string (specify wdl_string if so).
+        :param json_file: JSON file or JSON string containing arguments.
         :param dependencies: The subworkflow zip file. Optional.
+        :param wdl_string: If the wdl_file argument is actually a string. Optional.
         :return: Request response json.
         """
-        with open(json_file) as fh:
-            args = json.load(fh)
-        fh.close()
-        args['user'] = getpass.getuser()
-        j_args = json.dumps(args)
-        files = {'wdlSource': (wdl_file, open(wdl_file, 'rb'), 'application/octet-stream'),
+
+        if not json_file.startswith("{"):
+            with open(json_file) as fh:
+                args = json.load(fh)
+            fh.close()
+            args['user'] = getpass.getuser()
+            j_args = json.dumps(args)
+        else:
+            j_args = json_file
+
+        files = None
+        if not wdl_string:
+            files = {'wdlSource': (wdl_file, open(wdl_file, 'rb'), 'application/octet-stream'),
                  'workflowInputs': ('report.csv', j_args, 'application/json')}
+        else:
+            files = {'wdlSource': ('workflow.wdl', wdl_file, 'application/text-plain'),
+                  'workflowInputs': ('report.csv', j_args, 'application/json')}
         if dependencies:
             # add dependency as zip file
             files['wdlDependencies'] = (dependencies, open(dependencies, 'rb'), 'application/zip')
