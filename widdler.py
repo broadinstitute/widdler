@@ -167,6 +167,7 @@ def call_explain(args):
     printer.format = my_safe_repr
 
     if result != None:
+        print "-------------Workflow Status-------------"
         printer.pprint(result)
 
         if len(additional_res) > 0:
@@ -174,12 +175,11 @@ def call_explain(args):
             printer.pprint(additional_res)
 
         if len(stdout_res) > 0:
-            print "-------------Failed Stdout/Stderr Logs-------------"
-
-            for log in stdout_res:
+            for log in stdout_res["failed_jobs"]:
+                print "-------------Failed Stdout-------------"
                 print log["stdout"]["name"] + ":"
                 print log["stdout"]["log"]
-
+                print "-------------Failed Stderr-------------"
                 print log["stderr"]["name"] + ":"
                 print log["stderr"]["log"]
 
