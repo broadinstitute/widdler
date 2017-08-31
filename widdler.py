@@ -139,14 +139,19 @@ def call_monitor(args):
     else:
         m.monitor_user_workflows()
 
+
 def call_restart(args):
     cromwell = Cromwell(host=args.server)
     result = cromwell.restart_workflow(workflow_id=args.workflow_id, disable_caching=args.disable_caching)
 
-    if result != None and "id" in result:
-        print "Workflow restarted successfully; new workflow-id: " + str(result['id'])
+    if result is not None and "id" in result:
+        msg = "Workflow restarted successfully; new workflow-id: " + str(result['id'])
+        print(msg)
+        logger.info(msg)
     else:
-        print "Workflow was not restarted successfully; server response: " + str(result)
+        msg = "Workflow was not restarted successfully; server response: " + str(result)
+        print(msg)
+        logger.critical(msg)
 
 def call_explain(args):
     cromwell = Cromwell(host=args.server)
@@ -184,9 +189,9 @@ parser = argparse.ArgumentParser(
 
 sub = parser.add_subparsers()
 restart = sub.add_parser(name='restart',
-                       description='Restart a submitted workflow.',
-                       usage='widdler.py restart <workflow id>',
-                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                         description='Restart a submitted workflow.',
+                         usage='widdler.py restart <workflow id>',
+                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 restart.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
 restart.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                    help='Choose a cromwell server from {}'.format(c.servers))
