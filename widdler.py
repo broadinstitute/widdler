@@ -14,6 +14,7 @@ import logging
 import getpass
 import json
 import zipfile
+import pprint
 
 __author__ = "Amr Abouelleil, Paul Cao"
 __copyright__ = "Copyright 2017, The Broad Institute"
@@ -140,16 +141,45 @@ def call_monitor(args):
 
 def call_restart(args):
     cromwell = Cromwell(host=args.server)
-    result = cromwell.restart_workflow(workflow_id=args.workflow_id)
+    result = cromwell.restart_workflow(workflow_id=args.workflow_id, disable_caching=args.disable_caching)
 
     if result != None and "id" in result:
         print "Workflow restarted successfully; new workflow-id: " + str(result['id'])
     else:
         print "Workflow was not restarted successfully; server response: " + str(result)
 
+def call_explain(args):
+    cromwell = Cromwell(host=args.server)
+    (result, additional_res) = cromwell.explain_workflow(workflow_id=args.workflow_id, include_inputs=args.input)
+
+    def my_safe_repr(object, context, maxlevels, level):
+        typ = pprint._type(object)
+        if typ is unicode:
+            object = str(object)
+        return pprint._safe_repr(object, context, maxlevels, level)
+
+    printer = pprint.PrettyPrinter()
+    printer.format = my_safe_repr
+
+    if result != None:
+        printer.pprint(result)
+
+        if len(additional_res) > 0:
+            print "-------------Additional Parameters-------------"
+            printer.pprint(additional_res)
+
+        print "-------------Cromwell Links-------------"
+        print 'http://' + args.server + ':9000/api/workflows/v1/' + result['id'] + '/metadata'
+        print 'http://' + args.server + ':9000/api/workflows/v1/' + result['id'] + '/timing'
+    else:
+        print "Workflow not found."
+
+    args.monitor = True
+    return None
+
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
-    usage='widdler.py <run | monitor | query | abort | validate |restart> [<args>]',
+    usage='widdler.py <run | monitor | query | abort | validate |restart | explain> [<args>]',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 sub = parser.add_subparsers()
@@ -161,9 +191,19 @@ restart.add_argument('workflow_id', action='store', help='workflow id of workflo
 restart.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                    help='Choose a cromwell server from {}'.format(c.servers))
 restart.add_argument('-M', '--monitor', action='store_true', default=True, help=argparse.SUPPRESS)
+restart.add_argument('-D', '--disable_caching', action='store_true', default=False, help=argparse.SUPPRESS)
 restart.set_defaults(func=call_restart)
 
-#sub = su.add_subparsers()
+explain = sub.add_parser(name='explain',
+                         description='Explain the status of a workflow.',
+                         usage='widdler.py explain <workflowid>',
+                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+explain.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
+explain.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
+                   help='Choose a cromwell server from {}'.format(c.servers))
+explain.add_argument('-I', '--input', action='store_true', default=False, help=argparse.SUPPRESS)
+explain.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
+explain.set_defaults(func=call_explain)
 
 abort = sub.add_parser(name='abort',
                        description='Abort a submitted workflow.',

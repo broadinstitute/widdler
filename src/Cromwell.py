@@ -53,7 +53,7 @@ class Cromwell:
         r = requests.post(workflow_url)
         return json.loads(r.text)
 
-    def restart_workflow(self, workflow_id):
+    def restart_workflow(self, workflow_id, disable_caching=False):
         """
         Restart a workflow given an existing workflow id.
         :param workflow_id: the id of the existing workflow
@@ -65,9 +65,50 @@ class Cromwell:
             workflow_input = metadata['submittedFiles']['inputs']
             wdl = metadata['submittedFiles']['workflow']
 
-            return self.jstart_workflow(wdl, workflow_input, wdl_string=True)
+            return self.jstart_workflow(wdl, workflow_input, wdl_string=True, disable_caching=disable_caching)
         except KeyError:
             return None
+
+    @staticmethod
+    def getCalls(status, call_arr, full_logs=False, limit_n=3):
+        filteredCalls = list(filter(lambda c:c[0]['executionStatus'] == status, call_arr))
+        filteredCalls = map(lambda c:c[0], filteredCalls)
+
+        def parse_logs(call):
+            log = {}
+            log['stdout'] = {'name':call['stdout']}
+            log['stderr'] = {'name': call['stderr']}
+
+            if full_logs:
+                with open(call['stdout'], 'r') as stdout_in:
+                    log['stdout']['log'] = stdout_in.read()
+                with open(call['stderr'], 'r') as stderr_in:
+                    log["stderr"]['log'] = stderr_in.read()
+            return log
+
+        return map(lambda c:parse_logs(c), filteredCalls[:limit_n])
+
+    def explain_workflow(self, workflow_id, include_inputs=True):
+        result = self.query_metadata(workflow_id)
+        explain_res = {}
+        additional_res= {}
+
+        if result != None:
+            explain_res["status"] = result["status"]
+            explain_res["id"] = result["id"]
+            explain_res["workflowRoot"] = result["workflowRoot"]
+
+            if explain_res["status"] == "Failed":
+                explain_res["failed_jobs"] = Cromwell.getCalls('RetryableFailure', result['calls'].values(), full_logs=True)
+            elif explain_res["status"] == "Running":
+                explain_res["running_jobs"] = Cromwell.getCalls('Running', result['calls'].values())
+
+            if include_inputs:
+                additional_res["inputs"] = result["inputs"]
+        else:
+            print "Workflow not found."
+
+        return (explain_res, additional_res)
 
     def start_workflow(self, wdl_file, workflow_name, workflow_args, dependencies=None):
         """
@@ -96,7 +137,7 @@ class Cromwell:
         r = requests.post(self.url, files=files)
         return json.loads(r.text)
 
-    def jstart_workflow(self, wdl_file, json_file, dependencies=None, wdl_string=False):
+    def jstart_workflow(self, wdl_file, json_file, dependencies=None, wdl_string=False, disable_caching=False):
         """
         Start a workflow using json file for argument inputs.
         :param wdl_file: Workflow description file or WDL string (specify wdl_string if so).
@@ -125,6 +166,11 @@ class Cromwell:
         if dependencies:
             # add dependency as zip file
             files['wdlDependencies'] = (dependencies, open(dependencies, 'rb'), 'application/zip')
+
+        if disable_caching:
+            files['workflowOptions'] = ('options.json', "{\"read_from_cache\":false}", 'application/json')
+            print 'disable_caching enabled'
+
         r = requests.post(self.url, files=files)
         return json.loads(r.text)
 
