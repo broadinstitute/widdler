@@ -155,7 +155,7 @@ def call_restart(args):
 
 def call_explain(args):
     cromwell = Cromwell(host=args.server)
-    (result, additional_res) = cromwell.explain_workflow(workflow_id=args.workflow_id, include_inputs=args.input)
+    (result, additional_res, stdout_res) = cromwell.explain_workflow(workflow_id=args.workflow_id, include_inputs=args.input)
 
     def my_safe_repr(object, context, maxlevels, level):
         typ = pprint._type(object)
@@ -173,9 +173,20 @@ def call_explain(args):
             print "-------------Additional Parameters-------------"
             printer.pprint(additional_res)
 
+        if len(stdout_res) > 0:
+            print "-------------Failed Stdout/Stderr Logs-------------"
+
+            for log in stdout_res:
+                print log["stdout"]["name"] + ":"
+                print log["stdout"]["log"]
+
+                print log["stderr"]["name"] + ":"
+                print log["stderr"]["log"]
+
         print "-------------Cromwell Links-------------"
         print 'http://' + args.server + ':9000/api/workflows/v1/' + result['id'] + '/metadata'
         print 'http://' + args.server + ':9000/api/workflows/v1/' + result['id'] + '/timing'
+
     else:
         print "Workflow not found."
 

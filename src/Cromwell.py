@@ -92,6 +92,7 @@ class Cromwell:
         result = self.query_metadata(workflow_id)
         explain_res = {}
         additional_res= {}
+        stdout_res = {}
 
         if result != None:
             explain_res["status"] = result["status"]
@@ -99,7 +100,8 @@ class Cromwell:
             explain_res["workflowRoot"] = result["workflowRoot"]
 
             if explain_res["status"] == "Failed":
-                explain_res["failed_jobs"] = Cromwell.getCalls('RetryableFailure', result['calls'].values(), full_logs=True)
+                stdout_res["failed_jobs"] = Cromwell.getCalls('RetryableFailure', result['calls'].values(), full_logs=True)
+
             elif explain_res["status"] == "Running":
                 explain_res["running_jobs"] = Cromwell.getCalls('Running', result['calls'].values())
 
@@ -108,7 +110,7 @@ class Cromwell:
         else:
             print "Workflow not found."
 
-        return (explain_res, additional_res)
+        return (explain_res, additional_res, stdout_res)
 
     def start_workflow(self, wdl_file, workflow_name, workflow_args, dependencies=None):
         """
