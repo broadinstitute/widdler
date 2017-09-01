@@ -119,16 +119,16 @@ class Monitor:
                         minutes, seconds = divmod(remainder, 60)
                         summary += '<br><b>Duration:</b> {} hours, {} minutes, {} seconds'.format(hours, minutes, seconds)
                     if 'Failed' in query_status['status']:
-                        summary += "<br><b>Failures:</b> {}".format(json.dumps(jdata['failures']))
+                        fail_summary = "<br><b>Failures:</b> {}".format(json.dumps(jdata['failures']))
+                        fail_summary = fail_summary.replace(',', '<br>')
+                        summary += fail_summary.replace('\n', '<br>')
                     if 'workflowName' in jdata:
                         summary = "<b>Workflow Name:</b> {}{}".format(jdata['workflowName'], summary)
                     if 'workflowRoot' in jdata:
                         summary += "<br><b>workflowRoot:</b> {}".format(jdata['workflowRoot'])
                     summary += "<br><b>Timing graph:</b> http://{}:9000/api/workflows/v2/{}/timing".format(self.host,
                                                                                                     query_status['id'])
-                    for ch in [',', '\n']:
-                        if ch in summary:
-                            summary = summary.replace(ch, '<br>')
+
                     email_content = {
                         'user': self.user,
                         'workflow_id': query_status['id'],
