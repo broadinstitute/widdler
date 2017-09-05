@@ -153,9 +153,11 @@ def call_restart(args):
         print(msg)
         logger.critical(msg)
 
+
 def call_explain(args):
     cromwell = Cromwell(host=args.server)
-    (result, additional_res, stdout_res) = cromwell.explain_workflow(workflow_id=args.workflow_id, include_inputs=args.input)
+    (result, additional_res, stdout_res) = cromwell.explain_workflow(workflow_id=args.workflow_id,
+                                                                     include_inputs=args.input)
 
     def my_safe_repr(object, context, maxlevels, level):
         typ = pprint._type(object)
