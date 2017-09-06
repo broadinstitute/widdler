@@ -108,7 +108,7 @@ class Cromwell:
             if include_inputs:
                 additional_res["inputs"] = result["inputs"]
         else:
-            print "Workflow not found."
+            print("Workflow not found.")
 
         return (explain_res, additional_res, stdout_res)
 
@@ -171,7 +171,7 @@ class Cromwell:
 
         if disable_caching:
             files['workflowOptions'] = ('options.json', "{\"read_from_cache\":false}", 'application/json')
-            print 'disable_caching enabled'
+            print('disable_caching enabled')
 
         r = requests.post(self.url, files=files)
         return json.loads(r.text)

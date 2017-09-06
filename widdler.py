@@ -78,6 +78,11 @@ def call_run(args):
         call_validate(args)
     cromwell = Cromwell(host=args.server)
     result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies)
+    print("-------------Cromwell Links-------------")
+    links = get_cromwell_links(args.server, result['id'])
+    print (links['metadata'])
+    print (links['timing'])
+    print ("These will also be e-mailed to you when the workflow completes.")
     if args.monitor:
         retry = 4
         while retry != 0:
@@ -154,6 +159,11 @@ def call_restart(args):
         logger.critical(msg)
 
 
+def get_cromwell_links(server, workflow_id):
+    return {'metadata': 'http://' + server + ':9000/api/workflows/v1/' + workflow_id + '/metadata',
+            'timing': 'http://' + server + ':9000/api/workflows/v1/' + workflow_id + '/timing'}
+
+
 def call_explain(args):
     cromwell = Cromwell(host=args.server)
     (result, additional_res, stdout_res) = cromwell.explain_workflow(workflow_id=args.workflow_id,
@@ -168,29 +178,30 @@ def call_explain(args):
     printer = pprint.PrettyPrinter()
     printer.format = my_safe_repr
 
-    if result != None:
-        print "-------------Workflow Status-------------"
+    if result is not None:
+        print("-------------Workflow Status-------------")
         printer.pprint(result)
 
         if len(additional_res) > 0:
-            print "-------------Additional Parameters-------------"
+            print("-------------Additional Parameters-------------")
             printer.pprint(additional_res)
 
         if len(stdout_res) > 0:
             for log in stdout_res["failed_jobs"]:
-                print "-------------Failed Stdout-------------"
-                print log["stdout"]["name"] + ":"
-                print log["stdout"]["log"]
-                print "-------------Failed Stderr-------------"
-                print log["stderr"]["name"] + ":"
-                print log["stderr"]["log"]
+                print("-------------Failed Stdout-------------")
+                print (log["stdout"]["name"] + ":")
+                print (log["stdout"]["log"])
+                print ("-------------Failed Stderr-------------")
+                print (log["stderr"]["name"] + ":")
+                print (log["stderr"]["log"])
 
-        print "-------------Cromwell Links-------------"
-        print 'http://' + args.server + ':9000/api/workflows/v1/' + result['id'] + '/metadata'
-        print 'http://' + args.server + ':9000/api/workflows/v1/' + result['id'] + '/timing'
+        print("-------------Cromwell Links-------------")
+        links = get_cromwell_links(args.server, result['id'])
+        print (links['metadata'])
+        print (links['timing'])
 
     else:
-        print "Workflow not found."
+        print("Workflow not found.")
 
     args.monitor = True
     return None

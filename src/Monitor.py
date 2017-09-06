@@ -4,7 +4,6 @@ import logging
 import time
 import json
 import os
-from datetime import datetime, timedelta
 from dateutil.parser import parse
 from multiprocessing import Pool
 from functools import partial
@@ -87,6 +86,7 @@ class Monitor:
         :param workflow_id: Workflow ID of workflow to monitor.
         :return: returns 0 when workflow reaches terminal state.
         """
+        print("-------------Monitoring Workflow-------------")
         run_states = ['Running', 'Submitted', 'QueuedInCromwell']
         while 0 == 0:
             query_status = self.cromwell.query_status(workflow_id)
