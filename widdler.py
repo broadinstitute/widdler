@@ -15,7 +15,7 @@ import getpass
 import json
 import zipfile
 import pprint
-
+import time
 __author__ = "Amr Abouelleil, Paul Cao"
 __copyright__ = "Copyright 2017, The Broad Institute"
 __credits__ = ["Amr Abouelleil", "Paul Cao", "Jean Chang"]
@@ -29,7 +29,7 @@ __status__ = "Production"
 logger = logging.getLogger('widdler')
 logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
-fh = logging.FileHandler(os.path.join(c.log_dir, 'widdler.log'))
+fh = logging.FileHandler(os.path.join(c.log_dir, '{}.widdler.log'.format(str(time.time()))))
 fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
@@ -62,7 +62,9 @@ def is_valid_zip(path):
     """
     is_valid(path)
     if not zipfile.is_zipfile(path):
-        raise argparse.ArgumentTypeError("{} is not a valid zip file.\n".format(path))
+        e = "{} is not a valid zip file.\n".format(path)
+        logger.error(e)
+        raise argparse.ArgumentTypeError(e)
     else:
         return path
 
@@ -82,8 +84,11 @@ def call_run(args):
     links = get_cromwell_links(args.server, result['id'])
     print (links['metadata'])
     print (links['timing'])
+    logger.info("Metadata:{}".format(links['metadata']))
+    logger.info("Timing Graph:{}".format(links['timing']))
     print ("These will also be e-mailed to you when the workflow completes.")
     if args.monitor:
+        time.sleep(2)
         retry = 4
         while retry != 0:
             try:
@@ -105,25 +110,34 @@ def call_query(args):
     cromwell = Cromwell(host=args.server)
     responses = []
     if args.status:
+        logger.info("Status requested.")
         status = cromwell.query_status(args.workflow_id)
         responses.append(status)
     if args.metadata:
+        logger.info("Metadata requested.")
         metadata = cromwell.query_metadata(args.workflow_id)
         responses.append(metadata)
     if args.logs:
+        logger.info("Logs requested.")
         logs = cromwell.query_logs(args.workflow_id)
         responses.append(logs)
+    logger.debug("Query Results:\n".join(responses))
     return responses
 
 
 def call_validate(args):
+    logger.info("Validation requested.")
     validator = Validator(wdl=args.wdl, json=args.json)
     result = validator.validate_json()
     if len(result) != 0:
-        print("{} input file contains the following errors:\n{}".format(args.json, "\n".join(result)))
+        e = "{} input file contains the following errors:\n{}".format(args.json, "\n".join(result))
+        print(e)
+        logger.critical(e)
         sys.exit(-1)
     else:
-        print('No errors found in {}'.format(args.wdl))
+        s = 'No errors found in {}'.format(args.wdl)
+        print(s)
+        logger.info(s)
 
 
 def call_abort(args):
@@ -133,10 +147,13 @@ def call_abort(args):
     :return: JSON containing abort response.
     """
     cromwell = Cromwell(host=args.server)
+    logger.info("Abort requested")
     return cromwell.stop_workflow(workflow_id=args.workflow_id)
 
 
 def call_monitor(args):
+    logger.info("Monitoring requested")
+    print("-------------Monitoring Workflow-------------")
     m = Monitor(host=args.server, user=args.username, no_notify=args.no_notify, verbose=args.verbose,
                 interval=args.interval)
     if args.workflow_id:
@@ -146,6 +163,7 @@ def call_monitor(args):
 
 
 def call_restart(args):
+    logger.info("Restart requested")
     cromwell = Cromwell(host=args.server)
     result = cromwell.restart_workflow(workflow_id=args.workflow_id, disable_caching=args.disable_caching)
 
@@ -165,6 +183,7 @@ def get_cromwell_links(server, workflow_id):
 
 
 def call_explain(args):
+    logger.info("Explain requested")
     cromwell = Cromwell(host=args.server)
     (result, additional_res, stdout_res) = cromwell.explain_workflow(workflow_id=args.workflow_id,
                                                                      include_inputs=args.input)
@@ -229,7 +248,7 @@ explain = sub.add_parser(name='explain',
                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 explain.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
 explain.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
-                   help='Choose a cromwell server from {}'.format(c.servers))
+                     help='Choose a cromwell server from {}'.format(c.servers))
 explain.add_argument('-I', '--input', action='store_true', default=False, help=argparse.SUPPRESS)
 explain.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 explain.set_defaults(func=call_explain)
