@@ -1,5 +1,5 @@
 {
-  "gatk.samples_file": "C:\\Dev\\Python\\widdler\\resources\\test.tsv",
+  "gatk.samples_file": "C:\\Dev\\Python\\widdler\\resources\\test_local.tsv",
   "gatk.picard": "/cil/shed/apps/external/picard/current/bin/picard.jar",
   "gatk.gatk_3_7": "/humgen/gsa-hpprojects/GATK/bin/current/GenomeAnalysisTK.jar",
   "gatk.snpeff": "/cil/shed/apps/external/snpEff/snpEff-4.1g/snpEff.jar",

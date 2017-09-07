@@ -36,6 +36,9 @@ class ValidatorUnitTests(unittest.TestCase):
     def test_validate_param_json(self):
         self.logger.info("Testing validate_param_json...")
         for k, v in self.json_args.items():
+            if not self.validator.validate_param(k, self.wdl_args):
+                print(k, v)
+
             self.assertIs(self.validator.validate_param(k, self.wdl_args), True)
 
     def test_validate_string(self):

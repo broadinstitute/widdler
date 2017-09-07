@@ -30,8 +30,8 @@ class MyTestCase(unittest.TestCase):
     def test_monitor_workflow(self):
         self.assertEquals(0, self.m.monitor_workflow(self.workflow_id))
 
-    def test_get_user_workflows(self):
-        self.m.get_user_workflows()
+    # def test_get_user_workflows(self):
+    #     self.m.get_user_workflows()
 
     @classmethod
     def tearDown(self):

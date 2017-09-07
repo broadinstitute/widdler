@@ -715,6 +715,7 @@ workflow gatk {
     String gatk = gatk_3_7
     # TCIR Selection
     Boolean tcir
+    Boolean clean
     # BQSR selection and relevant parameters
     Boolean bqsr
     Array[String] known_sites
