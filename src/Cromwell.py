@@ -184,6 +184,21 @@ class Cromwell:
         r = requests.post(self.url, files=files)
         return json.loads(r.text)
 
+    def label_workflow(self, workflow_id, labels):
+        """
+        Adds a label to a workflow ID as a key/value pair which can later be queried.
+        :param workflow_id: the ID of the workflow to label.
+        :param labels: a dictionary of key/value pairs to assign as labels.
+        :return: returns result of label patch request
+        """
+        self.logger.info('Labeling workflow {} with the following labels:{}'.format(workflow_id, str(labels)))
+        labels['id'] = workflow_id
+        label_url = self.url + '/' + workflow_id + '/labels'
+        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+        response = requests.patch(label_url, json.dumps(labels), headers=headers)
+        self.logger.info('Label request returned status code{}'.format(response.status_code))
+        return response
+
     def stop_workflow(self, workflow_id):
         """
         Ends a running workflow.
