@@ -57,6 +57,7 @@ class Cromwell:
         """
         Restart a workflow given an existing workflow id.
         :param workflow_id: the id of the existing workflow
+        :param disable_caching: If true, do not use cached data to restart the workflow.
         :return: Request response json.
         """
         metadata = self.query_metadata(workflow_id)
@@ -64,7 +65,7 @@ class Cromwell:
         try:
             workflow_input = metadata['submittedFiles']['inputs']
             wdl = metadata['submittedFiles']['workflow']
-
+            self.logger.info('Workflow restarting with inputs: {}'.format(workflow_input))
             return self.jstart_workflow(wdl, workflow_input, wdl_string=True, disable_caching=disable_caching)
         except KeyError:
             return None
@@ -76,14 +77,20 @@ class Cromwell:
 
         def parse_logs(call):
             log = {}
-            log['stdout'] = {'name':call['stdout']}
+            log['stdout'] = {'name': call['stdout']}
             log['stderr'] = {'name': call['stderr']}
 
             if full_logs:
-                with open(call['stdout'], 'r') as stdout_in:
-                    log['stdout']['log'] = stdout_in.read()
-                with open(call['stderr'], 'r') as stderr_in:
-                    log["stderr"]['log'] = stderr_in.read()
+                try:
+                    with open(call['stdout'], 'r') as stdout_in:
+                        log['stdout']['log'] = stdout_in.read()
+                except IOError as e:
+                    log['stdout']['log'] = e
+                try:
+                    with open(call['stderr'], 'r') as stderr_in:
+                        log["stderr"]['log'] = stderr_in.read()
+                except IOError as e:
+                    log["stderr"]['log'] = e
             return log
 
         return map(lambda c:parse_logs(c), filteredCalls[:limit_n])
@@ -100,7 +107,8 @@ class Cromwell:
             explain_res["workflowRoot"] = result["workflowRoot"]
 
             if explain_res["status"] == "Failed":
-                stdout_res["failed_jobs"] = Cromwell.getCalls('RetryableFailure', result['calls'].values(), full_logs=True)
+                stdout_res["failed_jobs"] = Cromwell.getCalls('RetryableFailure', result['calls'].values(),
+                                                              full_logs=True)
 
             elif explain_res["status"] == "Running":
                 explain_res["running_jobs"] = Cromwell.getCalls('Running', result['calls'].values())

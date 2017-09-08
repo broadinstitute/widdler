@@ -6,7 +6,9 @@ Widdler is a command-line tool for executing WDL workflows on Cromwell servers.
 Features include:
 
 * Workflow execution: Execute a workflow on a specified Cromwell server.
+* Workflow restart: Restart a previously executed workflow.
 * Workflow queries: Get the status, metadata, or logs for a specific workflow.
+* Workflow result explanation: Get more detailed information on fails at the command line. 
 * Workflow monitoring: Monitor a specific workflow or set of user-specific workflows to completion.
 * Workflow abortion: Abort a running workflow.
 * JSON validation: Validate a JSON input file against the WDL file intended for use.
@@ -21,15 +23,16 @@ Below is widdler's basic help text. Widdler expects one of three usage modes to
 be indicated as it's first argument: run, query, or abort.
 
 ```
-usage: widdler.py <run | monitor | query | abort | validate> [<args>]
+usage: widdler.py <run | monitor | query | abort | validate |restart | explain> [<args>]
 
 Description: A tool for executing and monitoring WDLs to Cromwell instances.
 
 positional arguments:
-  {abort,monitor,query,run,validate}
+  {restart,explain,abort,monitor,query,run,validate}
 
 optional arguments:
   -h, --help            show this help message and exit
+
 
 ```
 
@@ -83,6 +86,39 @@ This will execute a workflow that uses subworkflows:
 
 Users may also invoke Widdler's monitoring capabilities when initiating a workflow. See below for an 
 explanation of monitoring options.
+
+### widdler.py restart
+
+If a workflow has been previously executed to a Cromwell server, it is possible to restart the workflow after it has
+completed and run it again with the same inputs simply by providing the workflow ID and server of the original run.
+The usage for performing this action is as follows:
+
+```
+usage: widdler.py restart <workflow id>
+
+Restart a submitted workflow.
+
+positional arguments:
+  workflow_id           workflow id of workflow to restart.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
+                        Choose a cromwell server from ['ale', 'btl-cromwell']
+                        (default: None)
+```
+
+For example:
+
+```python widdler.py restart b931c639-e73d-4b59-9333-be5ede4ae2cb -S ale
+```
+
+Will restart workflow b931xxx and return the new workflow id like so:
+
+```
+Workflow restarted successfully; new workflow-id: 164678b8-2a52-40f3-976c-417c777c78ef
+```
+
 
 ### widdler.py query
 
@@ -159,6 +195,51 @@ will return:
 ```
 {'status': 'Aborted', 'id': '2f8bb5c6-8254-4d38-b010-620913dd325e'}
 ```
+
+### widdler.py explain
+
+Running widdler.py explain will provide information at command line similar to the monitor e-mail, including workflow
+status, root directory, stdout and stderr information, and useful links. Usage is as follows:
+
+```
+usage: widdler.py explain <workflowid>
+
+Explain the status of a workflow.
+
+positional arguments:
+  workflow_id           workflow id of workflow to abort.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
+                        Choose a cromwell server from ['ale', 'btl-cromwell']
+                        (default: None)
+```
+
+This example:
+```
+python widdler.py explain b931c639-e73d-4b59-9333-be5ede4ae2cb -S ale
+```
+
+will return:
+```-------------Workflow Status-------------
+{'id': 'b931c639-e73d-4b59-9333-be5ede4ae2cb',
+ 'status': 'Failed',
+ 'workflowRoot': '/cil/shed/apps/internal/cromwell_gaag/cromwell-executions/gatk/b931c639-e73d-4b59-9333-be5ede4ae2cb'}
+-------------Failed Stdout-------------
+/cil/shed/apps/internal/cromwell_gaag/cromwell-executions/gatk/b931c639-e73d-4b59-9333-be5ede4ae2cb/call-ApplySnpRecalibration/execution/stdout:
+[Errno 2] No such file or directory: u'/cil/shed/apps/internal/cromwell_gaag/cromwell-executions/gatk/b931c639-e73d-4b59-9333-be5ede4ae2cb/call-ApplySnpRecalibration/execution/stdout'
+-------------Failed Stderr-------------
+/cil/shed/apps/internal/cromwell_gaag/cromwell-executions/gatk/b931c639-e73d-4b59-9333-be5ede4ae2cb/call-ApplySnpRecalibration/execution/stderr:
+[Errno 2] No such file or directory: u'/cil/shed/apps/internal/cromwell_gaag/cromwell-executions/gatk/b931c639-e73d-4b59-9333-be5ede4ae2cb/call-ApplySnpRecalibration/execution/stderr'
+-------------Cromwell Links-------------
+http://ale:9000/api/workflows/v1/b931c639-e73d-4b59-9333-be5ede4ae2cb/metadata
+http://ale:9000/api/workflows/v1/b931c639-e73d-4b59-9333-be5ede4ae2cb/timing
+```
+
+Note that in this case, there were no stdout or stderr for the step that failed in the workflow. 
+
+
 ## Validation
 (Requires Java-1.8, so make sure to 'use Java-1.8' before trying validation)
 

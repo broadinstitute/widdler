@@ -235,9 +235,9 @@ restart = sub.add_parser(name='restart',
                          description='Restart a submitted workflow.',
                          usage='widdler.py restart <workflow id>',
                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-restart.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
+restart.add_argument('workflow_id', action='store', help='workflow id of workflow to restart.')
 restart.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
-                   help='Choose a cromwell server from {}'.format(c.servers))
+                     help='Choose a cromwell server from {}'.format(c.servers))
 restart.add_argument('-M', '--monitor', action='store_true', default=True, help=argparse.SUPPRESS)
 restart.add_argument('-D', '--disable_caching', action='store_true', default=False, help=argparse.SUPPRESS)
 restart.set_defaults(func=call_restart)
