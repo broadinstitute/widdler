@@ -19,7 +19,7 @@ class CromwellUnitTests(unittest.TestCase):
         hdlr.setFormatter(formatter)
         self.logger.addHandler(hdlr)
         self.logger.setLevel(logging.INFO)
-        self.cromwell = Cromwell(host='btl-cromwell')
+        self.cromwell = Cromwell(host='ale')
         self.json = os.path.join(resources, 'test.json')
         self.wdl = os.path.join(resources, 'test.wdl')
         self.logger.info('Resources: {}, {}'.format(self.wdl, self.json))
@@ -44,6 +44,7 @@ class CromwellUnitTests(unittest.TestCase):
         self.logger.info('Testing query_metadata...')
         result = self.cromwell.query_metadata(self.workflow_id)
         self.logger.info('Result: {}'.format(result))
+        print(result)
         self.assertTrue('id' in result and 'submission' in result)
 
     def test_query_logs(self):
@@ -75,6 +76,10 @@ class CromwellUnitTests(unittest.TestCase):
 
     def test_query_backend(self):
         self.assertTrue('defaultBackend' in self.cromwell.query_backend())
+
+    # def test_label_workflow(self):
+    #     r = self.cromwell.label_workflow(self.workflow_id, {'foo':'bar'})
+    #     self.assertEqual(r.status_code, 200)
 
     def test_stop_workflow(self):
         self.logger.info('Testing stop_workflow...')
