@@ -19,7 +19,11 @@ class Cromwell:
     """
 
     def __init__(self, host='btl-cromwell', port=9000):
-        self.url = 'http://' + host + ':' + str(port) + '/api/workflows/v1'
+        if host == 'localhost':
+            self.port = 8000
+        else:
+            self.port = port
+        self.url = 'http://' + host + ':' + str(self.port) + '/api/workflows/v1'
         self.logger = logging.getLogger('widdler.cromwell.Cromwell')
         self.logger.info('URL:{}'.format(self.url))
 
@@ -36,7 +40,7 @@ class Cromwell:
             workflow_url = self.url + '/' + rtype
         self.logger.info("GET REQUEST:{}".format(workflow_url))
         r = requests.get(workflow_url)
-        return json.loads(r.text)
+        return json.loads(r.content)
 
     def post(self, rtype, workflow_id=None):
         """
@@ -202,6 +206,19 @@ class Cromwell:
         self.logger.info('Querying metadata for workflow {}'.format(workflow_id))
         return self.get('metadata', workflow_id)
 
+    def query_labels(self, labels):
+        """
+        Query cromwell database with a given set of labels.
+        :param labels: A dictionary of label keys and values.
+        :return: Query results.
+        """
+        label_dict = {}
+        for k, v in labels.items():
+            label_dict["label=" + k] = v
+        url = self.build_query_url(self.url + '/query?', label_dict, ':')
+        r = requests.get(url)
+        return json.loads(r.content)
+
     def query_status(self, workflow_id):
         """
         Return the status for a given workflow.
@@ -242,11 +259,12 @@ class Cromwell:
         return json.loads(r.text)
 
     @staticmethod
-    def build_query_url(base_url, url_dict):
+    def build_query_url(base_url, url_dict, sep='='):
         """
         A function for building a query URL given a dictionary of key/value pairs to query.
         :param base_url: The base query URL (ex:http://btl-cromwell:9000/api/workflows/v1/query?)
         :param url_dict: Dictionary of query terms.
+        :param sep: Seperator for query terms.
         :return: Returns the full query URL.
         """
         first = True
@@ -259,9 +277,9 @@ class Cromwell:
                 value = dt.replace('%20', 'T')
             if isinstance(value, list):
                 for item in value:
-                    url_string += '{}={}'.format(key, item)
+                    url_string += '{}{}{}'.format(key, sep, item)
             else:
-                url_string += '{}={}'.format(key, value)
+                url_string += '{}{}{}'.format(key, sep, value)
             first = False
         return base_url.rstrip() + url_string
 

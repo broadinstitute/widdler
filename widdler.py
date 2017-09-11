@@ -81,7 +81,7 @@ def call_run(args):
     cromwell = Cromwell(host=args.server)
     result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies)
     print("-------------Cromwell Links-------------")
-    links = get_cromwell_links(args.server, result['id'])
+    links = get_cromwell_links(args.server, result['id'], cromwell.port)
     print (links['metadata'])
     print (links['timing'])
     logger.info("Metadata:{}".format(links['metadata']))
@@ -177,9 +177,9 @@ def call_restart(args):
         logger.critical(msg)
 
 
-def get_cromwell_links(server, workflow_id):
-    return {'metadata': 'http://' + server + ':9000/api/workflows/v1/' + workflow_id + '/metadata',
-            'timing': 'http://' + server + ':9000/api/workflows/v1/' + workflow_id + '/timing'}
+def get_cromwell_links(server, workflow_id, port):
+    return {'metadata': 'http://{}:{}/api/workflows/v1/{}/metadata'.format(server, port, workflow_id),
+            'timing': 'http://{}:{}/api/workflows/v1/{}/metadata'.format(server, port, workflow_id)}
 
 
 def call_explain(args):
@@ -215,7 +215,7 @@ def call_explain(args):
                 print (log["stderr"]["log"])
 
         print("-------------Cromwell Links-------------")
-        links = get_cromwell_links(args.server, result['id'])
+        links = get_cromwell_links(args.server, result['id'], cromwell.port)
         print (links['metadata'])
         print (links['timing'])
 

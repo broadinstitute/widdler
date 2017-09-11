@@ -19,7 +19,7 @@ class CromwellUnitTests(unittest.TestCase):
         hdlr.setFormatter(formatter)
         self.logger.addHandler(hdlr)
         self.logger.setLevel(logging.INFO)
-        self.cromwell = Cromwell(host='btl-cromwell')
+        self.cromwell = Cromwell(host='ale')
         self.json = os.path.join(resources, 'test.json')
         self.wdl = os.path.join(resources, 'test.wdl')
         self.logger.info('Resources: {}, {}'.format(self.wdl, self.json))
@@ -31,7 +31,7 @@ class CromwellUnitTests(unittest.TestCase):
     def test_start_workflow(self):
         self.logger.info('Testing start_workflow...')
         self.assertTrue('id' in self.wf and 'status' in self.wf)
-        self.assertEqual(self.wf ['status'], 'Submitted')
+        self.assertEqual(self.wf['status'], 'Submitted')
         self.assertEqual(len(self.workflow_id), 36)
 
     def test_query_status(self):
@@ -76,6 +76,11 @@ class CromwellUnitTests(unittest.TestCase):
     def test_query_backend(self):
         self.assertTrue('defaultBackend' in self.cromwell.query_backend())
 
+    def test_explain(self):
+        time.sleep(20)
+        result = self.cromwell.explain_workflow(self.workflow_id)
+        self.assertIsInstance(result, tuple)
+
     def test_stop_workflow(self):
         self.logger.info('Testing stop_workflow...')
         result = self.cromwell.stop_workflow(self.workflow_id)
@@ -83,4 +88,5 @@ class CromwellUnitTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
+        self.cromwell.stop_workflow(self.workflow_id)
         self.logger.info("Test done!")
