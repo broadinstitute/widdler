@@ -31,7 +31,7 @@ class CromwellUnitTests(unittest.TestCase):
     def test_start_workflow(self):
         self.logger.info('Testing start_workflow...')
         self.assertTrue('id' in self.wf and 'status' in self.wf)
-        self.assertEqual(self.wf ['status'], 'Submitted')
+        self.assertEqual(self.wf['status'], 'Submitted')
         self.assertEqual(len(self.workflow_id), 36)
 
     def test_query_status(self):
@@ -44,7 +44,6 @@ class CromwellUnitTests(unittest.TestCase):
         self.logger.info('Testing query_metadata...')
         result = self.cromwell.query_metadata(self.workflow_id)
         self.logger.info('Result: {}'.format(result))
-        print(result)
         self.assertTrue('id' in result and 'submission' in result)
 
     def test_query_logs(self):
@@ -77,9 +76,10 @@ class CromwellUnitTests(unittest.TestCase):
     def test_query_backend(self):
         self.assertTrue('defaultBackend' in self.cromwell.query_backend())
 
-    # def test_label_workflow(self):
-    #     r = self.cromwell.label_workflow(self.workflow_id, {'foo':'bar'})
-    #     self.assertEqual(r.status_code, 200)
+    def test_explain(self):
+        time.sleep(20)
+        result = self.cromwell.explain_workflow(self.workflow_id)
+        self.assertIsInstance(result, tuple)
 
     def test_stop_workflow(self):
         self.logger.info('Testing stop_workflow...')
@@ -88,4 +88,5 @@ class CromwellUnitTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
+        self.cromwell.stop_workflow(self.workflow_id)
         self.logger.info("Test done!")
