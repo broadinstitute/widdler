@@ -179,7 +179,7 @@ def call_restart(args):
 
 def get_cromwell_links(server, workflow_id, port):
     return {'metadata': 'http://{}:{}/api/workflows/v1/{}/metadata'.format(server, port, workflow_id),
-            'timing': 'http://{}:{}/api/workflows/v1/{}/metadata'.format(server, port, workflow_id)}
+            'timing': 'http://{}:{}/api/workflows/v1/{}/timing'.format(server, port, workflow_id)}
 
 
 def call_explain(args):
