@@ -59,9 +59,12 @@ class Monitor:
         print('Determining {}\'s workflows...'.format(self.user))
         user_workflows = []
         results = self.cromwell.query_labels({'username': self.user})
-        for result in results['results']:
-            if result['status'] in c.run_states:
-                user_workflows.append(result['id'])
+        try:
+            for result in results['results']:
+                if result['status'] in c.run_states:
+                    user_workflows.append(result['id'])
+        except KeyError as e:
+            print('No user workflows found with username {}.'.format(self.user))
         return user_workflows
 
     def monitor_user_workflows(self):
