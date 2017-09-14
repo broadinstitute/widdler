@@ -57,6 +57,12 @@ class Cromwell:
         r = requests.post(workflow_url)
         return json.loads(r.text)
 
+    def patch(self, rtype, workflow_id, payload, headers):
+        workflow_url = self.url + '/' + workflow_id + '/' + rtype
+        self.logger.info("POST REQUEST:{}".format(workflow_url))
+        r = requests.patch(url=workflow_url, data=payload, headers=headers)
+        return r
+
     def restart_workflow(self, workflow_id, disable_caching=False):
         """
         Restart a workflow given an existing workflow id.
@@ -215,6 +221,11 @@ class Cromwell:
         """
         self.logger.info('Querying metadata for workflow {}'.format(workflow_id))
         return self.get('metadata', workflow_id)
+
+    def label_workflow(self, workflow_id, labels):
+        labels_json = json.dumps(labels)
+        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+        return self.patch('labels', workflow_id, labels_json, headers)
 
     def query_labels(self, labels):
         """

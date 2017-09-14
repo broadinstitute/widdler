@@ -26,6 +26,7 @@ class CromwellUnitTests(unittest.TestCase):
         self.wf = self.cromwell.jstart_workflow(self.wdl, self.json)
         self.logger.info('Workflow: {}'.format(self.wf))
         self.workflow_id = self.wf['id']
+        self.labels = {'username': 'amr', 'foo': 'bar'}
         time.sleep(2)
 
     def test_start_workflow(self):
@@ -73,10 +74,18 @@ class CromwellUnitTests(unittest.TestCase):
         result = self.cromwell.query(url_dict)
         self.assertTrue(isinstance(result['results'], list), True)
 
+    def test_label_workflow(self):
+        r = self.cromwell.label_workflow(self.workflow_id, self.labels)
+        self.assertEquals(r.status_code, 200)
+
     def test_query_labels(self):
+        # This sleep is needed to make sure test_label_workflow runs before the query does.
+        time.sleep(5)
         labels = {'username': 'amr', 'foo': 'bar'}
         r = self.cromwell.query_labels(labels)
-        self.assertTrue('results' in r)
+        # Here, the most recent workflow that matches the query will be the last item so we can use that to check
+        # this assertion.
+        self.assertTrue(self.workflow_id in r['results'][-1]['id'])
 
     def test_query_backend(self):
         self.assertTrue('defaultBackend' in self.cromwell.query_backend())

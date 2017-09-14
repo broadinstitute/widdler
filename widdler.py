@@ -87,6 +87,7 @@ def call_run(args):
     logger.info("Metadata:{}".format(links['metadata']))
     logger.info("Timing Graph:{}".format(links['timing']))
     print ("These will also be e-mailed to you when the workflow completes.")
+    cromwell.label_workflow(result['id'], {'username': getpass.getuser()})
     if args.monitor:
         time.sleep(2)
         retry = 4
@@ -171,6 +172,7 @@ def call_restart(args):
         msg = "Workflow restarted successfully; new workflow-id: " + str(result['id'])
         print(msg)
         logger.info(msg)
+        cromwell.label_workflow(result['id'], {'username': getpass.getuser()})
     else:
         msg = "Workflow was not restarted successfully; server response: " + str(result)
         print(msg)
