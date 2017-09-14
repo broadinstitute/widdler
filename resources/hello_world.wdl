@@ -1,13 +1,14 @@
 task helloWorld {
     String name
-    command {
-        python C:\Dev\Python\widdler>python widdler.py -h -u ${name}
+ command {
+    echo Hello, ${name}
     }
-    }
+#    runtime {
+#    backend: "Local"
+#    }
+}
+
 workflow hello {
     String name
-
-    call helloWorld{
-    input:name=name
-    }
+    call helloWorld {input: name = name}
 }

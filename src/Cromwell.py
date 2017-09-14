@@ -81,9 +81,14 @@ class Cromwell:
 
         def parse_logs(call):
             log = {}
-            log['stdout'] = {'name': call['stdout']}
-            log['stderr'] = {'name': call['stderr']}
-
+            try:
+                log['stdout'] = {'name': call['stdout']}
+            except KeyError as e:
+                log['stddout'] = e
+            try:
+                log['stderr'] = {'name': call['stderr']}
+            except KeyError as e:
+                log['stderr'] = e
             if full_logs:
                 try:
                     with open(call['stdout'], 'r') as stdout_in:
@@ -100,16 +105,21 @@ class Cromwell:
         return map(lambda c:parse_logs(c), filteredCalls[:limit_n])
 
     def explain_workflow(self, workflow_id, include_inputs=True):
+
+        def assign(sdict, ddict, key):
+            try:
+                ddict[key] = sdict[key]
+            except KeyError as e:
+                ddict[key] = e
         result = self.query_metadata(workflow_id)
         explain_res = {}
         additional_res= {}
         stdout_res = {}
 
-        if result != None:
-            explain_res["status"] = result["status"]
-            explain_res["id"] = result["id"]
-            explain_res["workflowRoot"] = result["workflowRoot"]
-
+        if not result:
+            assign(result, explain_res, 'status')
+            assign(result, explain_res, 'id')
+            assign(result, explain_res, 'workflowRoot')
             if explain_res["status"] == "Failed":
                 stdout_res["failed_jobs"] = Cromwell.getCalls('RetryableFailure', result['calls'].values(),
                                                               full_logs=True)
