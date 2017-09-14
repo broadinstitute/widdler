@@ -116,7 +116,7 @@ class Cromwell:
         additional_res= {}
         stdout_res = {}
 
-        if not result:
+        if result != None:
             assign(result, explain_res, 'status')
             assign(result, explain_res, 'id')
             assign(result, explain_res, 'workflowRoot')

@@ -121,7 +121,7 @@ def call_query(args):
         logger.info("Logs requested.")
         logs = cromwell.query_logs(args.workflow_id)
         responses.append(logs)
-    logger.debug("Query Results:\n".join(responses))
+    logger.debug("Query Results:\n" + str(responses))
     return responses
 
 
@@ -131,7 +131,7 @@ def call_validate(args):
     result = validator.validate_json()
     if len(result) != 0:
         e = "{} input file contains the following errors:\n{}".format(args.json, "\n".join(result))
-        print(e)
+        # This will also print to stdout so no need for a print statement
         logger.critical(e)
         sys.exit(-1)
     else:
@@ -196,7 +196,6 @@ def call_explain(args):
 
     printer = pprint.PrettyPrinter()
     printer.format = my_safe_repr
-
     if result is not None:
         print("-------------Workflow Status-------------")
         printer.pprint(result)
