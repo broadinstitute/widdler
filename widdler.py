@@ -20,7 +20,7 @@ __author__ = "Amr Abouelleil, Paul Cao"
 __copyright__ = "Copyright 2017, The Broad Institute"
 __credits__ = ["Amr Abouelleil", "Paul Cao", "Jean Chang"]
 __license__ = "GPL"
-__version__ = "1.0"
+__version__ = "1.0.3"
 __maintainer__ = "Amr Abouelleil"
 __email__ = "amr@broadinstitute.org"
 __status__ = "Production"
@@ -87,6 +87,7 @@ def call_run(args):
     logger.info("Metadata:{}".format(links['metadata']))
     logger.info("Timing Graph:{}".format(links['timing']))
     print ("These will also be e-mailed to you when the workflow completes.")
+    cromwell.label_workflow(result['id'], {'username': getpass.getuser()})
     if args.monitor:
         time.sleep(2)
         retry = 4
@@ -121,7 +122,7 @@ def call_query(args):
         logger.info("Logs requested.")
         logs = cromwell.query_logs(args.workflow_id)
         responses.append(logs)
-    logger.debug("Query Results:\n".join(responses))
+    logger.debug("Query Results:\n" + str(responses))
     return responses
 
 
@@ -131,7 +132,7 @@ def call_validate(args):
     result = validator.validate_json()
     if len(result) != 0:
         e = "{} input file contains the following errors:\n{}".format(args.json, "\n".join(result))
-        print(e)
+        # This will also print to stdout so no need for a print statement
         logger.critical(e)
         sys.exit(-1)
     else:
@@ -171,6 +172,7 @@ def call_restart(args):
         msg = "Workflow restarted successfully; new workflow-id: " + str(result['id'])
         print(msg)
         logger.info(msg)
+        cromwell.label_workflow(result['id'], {'username': getpass.getuser()})
     else:
         msg = "Workflow was not restarted successfully; server response: " + str(result)
         print(msg)
@@ -179,7 +181,7 @@ def call_restart(args):
 
 def get_cromwell_links(server, workflow_id, port):
     return {'metadata': 'http://{}:{}/api/workflows/v1/{}/metadata'.format(server, port, workflow_id),
-            'timing': 'http://{}:{}/api/workflows/v1/{}/metadata'.format(server, port, workflow_id)}
+            'timing': 'http://{}:{}/api/workflows/v1/{}/timing'.format(server, port, workflow_id)}
 
 
 def call_explain(args):
@@ -196,7 +198,6 @@ def call_explain(args):
 
     printer = pprint.PrettyPrinter()
     printer.format = my_safe_repr
-
     if result is not None:
         print("-------------Workflow Status-------------")
         printer.pprint(result)

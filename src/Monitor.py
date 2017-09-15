@@ -56,18 +56,15 @@ class Monitor:
         A function for creating a list of workflows owned by a particular user.
         :return: A list of workflow IDs owned by the user.
         """
-        print('Determining {}\'s workflows. This could take a while...'.format(self.user))
-        workflows = []
-        results = self.cromwell.query(query_dict={})
-        for result in results['results']:
-            workflows.append(result['id'])
-        # With the list of workflows, query metadata for each one
-        p = Pool()
-        func = partial(is_user_workflow, self.host, self.user)
-        results = p.map(func, workflows)
-        p.close()
-        p.join()
-        user_workflows = ([x for x in results if x is not None])
+        print('Determining {}\'s workflows...'.format(self.user))
+        user_workflows = []
+        results = self.cromwell.query_labels({'username': self.user})
+        try:
+            for result in results['results']:
+                if result['status'] in c.run_states:
+                    user_workflows.append(result['id'])
+        except KeyError as e:
+            print('No user workflows found with username {}.'.format(self.user))
         return user_workflows
 
     def monitor_user_workflows(self):
@@ -76,9 +73,12 @@ class Monitor:
         :return:
         """
         print('Monitoring {}\'s workflows.'.format(self.user))
-        user_workflows = self.get_user_workflows()
-        for workflow in user_workflows:
-            self.monitor_workflow(workflow)
+        workflows = self.get_user_workflows()
+        if len(workflows) == 0:
+            print("User {} has no running workflows.".format(self.user))
+        else:
+            for workflow in workflows:
+                self.monitor_workflow(workflow)
 
     def monitor_workflow(self, workflow_id):
         """
@@ -86,12 +86,12 @@ class Monitor:
         :param workflow_id: Workflow ID of workflow to monitor.
         :return: returns 0 when workflow reaches terminal state.
         """
-        run_states = ['Running', 'Submitted', 'QueuedInCromwell']
+
         while 0 == 0:
             query_status = self.cromwell.query_status(workflow_id)
             if self.verbose:
                 print('Workflow {} | {}'.format(query_status['id'], query_status['status']))
-            if query_status['status'] not in run_states:
+            if query_status['status'] not in c.run_states:
                 if not self.no_notify:
                     filename = '{}.metadata.json'.format(query_status['id'])
                     filepath = os.path.join(c.log_dir, '{}.metadata.json'.format(query_status['id']))
