@@ -27,11 +27,12 @@ class Cromwell:
         self.logger = logging.getLogger('widdler.cromwell.Cromwell')
         self.logger.info('URL:{}'.format(self.url))
 
-    def get(self, rtype, workflow_id=None):
+    def get(self, rtype, workflow_id=None, headers=None):
         """
         A generic get request function.
         :param rtype: a type of request such as 'abort' or 'status'.
         :param workflow_id: The ID of a workflow if get request requires one.
+        :param headers: Optional headers for request.
         :return: json of request response
         """
         if workflow_id:
@@ -39,7 +40,10 @@ class Cromwell:
         else:
             workflow_url = self.url + '/' + rtype
         self.logger.info("GET REQUEST:{}".format(workflow_url))
-        r = requests.get(workflow_url)
+        if headers:
+            r = requests.get(workflow_url, headers=headers)
+        else:
+            r = requests.get(workflow_url)
         return json.loads(r.content)
 
     def post(self, rtype, workflow_id=None):
@@ -220,7 +224,7 @@ class Cromwell:
         :return: Request Response json.
         """
         self.logger.info('Querying metadata for workflow {}'.format(workflow_id))
-        return self.get('metadata', workflow_id)
+        return self.get('metadata', workflow_id, {'Accept': 'application/json', 'Accept-Encoding': 'identity'})
 
     def label_workflow(self, workflow_id, labels):
         labels_json = json.dumps(labels)

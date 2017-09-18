@@ -19,7 +19,7 @@ class CromwellUnitTests(unittest.TestCase):
         hdlr.setFormatter(formatter)
         self.logger.addHandler(hdlr)
         self.logger.setLevel(logging.INFO)
-        self.cromwell = Cromwell(host='btl-cromwell')
+        self.cromwell = Cromwell(host='local-host')
         self.json = os.path.join(resources, 'test.json')
         self.wdl = os.path.join(resources, 'test.wdl')
         self.logger.info('Resources: {}, {}'.format(self.wdl, self.json))
