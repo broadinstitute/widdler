@@ -29,7 +29,7 @@ __status__ = "Production"
 logger = logging.getLogger('widdler')
 logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
-fh = logging.FileHandler(os.path.join(c.log_dir, '{}.widdler.log'.format(str(time.time()))))
+fh = logging.FileHandler(os.path.join(c.log_dir, '{}.widdler.log'.format(str(time.strftime("%m.%d.%Y")))))
 fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
@@ -87,15 +87,14 @@ def call_run(args):
     logger.info("Metadata:{}".format(links['metadata']))
     logger.info("Timing Graph:{}".format(links['timing']))
     print ("These will also be e-mailed to you when the workflow completes.")
-    cromwell.label_workflow(result['id'], {'username': getpass.getuser()})
+    cromwell.label_workflow(result['id'], {'username': args.username})
     if args.monitor:
-        time.sleep(2)
         retry = 4
         while retry != 0:
             try:
                 args.workflow_id = result['id']
                 call_monitor(args)
-                break
+                retry = 0
             except KeyError as e:
                 logger.debug(e)
                 retry = retry - 1
@@ -154,6 +153,9 @@ def call_abort(args):
 
 def call_monitor(args):
     logger.info("Monitoring requested")
+    # this sleep is to allow job to get started in Cromwell before querying. Probably better ways to do this
+    # but for now this works.
+    time.sleep(2)
     print("-------------Monitoring Workflow-------------")
     m = Monitor(host=args.server, user=args.username, no_notify=args.no_notify, verbose=args.verbose,
                 interval=args.interval)
