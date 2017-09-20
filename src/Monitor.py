@@ -51,14 +51,18 @@ class Monitor:
         self.no_notify = no_notify
         self.verbose = verbose
 
-    def get_user_workflows(self):
+    def get_user_workflows(self, raw=False, start_time=None):
         """
         A function for creating a list of workflows owned by a particular user.
         :return: A list of workflow IDs owned by the user.
         """
         print('Determining {}\'s workflows...'.format(self.user))
         user_workflows = []
-        results = self.cromwell.query_labels({'username': self.user})
+        results = self.cromwell.query_labels({'username': self.user}, start_time=start_time)
+
+        if raw:
+            return results
+
         try:
             for result in results['results']:
                 if result['status'] in c.run_states:

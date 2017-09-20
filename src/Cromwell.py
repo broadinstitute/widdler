@@ -5,6 +5,7 @@ import requests
 import datetime
 import getpass
 from requests.utils import quote
+import urllib
 
 module_logger = logging.getLogger('widdler.Cromwell')
 
@@ -231,7 +232,7 @@ class Cromwell:
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         return self.patch('labels', workflow_id, labels_json, headers)
 
-    def query_labels(self, labels):
+    def query_labels(self, labels, start_time=None):
         """
         Query cromwell database with a given set of labels.
         :param labels: A dictionary of label keys and values.
@@ -240,7 +241,9 @@ class Cromwell:
         label_dict = {}
         for k, v in labels.items():
             label_dict["label=" + k] = v
-        url = self.build_query_url(self.url + '/query?', label_dict, ':')
+
+        time_query = "start=" + start_time + "&" if start_time != None else ""
+        url = self.build_query_url(self.url + '/query?' + time_query, label_dict, ':')
         r = requests.get(url)
         return json.loads(r.content)
 

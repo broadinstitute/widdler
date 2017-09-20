@@ -16,6 +16,9 @@ import json
 import zipfile
 import pprint
 import time
+import pytz
+import datetime
+
 __author__ = "Amr Abouelleil, Paul Cao"
 __copyright__ = "Copyright 2017, The Broad Institute"
 __credits__ = ["Amr Abouelleil", "Paul Cao", "Jean Chang"]
@@ -226,6 +229,37 @@ def call_explain(args):
     args.monitor = True
     return None
 
+def call_list(args):
+    m = Monitor(host=args.server, user=args.username, no_notify=True, verbose=True,
+                interval=None)
+
+    def get_iso_date(dt):
+        tz = pytz.timezone("US/Eastern")
+        return tz.localize(dt).isoformat()
+
+    def process_job(job):
+        links = get_cromwell_links(args.server, job['id'], m.cromwell.port)
+        job['metadata'] = links['metadata']
+        job['timing'] = links['timing']
+        return job
+
+    def my_safe_repr(object, context, maxlevels, level):
+        typ = pprint._type(object)
+        if typ is unicode:
+            object = str(object)
+        return pprint._safe_repr(object, context, maxlevels, level)
+
+    start_date_str = get_iso_date(datetime.datetime.now() - datetime.timedelta(days=int(args.days)))
+    result = m.get_user_workflows(raw=True,start_time=start_date_str)["results"]
+
+    result = map(lambda j:process_job(j), result)
+    printer = pprint.PrettyPrinter()
+    printer.format = my_safe_repr
+    printer.pprint(result)
+
+    args.monitor = True
+    return None
+
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
     usage='widdler.py <run | monitor | query | abort | validate |restart | explain> [<args>]',
@@ -253,6 +287,19 @@ explain.add_argument('-S', '--server', action='store', required=True, type=str, 
 explain.add_argument('-I', '--input', action='store_true', default=False, help=argparse.SUPPRESS)
 explain.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 explain.set_defaults(func=call_explain)
+
+list = sub.add_parser(name='list',
+                         description='List the workflows.',
+                         usage='widdler.py list',
+                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+list.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
+                     help='Choose a cromwell server from {}'.format(c.servers))
+list.add_argument('-u', '--username', action='store', default=getpass.getuser(),
+                     help='Owner of workflows to monitor.')
+list.add_argument('-d', '--days', action='store', default=7,
+                     help='Owner of workflows to monitor.')
+list.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
+list.set_defaults(func=call_list)
 
 abort = sub.add_parser(name='abort',
                        description='Abort a submitted workflow.',
