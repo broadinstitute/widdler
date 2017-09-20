@@ -87,6 +87,7 @@ class Cromwell:
 
     @staticmethod
     def getCalls(status, call_arr, full_logs=False, limit_n=3):
+
         filteredCalls = list(filter(lambda c:c[0]['executionStatus'] == status, call_arr))
         filteredCalls = map(lambda c:c[0], filteredCalls)
 
@@ -232,7 +233,7 @@ class Cromwell:
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         return self.patch('labels', workflow_id, labels_json, headers)
 
-    def query_labels(self, labels, start_time=None):
+    def query_labels(self, labels, start_time=None, running_jobs=False):
         """
         Query cromwell database with a given set of labels.
         :param labels: A dictionary of label keys and values.
@@ -243,7 +244,8 @@ class Cromwell:
             label_dict["label=" + k] = v
 
         time_query = "start=" + start_time + "&" if start_time != None else ""
-        url = self.build_query_url(self.url + '/query?' + time_query, label_dict, ':')
+        running_query = "status=Submitted&status=Running" if running_jobs else ""
+        url = self.build_query_url(self.url + '/query?' + time_query + running_query, label_dict, ':')
         r = requests.get(url)
         return json.loads(r.content)
 

@@ -58,7 +58,12 @@ class Monitor:
         """
         print('Determining {}\'s workflows...'.format(self.user))
         user_workflows = []
-        results = self.cromwell.query_labels({'username': self.user}, start_time=start_time)
+
+        results = None
+        if self.user == "*":
+            results = self.cromwell.query_labels({}, start_time=start_time, running_jobs=True)
+        else:
+            results = self.cromwell.query_labels({'username': self.user}, start_time=start_time)
 
         if raw:
             return results

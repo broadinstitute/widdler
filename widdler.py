@@ -113,6 +113,10 @@ def call_query(args):
     """
     cromwell = Cromwell(host=args.server)
     responses = []
+
+    if args.workflow_id == None or args.workflow_id == "None":
+        return call_list(args)
+
     if args.status:
         logger.info("Status requested.")
         status = cromwell.query_status(args.workflow_id)
@@ -230,7 +234,8 @@ def call_explain(args):
     return None
 
 def call_list(args):
-    m = Monitor(host=args.server, user=args.username, no_notify=True, verbose=True,
+    username = "*" if args.all else args.username
+    m = Monitor(host=args.server, user=username, no_notify=True, verbose=True,
                 interval=None)
 
     def get_iso_date(dt):
@@ -288,19 +293,6 @@ explain.add_argument('-I', '--input', action='store_true', default=False, help=a
 explain.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 explain.set_defaults(func=call_explain)
 
-list = sub.add_parser(name='list',
-                         description='List the workflows.',
-                         usage='widdler.py list',
-                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-list.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
-                     help='Choose a cromwell server from {}'.format(c.servers))
-list.add_argument('-u', '--username', action='store', default=getpass.getuser(),
-                     help='Owner of workflows to monitor.')
-list.add_argument('-d', '--days', action='store', default=7,
-                     help='Owner of workflows to monitor.')
-list.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
-list.set_defaults(func=call_list)
-
 abort = sub.add_parser(name='abort',
                        description='Abort a submitted workflow.',
                        usage='widdler.py abort <workflow id>',
@@ -336,12 +328,15 @@ query = sub.add_parser(name='query',
                        description='Query cromwell for information on the submitted workflow.',
                        usage='widdler.py query <workflow id> [<args>]',
                        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-query.add_argument('workflow_id', action='store', help='workflow id for workflow execution of interest.')
+query.add_argument('workflow_id', nargs='?', default="None", help='workflow id for workflow execution of interest.')
 query.add_argument('-s', '--status', action='store_true', default=False, help='Print status for workflow to stdout')
 query.add_argument('-m', '--metadata', action='store_true', default=False, help='Print metadata for workflow to stdout')
 query.add_argument('-l', '--logs', action='store_true', default=False, help='Print logs for workflow to stdout')
+query.add_argument('-u', '--username', action='store', default=getpass.getuser(),help='Owner of workflows to monitor.')
+query.add_argument('-d', '--days', action='store', default=7, help='Last n days to query.')
 query.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                    help='Choose a cromwell server from {}'.format(c.servers))
+query.add_argument('-a', '--all', action='store_true', default=False, help='Query for all users.')
 query.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 
 query.set_defaults(func=call_query)
