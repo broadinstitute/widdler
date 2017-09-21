@@ -375,6 +375,7 @@ run.add_argument('-d', '--dependencies', action='store', default=None, type=is_v
                  help='A zip file containing one or more WDL files that the main WDL imports.')
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                  help='Choose a cromwell server from {}'.format(c.servers))
+run.add_argument('-l', '--label', action='append', help='A key:value pair to assign. May be used multiple times.')
 run.add_argument('-u', '--username', action='store', default=getpass.getuser(), help=argparse.SUPPRESS)
 run.add_argument('-w', '--workflow_id', help=argparse.SUPPRESS)
 run.set_defaults(func=call_run)
