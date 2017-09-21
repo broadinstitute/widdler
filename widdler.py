@@ -233,6 +233,7 @@ def call_explain(args):
     args.monitor = True
     return None
 
+
 def call_list(args):
     username = "*" if args.all else args.username
     m = Monitor(host=args.server, user=username, no_notify=True, verbose=True,
