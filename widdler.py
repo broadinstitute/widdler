@@ -23,7 +23,7 @@ __author__ = "Amr Abouelleil, Paul Cao"
 __copyright__ = "Copyright 2017, The Broad Institute"
 __credits__ = ["Amr Abouelleil", "Paul Cao", "Jean Chang"]
 __license__ = "GPL"
-__version__ = "1.1.4"
+__version__ = "1.2.4"
 __maintainer__ = "Amr Abouelleil"
 __email__ = "amr@broadinstitute.org"
 __status__ = "Production"
@@ -256,7 +256,7 @@ def call_list(args):
         return pprint._safe_repr(object, context, maxlevels, level)
 
     start_date_str = get_iso_date(datetime.datetime.now() - datetime.timedelta(days=int(args.days)))
-    result = m.get_user_workflows(raw=True,start_time=start_date_str)["results"]
+    result = m.get_user_workflows(raw=True, start_time=start_date_str)["results"]
 
     result = map(lambda j:process_job(j), result)
     printer = pprint.PrettyPrinter()
@@ -266,9 +266,21 @@ def call_list(args):
     args.monitor = True
     return None
 
+
+def call_label(args):
+    cromwell = Cromwell(host=args.server)
+    # cromwell.label_workflow(args.workflow_id)
+    labels_dict = dict()
+    for label in args.label:
+        (key, val) = label.split(':')
+        labels_dict[key] = val
+    response = cromwell.label_workflow(args.workflow_id, labels=labels_dict)
+    print(response)
+
+
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
-    usage='widdler.py <run | monitor | query | abort | validate |restart | explain> [<args>]',
+    usage='widdler.py <run | monitor | query | abort | validate |restart | explain | label> [<args>]',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 sub = parser.add_subparsers()
@@ -375,6 +387,18 @@ validate.add_argument('wdl', action='store', type=is_valid, help='Path to the WD
 validate.add_argument('json', action='store', type=is_valid, help='Path the json inputs file to validate.')
 validate.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 validate.set_defaults(func=call_validate)
+
+label = sub.add_parser(name='label',
+                       description='Label a specific workflow with one or more key/value pairs.',
+                       usage='widdler.py label <workflow_id> [<args>]',
+                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+label.add_argument('workflow_id', nargs='?', default="None", help='workflow id for workflow to label.')
+label.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
+                   help='Choose a cromwell server from {}'.format(c.servers))
+label.add_argument('-l', '--label', action='append', help='A key:value pair to assign. May be used multiple times.')
+label.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
+
+label.set_defaults(func=call_label)
 
 args = parser.parse_args()
 
