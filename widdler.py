@@ -16,6 +16,9 @@ import json
 import zipfile
 import pprint
 import time
+import pytz
+import datetime
+
 __author__ = "Amr Abouelleil, Paul Cao"
 __copyright__ = "Copyright 2017, The Broad Institute"
 __credits__ = ["Amr Abouelleil", "Paul Cao", "Jean Chang"]
@@ -110,6 +113,10 @@ def call_query(args):
     """
     cromwell = Cromwell(host=args.server)
     responses = []
+
+    if args.workflow_id == None or args.workflow_id == "None":
+        return call_list(args)
+
     if args.status:
         logger.info("Status requested.")
         status = cromwell.query_status(args.workflow_id)
@@ -226,6 +233,38 @@ def call_explain(args):
     args.monitor = True
     return None
 
+def call_list(args):
+    username = "*" if args.all else args.username
+    m = Monitor(host=args.server, user=username, no_notify=True, verbose=True,
+                interval=None)
+
+    def get_iso_date(dt):
+        tz = pytz.timezone("US/Eastern")
+        return tz.localize(dt).isoformat()
+
+    def process_job(job):
+        links = get_cromwell_links(args.server, job['id'], m.cromwell.port)
+        job['metadata'] = links['metadata']
+        job['timing'] = links['timing']
+        return job
+
+    def my_safe_repr(object, context, maxlevels, level):
+        typ = pprint._type(object)
+        if typ is unicode:
+            object = str(object)
+        return pprint._safe_repr(object, context, maxlevels, level)
+
+    start_date_str = get_iso_date(datetime.datetime.now() - datetime.timedelta(days=int(args.days)))
+    result = m.get_user_workflows(raw=True,start_time=start_date_str)["results"]
+
+    result = map(lambda j:process_job(j), result)
+    printer = pprint.PrettyPrinter()
+    printer.format = my_safe_repr
+    printer.pprint(result)
+
+    args.monitor = True
+    return None
+
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
     usage='widdler.py <run | monitor | query | abort | validate |restart | explain> [<args>]',
@@ -289,12 +328,15 @@ query = sub.add_parser(name='query',
                        description='Query cromwell for information on the submitted workflow.',
                        usage='widdler.py query <workflow id> [<args>]',
                        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-query.add_argument('workflow_id', action='store', help='workflow id for workflow execution of interest.')
+query.add_argument('workflow_id', nargs='?', default="None", help='workflow id for workflow execution of interest.')
 query.add_argument('-s', '--status', action='store_true', default=False, help='Print status for workflow to stdout')
 query.add_argument('-m', '--metadata', action='store_true', default=False, help='Print metadata for workflow to stdout')
 query.add_argument('-l', '--logs', action='store_true', default=False, help='Print logs for workflow to stdout')
+query.add_argument('-u', '--username', action='store', default=getpass.getuser(),help='Owner of workflows to monitor.')
+query.add_argument('-d', '--days', action='store', default=7, help='Last n days to query.')
 query.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                    help='Choose a cromwell server from {}'.format(c.servers))
+query.add_argument('-a', '--all', action='store_true', default=False, help='Query for all users.')
 query.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 
 query.set_defaults(func=call_query)
