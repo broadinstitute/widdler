@@ -243,17 +243,6 @@ class Cromwell:
         self.logger.info('Querying metadata for workflow {}'.format(workflow_id))
         return self.get('metadata', workflow_id, {'Accept': 'application/json', 'Accept-Encoding': 'identity'})
 
-    def label_workflow(self, workflow_id, labels):
-        """
-        A method for labeling a workflow with one more labels.
-        :param workflow_id: Workflow ID to label.
-        :param labels: A dictionary of labels.
-        :return: JSON response
-        """
-        labels_json = json.dumps(labels)
-        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-        return self.patch('labels', workflow_id, labels_json, headers)
-
     def query_labels(self, labels, start_time=None, running_jobs=False):
         """
         Query cromwell database with a given set of labels.

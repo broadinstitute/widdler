@@ -91,6 +91,8 @@ def call_run(args):
     logger.info("Timing Graph:{}".format(links['timing']))
     print ("These will also be e-mailed to you when the workflow completes.")
     cromwell.label_workflow(result['id'], {'username': args.username})
+    if args.label:
+        call_label(args)
     if args.monitor:
         retry = 4
         while retry != 0:
@@ -112,10 +114,12 @@ def call_query(args):
     """
     cromwell = Cromwell(host=args.server)
     responses = []
-
-    if args.workflow_id == None or args.workflow_id == "None":
+    if args.workflow_id == None or args.workflow_id == "None" and not args.label:
         return call_list(args)
-
+    if args.label:
+        logger.info("Label query requested.")
+        labeled = cromwell.query_labels(labels=labels_to_dict(args.label))
+        return labeled
     if args.status:
         logger.info("Status requested.")
         status = cromwell.query_status(args.workflow_id)
@@ -258,28 +262,35 @@ def call_list(args):
         return pprint._safe_repr(object, context, maxlevels, level)
 
     start_date_str = get_iso_date(datetime.datetime.now() - datetime.timedelta(days=int(args.days)))
-    result = m.get_user_workflows(raw=True, start_time=start_date_str)["results"]
+    q = m.get_user_workflows(raw=True, start_time=start_date_str)
+    try:
+        result = q["results"]
+        result = map(lambda j: process_job(j), result)
+        printer = pprint.PrettyPrinter()
+        printer.format = my_safe_repr
+        printer.pprint(result)
+        args.monitor = True
+        return None
+    except KeyError as e:
+        logger.critical('KeyError: Unable to find key {}'.format(e))
 
-    result = map(lambda j:process_job(j), result)
-    printer = pprint.PrettyPrinter()
-    printer.format = my_safe_repr
-    printer.pprint(result)
 
-    args.monitor = True
-    return None
+def labels_to_dict(labels):
+    labels_dict = dict()
+    for label in labels:
+        (key, val) = label.split(':')
+        labels_dict[key] = val
+    return labels_dict
 
 
 def call_label(args):
     cromwell = Cromwell(host=args.server)
-    # cromwell.label_workflow(args.workflow_id)
-    labels_dict = dict()
-    for label in args.label:
-        (key, val) = label.split(':')
-        labels_dict[key] = val
+    labels_dict = labels_to_dict(args.label)
     response = cromwell.label_workflow(args.workflow_id, labels=labels_dict)
-    print(response)
-
-
+    if response.status_code == 200:
+        print("Labels successfully applied:\n{}".format(response.content))
+    else:
+        logger.critical("Unable to apply specified labels:\n{}".format(response.content))
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
     usage='widdler.py <run | monitor | query | abort | validate |restart | explain | label> [<args>]',
@@ -347,7 +358,8 @@ query.add_argument('workflow_id', nargs='?', default="None", help='workflow id f
 query.add_argument('-s', '--status', action='store_true', default=False, help='Print status for workflow to stdout')
 query.add_argument('-m', '--metadata', action='store_true', default=False, help='Print metadata for workflow to stdout')
 query.add_argument('-l', '--logs', action='store_true', default=False, help='Print logs for workflow to stdout')
-query.add_argument('-u', '--username', action='store', default=getpass.getuser(),help='Owner of workflows to monitor.')
+query.add_argument('-u', '--username', action='store', default=getpass.getuser(), help='Owner of workflows to monitor.')
+query.add_argument('-L', '--label', action='append', help='Query status of all workflows with specific label(s).')
 query.add_argument('-d', '--days', action='store', default=7, help='Last n days to query.')
 query.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                    help='Choose a cromwell server from {}'.format(c.servers))
@@ -372,7 +384,7 @@ run.add_argument('-i', '--interval', action='store', default=30, type=int,
 run.add_argument('-V', '--verbose', action='store_true', default=False,
                  help='If selected, widdler will write the current status to STDOUT until completion while monitoring.')
 run.add_argument('-n', '--no_notify', action='store_true', default=False,
-                     help='When selected, disable widdler e-mail notification of workflow completion.')
+                 help='When selected, disable widdler e-mail notification of workflow completion.')
 run.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
                  help='A zip file containing one or more WDL files that the main WDL imports.')
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
@@ -400,7 +412,6 @@ label.add_argument('-S', '--server', action='store', required=True, type=str, ch
                    help='Choose a cromwell server from {}'.format(c.servers))
 label.add_argument('-l', '--label', action='append', help='A key:value pair to assign. May be used multiple times.')
 label.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
-
 label.set_defaults(func=call_label)
 
 args = parser.parse_args()
