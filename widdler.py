@@ -82,7 +82,8 @@ def call_run(args):
     if args.validate:
         call_validate(args)
     cromwell = Cromwell(host=args.server)
-    result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies)
+    result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies,
+                                      disable_caching=args.disable_caching)
     print("-------------Cromwell Links-------------")
     links = get_cromwell_links(args.server, result['id'], cromwell.port)
     print (links['metadata'])
@@ -305,7 +306,7 @@ restart.add_argument('workflow_id', action='store', help='workflow id of workflo
 restart.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                      help='Choose a cromwell server from {}'.format(c.servers))
 restart.add_argument('-M', '--monitor', action='store_true', default=True, help=argparse.SUPPRESS)
-restart.add_argument('-D', '--disable_caching', action='store_true', default=False, help=argparse.SUPPRESS)
+restart.add_argument('-D', '--disable_caching', action='store_true', default=False, help="Don't used cached data.")
 restart.set_defaults(func=call_restart)
 
 explain = sub.add_parser(name='explain',
@@ -377,6 +378,7 @@ run.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL to 
 run.add_argument('json', action='store', type=is_valid, help='Path the json inputs file.')
 run.add_argument('-v', '--validate', action='store_true', default=False,
                  help='Validate WDL inputs in json file.')
+run.add_argument('-l', '--label', action='append', help='A key:value pair to assign. May be used multiple times.')
 run.add_argument('-m', '--monitor', action='store_true', default=False,
                  help='Monitor the workflow and receive an e-mail notification when it terminates.')
 run.add_argument('-i', '--interval', action='store', default=30, type=int,
@@ -387,9 +389,9 @@ run.add_argument('-n', '--no_notify', action='store_true', default=False,
                  help='When selected, disable widdler e-mail notification of workflow completion.')
 run.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
                  help='A zip file containing one or more WDL files that the main WDL imports.')
+run.add_argument('-D', '--disable_caching', action='store_true', default=False, help="Don't used cached data.")
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                  help='Choose a cromwell server from {}'.format(c.servers))
-run.add_argument('-l', '--label', action='append', help='A key:value pair to assign. May be used multiple times.')
 run.add_argument('-u', '--username', action='store', default=getpass.getuser(), help=argparse.SUPPRESS)
 run.add_argument('-w', '--workflow_id', help=argparse.SUPPRESS)
 run.set_defaults(func=call_run)
