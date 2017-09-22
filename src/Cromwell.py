@@ -5,6 +5,7 @@ import requests
 import datetime
 import getpass
 from requests.utils import quote
+import urllib
 
 module_logger = logging.getLogger('widdler.Cromwell')
 
@@ -86,6 +87,7 @@ class Cromwell:
 
     @staticmethod
     def getCalls(status, call_arr, full_logs=False, limit_n=3):
+
         filteredCalls = list(filter(lambda c:c[0]['executionStatus'] == status, call_arr))
         filteredCalls = map(lambda c:c[0], filteredCalls)
 
@@ -242,11 +244,17 @@ class Cromwell:
         return self.get('metadata', workflow_id, {'Accept': 'application/json', 'Accept-Encoding': 'identity'})
 
     def label_workflow(self, workflow_id, labels):
+        """
+        A method for labeling a workflow with one more labels.
+        :param workflow_id: Workflow ID to label.
+        :param labels: A dictionary of labels.
+        :return: JSON response
+        """
         labels_json = json.dumps(labels)
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         return self.patch('labels', workflow_id, labels_json, headers)
 
-    def query_labels(self, labels):
+    def query_labels(self, labels, start_time=None, running_jobs=False):
         """
         Query cromwell database with a given set of labels.
         :param labels: A dictionary of label keys and values.
@@ -255,7 +263,10 @@ class Cromwell:
         label_dict = {}
         for k, v in labels.items():
             label_dict["label=" + k] = v
-        url = self.build_query_url(self.url + '/query?', label_dict, ':')
+
+        time_query = "start=" + start_time + "&" if start_time != None else ""
+        running_query = "status=Submitted&status=Running" if running_jobs else ""
+        url = self.build_query_url(self.url + '/query?' + time_query + running_query, label_dict, ':')
         r = requests.get(url)
         return json.loads(r.content)
 
