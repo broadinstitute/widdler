@@ -17,7 +17,7 @@ Features include:
 ## Dependencies
 
 Widdler requires Python 2.7 and Java-1.8 to be loaded in your environment in order for full functionality to work.
-In addition, it uses the following Python libraries. See requirements.txt for additional Python library requirements.
+In addition, it uses the following Python libraries. See [requirements.txt](https://github.com/broadinstitute/widdler/blob/master/requirements.txt) for additional Python library requirements.
 
 ## Usage
 
