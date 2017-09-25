@@ -248,15 +248,14 @@ class Cromwell:
         label_dict = {}
         for k, v in labels.items():
             label_dict["label=" + k] = v
-
-        time_query = "start=" + start_time + "&" if start_time != None else ""
-        # running_query = "status=Submitted&status=Running" if running_jobs else ""
+        time_query = "start=" + start_time if start_time != None else ""
         status_query = ""
         if status_filter:
             for status in status_filter:
                 status_query += "status={}&".format(status)
-        url = self.build_query_url(self.url + '/query?' + time_query + status_query, label_dict, ':')
-        r = requests.get(url)
+        url = self.build_query_url(self.url + '/query?' + "&".join([time_query, status_query]), label_dict, ':')
+        # In soem cases we can get a dangling & so this removed that.
+        r = requests.get(url.rstrip('&'))
         return json.loads(r.content)
 
     def query_status(self, workflow_id):
