@@ -355,7 +355,6 @@ returns:
      'start': '2017-09-19T10:02:47.247-04:00',
      'status': 'Succeeded',
      'timing': 'http://ale:9000/api/workflows/v1/bed73265-6eaf-4984-895d-5054aa7f577c/timing'}]
-   
 ```
 
 ### widdler.py abort
