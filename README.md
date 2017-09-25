@@ -7,15 +7,17 @@ Features include:
 
 * Workflow execution: Execute a workflow on a specified Cromwell server.
 * Workflow restart: Restart a previously executed workflow.
-* Workflow queries: Get the status, metadata, or logs for a specific workflow.
+* Workflow queries: Query workflow(s) to get metadata information and more, and query by labels.
 * Workflow result explanation: Get more detailed information on fails at the command line. 
 * Workflow monitoring: Monitor a specific workflow or set of user-specific workflows to completion.
+* Workflow labeling: Add one ore more labels to a given workflow that can then be queried.
 * Workflow abortion: Abort a running workflow.
 * JSON validation: Validate a JSON input file against the WDL file intended for use.
 
 ## Dependencies
 
 Widdler requires Python 2.7 and Java-1.8 to be loaded in your environment in order for full functionality to work.
+In addition, it uses the following Python libraries. See [requirements.txt](https://github.com/broadinstitute/widdler/blob/master/requirements.txt) for additional Python library requirements.
 
 ## Usage
 
@@ -23,17 +25,15 @@ Below is widdler's basic help text. Widdler expects one of three usage modes to
 be indicated as it's first argument: run, query, or abort.
 
 ```
-usage: widdler.py <run | monitor | query | abort | validate |restart | explain> [<args>]
+usage: widdler.py <run | monitor | query | abort | validate |restart | explain | label> [<args>]
 
 Description: A tool for executing and monitoring WDLs to Cromwell instances.
 
 positional arguments:
-  {restart,explain,abort,monitor,query,run,validate}
+  {restart,explain,abort,monitor,query,run,validate,label}
 
 optional arguments:
   -h, --help            show this help message and exit
-
-
 ```
 
 ### widdler.py run
@@ -54,6 +54,9 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -v, --validate        Validate WDL inputs in json file. (default: False)
+  -l LABEL, --label LABEL
+                        A key:value pair to assign. May be used multiple
+                        times. (default: None)
   -m, --monitor         Monitor the workflow and receive an e-mail
                         notification when it terminates. (default: False)
   -i INTERVAL, --interval INTERVAL
@@ -62,14 +65,16 @@ optional arguments:
   -V, --verbose         If selected, widdler will write the current status to
                         STDOUT until completion while monitoring. (default:
                         False)
-  -n, --no_notify       If selected, disnable widdler monitoring e-mail
-                        notification of workflow completion. (default: True)
+  -n, --no_notify       When selected, disable widdler e-mail notification of
+                        workflow completion. (default: False)
   -d DEPENDENCIES, --dependencies DEPENDENCIES
                         A zip file containing one or more WDL files that the
                         main WDL imports. (default: None)
-  -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
-                        Choose a cromwell server from ['ale', 'btl-cromwell']
-                        (default: None)
+  -D, --disable_caching
+                        Don't used cached data. (default: False)
+  -S {ale,btl-cromwell,localhost,gscid-cromwell}, --server {ale,btl-cromwell,localhost,gscid-cromwell}
+                        Choose a cromwell server from ['ale', 'btl-cromwell',
+                        'localhost', 'gscid-cromwell'] (default: None)
 ```
 
 For example:
@@ -84,8 +89,8 @@ This will execute a workflow that uses subworkflows:
 
 ```widdler.py run myworkflow.wdl myinput.json -S ale -d mydependencies.zip```
 
-Users may also invoke Widdler's monitoring capabilities when initiating a workflow. See below for an 
-explanation of monitoring options.
+Users may also invoke widdler's monitoring and labeling capabilities when initiating a workflow. See below for an 
+explanation of monitoring and labeling options.
 
 ### widdler.py restart
 
@@ -103,9 +108,11 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
-                        Choose a cromwell server from ['ale', 'btl-cromwell']
-                        (default: None)
+  -S {ale,btl-cromwell,localhost,gscid-cromwell}, --server {ale,btl-cromwell,localhost,gscid-cromwell}
+                        Choose a cromwell server from ['ale', 'btl-cromwell',
+                        'localhost', 'gscid-cromwell'] (default: None)
+  -D, --disable_caching
+                        Don't used cached data. (default: False)
 ```
 
 For example:
@@ -125,22 +132,30 @@ Workflow restarted successfully; new workflow-id: 164678b8-2a52-40f3-976c-417c77
 Below is widdler's query help text. Aside from the workflow ID it expects one or more optional
 arguments to request basic status, metadata, and/or logs. 
 
-```usage: widdler.py query <workflow id> [<args>]
-   
-   Query cromwell for information on the submitted workflow.
-   
-   positional arguments:
-     workflow_id           workflow id for workflow execution of interest.
-   
-   optional arguments:
-     -h, --help            show this help message and exit
-     -s, --status          Print status for workflow to stdout (default: False)
-     -m, --metadata        Print metadata for workflow to stdout (default: False)
-     -l, --logs            Print logs for workflow to stdout (default: False)
-     -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
-                           Choose a cromwell server from ['ale', 'btl-cromwell']
-                           (default: None)
-   
+```
+usage: widdler.py query <workflow id> [<args>]
+
+Query cromwell for information on the submitted workflow.
+
+positional arguments:
+  workflow_id           workflow id for workflow execution of interest.
+                        (default: None)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s, --status          Print status for workflow to stdout (default: False)
+  -m, --metadata        Print metadata for workflow to stdout (default: False)
+  -l, --logs            Print logs for workflow to stdout (default: False)
+  -u USERNAME, --username USERNAME
+                        Owner of workflows to monitor. (default: Osiris)
+  -L LABEL, --label LABEL
+                        Query status of all workflows with specific label(s).
+                        (default: None)
+  -d DAYS, --days DAYS  Last n days to query. (default: 7)
+  -S {ale,btl-cromwell,localhost,gscid-cromwell}, --server {ale,btl-cromwell,localhost,gscid-cromwell}
+                        Choose a cromwell server from ['ale', 'btl-cromwell',
+                        'localhost', 'gscid-cromwell'] (default: None)
+  -a, --all             Query for all users. (default: False)  
 ```
 
 For example:
@@ -170,6 +185,99 @@ and:
    tk/2f8bb5c6-8254-4d38-b010-620913dd325e/call-MakeSampleDir/shard-0/execution/stderr', 'stdout': '/cil/shed/apps/internal/cromwell_new/cromwell-executions/gatk/2f8bb5c6-8254-4d38-b010-
    620913dd325e/call-MakeSampleDir/shard-0/execution/stdout'}
 ```
+
+In addition, users can query for workflows by username:
+
+```
+python widdler.py query -S ale -u amr
+```
+
+returns (truncated to save space):
+```Determining amr's workflows...
+[{'end': '2017-09-18T12:16:15.420-04:00',
+  'id': '4948665e-ab50-4524-a986-a3215df884f0',
+  'metadata': 'http://ale:9000/api/workflows/v1/4948665e-ab50-4524-a986-a3215df884f0/metadata',
+  'name': 'gatk',
+  'start': '2017-09-18T12:15:58.652-04:00',
+  'status': 'Aborted',
+  'timing': 'http://ale:9000/api/workflows/v1/4948665e-ab50-4524-a986-a3215df884f0/timing'},
+ {'end': '2017-09-18T12:20:48.307-04:00',
+  'id': 'bc38de08-06be-4845-85c2-2322176d7844',
+  'metadata': 'http://ale:9000/api/workflows/v1/bc38de08-06be-4845-85c2-2322176d7844/metadata',
+  'name': 'gatk',
+  'start': '2017-09-18T12:20:39.061-04:00',
+  'status': 'Aborted',
+  'timing': 'http://ale:9000/api/workflows/v1/bc38de08-06be-4845-85c2-2322176d7844/timing'},
+```
+However, we may only want the workflows from the last 4 days, so we can use the -d flag.
+
+```
+> python widdler.py query -S ale -u amr -d 4
+```
+returns
+```
+Determining amr's workflows...
+[{'end': '2017-09-19T11:29:04.346-04:00',
+  'id': 'bed73265-6eaf-4984-895d-5054aa7f577c',
+  'metadata': 'http://ale:9000/api/workflows/v1/bed73265-6eaf-4984-895d-5054aa7f577c/metadata',
+  'name': 'gatk',
+  'start': '2017-09-19T10:02:47.247-04:00',
+  'status': 'Succeeded',
+  'timing': 'http://ale:9000/api/workflows/v1/bed73265-6eaf-4984-895d-5054aa7f577c/timing'}]
+```
+
+Users can also assign labels to workflows(see below) and then query based on those labels. Supposing I tagged some
+workflows with a key of 'foo' and a value of 'bar', I can query the following:
+
+```
+python widdler.py query -S ale -L foo:bar
+```
+
+Which prints:
+```
+{
+    "results": [
+        {
+            "status": "Aborted",
+            "start": "2017-09-18T12:15:58.652-04:00",
+            "end": "2017-09-18T12:16:15.420-04:00",
+            "name": "gatk",
+            "id": "4948665e-ab50-4524-a986-a3215df884f0"
+        },
+        {
+            "status": "Aborted",
+            "start": "2017-09-18T12:20:39.061-04:00",
+            "end": "2017-09-18T12:20:48.307-04:00",
+            "name": "gatk",
+            "id": "bc38de08-06be-4845-85c2-2322176d7844"
+        }
+    ]
+}
+```
+
+Suppose, however, I want to filter my list by multiple labels, so I only want the foo:bar workflows that also
+are labeled moo:cow. I can query using multiple labels.
+
+```
+python widdler.py query -S ale -L foo:bar -L moo:cow
+```
+
+This returns a subset of the prior query:
+
+```
+{
+    "results": [
+        {
+            "status": "Aborted",
+            "start": "2017-09-18T12:20:39.061-04:00",
+            "end": "2017-09-18T12:20:48.307-04:00",
+            "name": "gatk",
+            "id": "bc38de08-06be-4845-85c2-2322176d7844"
+        }
+    ]
+}
+```
+
 ### widdler.py abort
 
 Below is widdler's abort usage. Simply provide the 
@@ -239,8 +347,70 @@ http://ale:9000/api/workflows/v1/b931c639-e73d-4b59-9333-be5ede4ae2cb/timing
 
 Note that in this case, there were no stdout or stderr for the step that failed in the workflow. 
 
+### widdler.py label
 
-## Validation
+Widdler allows users to attach one or more key:value pairs to a workflow so as to label them. This allows
+users to query workflows with custom labels that are meaningful to them. For example, if users have multiple
+workflows related to a plasmodium genome, the user could apply a "organism:plasmodium" label to every workflow
+using that genome and then query for it later. The following is the usage for widdler.py label.
+
+```
+usage: widdler.py label <workflow_id> [<args>]
+
+Label a specific workflow with one or more key/value pairs.
+
+positional arguments:
+  workflow_id           workflow id for workflow to label. (default: None)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -S {ale,btl-cromwell,localhost,gscid-cromwell}, --server {ale,btl-cromwell,localhost,gscid-cromwell}
+                        Choose a cromwell server from ['ale', 'btl-cromwell',
+                        'localhost', 'gscid-cromwell'] (default: None)
+  -l LABEL, --label LABEL
+                        A key:value pair to assign. May be used multiple
+                        times. (default: None)
+```
+
+For example:
+
+```
+python widdler.py label bc38de08-06be-4845-85c2-2322176d7844 -S ale -l organism:plasmodium
+```
+
+returns
+
+```
+Labels successfully applied:
+{
+  "id": "bc38de08-06be-4845-85c2-2322176d7844",
+  "labels": {
+    "organism": "plasmodium",
+    "id": "bc38de08-06be-4845-85c2-2322176d7844"
+  }
+}
+```
+
+Multiple labels can also be applied at once:
+
+```
+python widdler.py label bc38de08-06be-4845-85c2-2322176d7844 -S ale -l organism:plasmodium -l: group:BTL
+```
+
+returns
+
+```Labels successfully applied:
+{
+  "id": "bc38de08-06be-4845-85c2-2322176d7844",
+  "labels": {
+    "group": "btl",
+    "organism": "plasmodium",
+    "id": "bc38de08-06be-4845-85c2-2322176d7844"
+  }
+}
+```
+
+### widdler.py valdiate
 (Requires Java-1.8, so make sure to 'use Java-1.8' before trying validation)
 
 Widdler validation attempts to validate the inputs in the user's supplied json file against the WDL
@@ -351,7 +521,6 @@ defined by the --interval parameter, which has a default of 30 seconds.
 If --no_notify were selected, an e-mail would not be sent.
 
 #### User Workflow Monitoring
-(Note this feature is still under active development and is currently quite primitive)
 
 User's may also monitor all workflows for a given user name by omitting the workflow_id parameter and specifying the
 --user parameter like so:
@@ -360,10 +529,8 @@ User's may also monitor all workflows for a given user name by omitting the work
 widdler.py monitor -u amr -n -S btl-cromwell
 ```
 
-Here, the user 'amr' is monitoring all workflows ever executed by him using widdler. Any workflows not executed by 
-widdler will not be monitored. Workflows in a terminal state prior to execution will have an e-mail sent immediately
-regarding their status, and any running workflows will result in an e-mail once they terminate. Using the --verbose
-option here would result in STDOUT output for each workflow that is monitored at intervals specified by --interval.
+Here, the user 'amr' is monitoring any workflows currently executed by the user 'amr.' All othe parameters for 
+ workflow monitoring, such as intervals and verbose mode, apply to user workflow monitoring as well.
 
 ## Logging
 
