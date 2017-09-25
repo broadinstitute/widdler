@@ -155,6 +155,10 @@ optional arguments:
   -S {ale,btl-cromwell,localhost,gscid-cromwell}, --server {ale,btl-cromwell,localhost,gscid-cromwell}
                         Choose a cromwell server from ['ale', 'btl-cromwell',
                         'localhost', 'gscid-cromwell'] (default: None)
+  -f {Running,Submitted,QueuedInCromwell,Failed,Aborted,Succeeded}, --filter {Running,Submitted,QueuedInCromwell,Failed,Aborted,Succeeded}
+                        Filter by a workflow status from those listed above.
+                        May be specified more than once. (default: None)
+
   -a, --all             Query for all users. (default: False)  
 ```
 
@@ -277,6 +281,32 @@ This returns a subset of the prior query:
     ]
 }
 ```
+
+Users can further filter queries by the current status, and may do this multiple times. For example, to see
+all Succeeded workflows for user amr:
+
+```python widdler.py query -S ale -u amr -f Succeeded
+```
+
+returns
+
+```Determining amr's workflows...
+   [{'end': '2017-09-19T11:29:04.346-04:00',
+     'id': 'bed73265-6eaf-4984-895d-5054aa7f577c',
+     'metadata': 'http://ale:9000/api/workflows/v1/bed73265-6eaf-4984-895d-5054aa7f577c/metadata',
+     'name': 'gatk',
+     'start': '2017-09-19T10:02:47.247-04:00',
+     'status': 'Succeeded',
+     'timing': 'http://ale:9000/api/workflows/v1/bed73265-6eaf-4984-895d-5054aa7f577c/timing'}]
+```
+
+Multiple status filters may also be combined:
+
+```python widdler.py query -S ale -u amr -f Succeeded -f Aborted
+```
+
+returns:
+
 
 ### widdler.py abort
 
