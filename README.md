@@ -306,7 +306,57 @@ Multiple status filters may also be combined:
 ```
 
 returns:
-
+```Determining amr's workflows...
+   [{'end': '2017-09-18T12:16:15.420-04:00',
+     'id': '4948665e-ab50-4524-a986-a3215df884f0',
+     'metadata': 'http://ale:9000/api/workflows/v1/4948665e-ab50-4524-a986-a3215df884f0/metadata',
+     'name': 'gatk',
+     'start': '2017-09-18T12:15:58.652-04:00',
+     'status': 'Aborted',
+     'timing': 'http://ale:9000/api/workflows/v1/4948665e-ab50-4524-a986-a3215df884f0/timing'},
+    {'end': '2017-09-18T12:20:48.307-04:00',
+     'id': 'bc38de08-06be-4845-85c2-2322176d7844',
+     'metadata': 'http://ale:9000/api/workflows/v1/bc38de08-06be-4845-85c2-2322176d7844/metadata',
+     'name': 'gatk',
+     'start': '2017-09-18T12:20:39.061-04:00',
+     'status': 'Aborted',
+     'timing': 'http://ale:9000/api/workflows/v1/bc38de08-06be-4845-85c2-2322176d7844/timing'}]
+   
+   (C:\Miniconda3\envs\Widdler) C:\Dev\Python\widdler>python widdler.py query -S ale -u amr -f Succeeded
+   Determining amr's workflows...
+   [{'end': '2017-09-19T11:29:04.346-04:00',
+     'id': 'bed73265-6eaf-4984-895d-5054aa7f577c',
+     'metadata': 'http://ale:9000/api/workflows/v1/bed73265-6eaf-4984-895d-5054aa7f577c/metadata',
+     'name': 'gatk',
+     'start': '2017-09-19T10:02:47.247-04:00',
+     'status': 'Succeeded',
+     'timing': 'http://ale:9000/api/workflows/v1/bed73265-6eaf-4984-895d-5054aa7f577c/timing'}]
+   
+   (C:\Miniconda3\envs\Widdler) C:\Dev\Python\widdler>python widdler.py query -S ale -u amr -f Succeeded -f Aborted
+   Determining amr's workflows...
+   [{'end': '2017-09-18T12:16:15.420-04:00',
+     'id': '4948665e-ab50-4524-a986-a3215df884f0',
+     'metadata': 'http://ale:9000/api/workflows/v1/4948665e-ab50-4524-a986-a3215df884f0/metadata',
+     'name': 'gatk',
+     'start': '2017-09-18T12:15:58.652-04:00',
+     'status': 'Aborted',
+     'timing': 'http://ale:9000/api/workflows/v1/4948665e-ab50-4524-a986-a3215df884f0/timing'},
+    {'end': '2017-09-18T12:20:48.307-04:00',
+     'id': 'bc38de08-06be-4845-85c2-2322176d7844',
+     'metadata': 'http://ale:9000/api/workflows/v1/bc38de08-06be-4845-85c2-2322176d7844/metadata',
+     'name': 'gatk',
+     'start': '2017-09-18T12:20:39.061-04:00',
+     'status': 'Aborted',
+     'timing': 'http://ale:9000/api/workflows/v1/bc38de08-06be-4845-85c2-2322176d7844/timing'},
+    {'end': '2017-09-19T11:29:04.346-04:00',
+     'id': 'bed73265-6eaf-4984-895d-5054aa7f577c',
+     'metadata': 'http://ale:9000/api/workflows/v1/bed73265-6eaf-4984-895d-5054aa7f577c/metadata',
+     'name': 'gatk',
+     'start': '2017-09-19T10:02:47.247-04:00',
+     'status': 'Succeeded',
+     'timing': 'http://ale:9000/api/workflows/v1/bed73265-6eaf-4984-895d-5054aa7f577c/timing'}]
+   
+```
 
 ### widdler.py abort
 
