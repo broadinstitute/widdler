@@ -239,7 +239,7 @@ class Cromwell:
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         return self.patch('labels', workflow_id, labels_json, headers)
 
-    def query_labels(self, labels, start_time=None, running_jobs=False):
+    def query_labels(self, labels, start_time=None, status_filter=None):
         """
         Query cromwell database with a given set of labels.
         :param labels: A dictionary of label keys and values.
@@ -250,8 +250,12 @@ class Cromwell:
             label_dict["label=" + k] = v
 
         time_query = "start=" + start_time + "&" if start_time != None else ""
-        running_query = "status=Submitted&status=Running" if running_jobs else ""
-        url = self.build_query_url(self.url + '/query?' + time_query + running_query, label_dict, ':')
+        # running_query = "status=Submitted&status=Running" if running_jobs else ""
+        status_query = ""
+        if status_filter:
+            for status in status_filter:
+                status_query += "status={}&".format(status)
+        url = self.build_query_url(self.url + '/query?' + time_query + status_query, label_dict, ':')
         r = requests.get(url)
         return json.loads(r.content)
 

@@ -23,7 +23,7 @@ __author__ = "Amr Abouelleil, Paul Cao"
 __copyright__ = "Copyright 2017, The Broad Institute"
 __credits__ = ["Amr Abouelleil", "Paul Cao", "Jean Chang"]
 __license__ = "GPL"
-__version__ = "1.2.4"
+__version__ = "1.3.4"
 __maintainer__ = "Amr Abouelleil"
 __email__ = "amr@broadinstitute.org"
 __status__ = "Production"
@@ -237,7 +237,7 @@ def call_explain(args):
 def call_list(args):
     username = "*" if args.all else args.username
     m = Monitor(host=args.server, user=username, no_notify=True, verbose=True,
-                interval=None)
+                interval=None, status_filter=args.filter)
 
     def get_iso_date(dt):
         tz = pytz.timezone("US/Eastern")
@@ -349,6 +349,8 @@ query.add_argument('-u', '--username', action='store', default=getpass.getuser()
 query.add_argument('-d', '--days', action='store', default=7, help='Last n days to query.')
 query.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                    help='Choose a cromwell server from {}'.format(c.servers))
+query.add_argument('-f', '--filter', action='append', type=str, choices=c.run_states + c.terminal_states,
+                   help='Filter by a workflow status from those listed above. May be specified more than once.')
 query.add_argument('-a', '--all', action='store_true', default=False, help='Query for all users.')
 query.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 
