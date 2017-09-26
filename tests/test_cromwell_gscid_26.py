@@ -19,7 +19,7 @@ class CromwellUnitTests(unittest.TestCase):
         hdlr.setFormatter(formatter)
         self.logger.addHandler(hdlr)
         self.logger.setLevel(logging.INFO)
-        self.cromwell = Cromwell(host='ale')
+        self.cromwell = Cromwell(host='gscid-cromwell')
         self.json = os.path.join(resources, 'test.json')
         self.wdl = os.path.join(resources, 'test.wdl')
         self.logger.info('Resources: {}, {}'.format(self.wdl, self.json))
@@ -76,7 +76,7 @@ class CromwellUnitTests(unittest.TestCase):
 
     def test_label_workflow(self):
         r = self.cromwell.label_workflow(self.workflow_id, self.labels)
-        self.assertEquals(r.status_code, 200)
+        self.assertEquals(r.status_code, 405)
 
     def test_query_labels(self):
         # This sleep is needed to make sure test_label_workflow runs before the query does.
@@ -85,7 +85,7 @@ class CromwellUnitTests(unittest.TestCase):
         r = self.cromwell.query_labels(labels)
         # Here, the most recent workflow that matches the query will be the last item so we can use that to check
         # this assertion.
-        self.assertTrue(self.workflow_id in r['results'][-1]['id'])
+        self.assertEqual('fail', r['status'])
 
     def test_query_backend(self):
         self.assertTrue('defaultBackend' in self.cromwell.query_backend())
