@@ -42,7 +42,7 @@ class Monitor:
     A class for monitoring a user's workflows, providing status reports at regular intervals
     as well as e-mail notification.
     """
-    def __init__(self, user, host, no_notify, verbose, interval, status_filter):
+    def __init__(self, user, host, no_notify, verbose, interval, status_filter=None):
         self.host = host
         self.user = user
         self.interval = interval
