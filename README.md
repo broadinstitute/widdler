@@ -628,6 +628,8 @@ convenient identification.
    2017-07-14 12:10:44,813 - widdler - INFO - 
    -------------End Widdler Execution by amr-------------
    ```
+   
+Widdler logs can be found in /cil/shed/resources/widdler/logs
 
 ## Known Issues
 
