@@ -385,6 +385,10 @@ run.add_argument('-m', '--monitor', action='store_true', default=False,
                  help='Monitor the workflow and receive an e-mail notification when it terminates.')
 run.add_argument('-i', '--interval', action='store', default=30, type=int,
                  help='If --monitor is selected, the amount of time in seconds to elapse between status checks.')
+run.add_argument('-o', '--extra_options', action='append',
+                 help='Additional workflow options to pass to Cromwell. Specify as k:v pairs. May be specified multiple'
+                      + 'times for multiple options. See https://github.com/broadinstitute/cromwell#workflow-options' +
+                      'for available options.')
 run.add_argument('-V', '--verbose', action='store_true', default=False,
                  help='If selected, widdler will write the current status to STDOUT until completion while monitoring.')
 run.add_argument('-n', '--no_notify', action='store_true', default=False,

@@ -253,8 +253,9 @@ class Cromwell:
         if status_filter:
             for status in status_filter:
                 status_query += "status={}&".format(status)
-        url = self.build_query_url(self.url + '/query?' + "&".join([time_query, status_query]), label_dict, ':')
-        # In soem cases we can get a dangling & so this removed that.
+
+        url = self.build_query_url(self.url + '/query?' + "&".join([time_query, status_query]).lstrip("&"), label_dict, "%3A")
+        # In some cases we can get a dangling & so this removed that.
         r = requests.get(url.rstrip('&'))
         return json.loads(r.content)
 
