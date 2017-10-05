@@ -23,7 +23,9 @@ class CromwellUnitTests(unittest.TestCase):
         self.json = os.path.join(resources, 'test.json')
         self.wdl = os.path.join(resources, 'test.wdl')
         self.logger.info('Resources: {}, {}'.format(self.wdl, self.json))
-        self.wf = self.cromwell.jstart_workflow(self.wdl, self.json)
+        self.wf = self.cromwell.jstart_workflow(self.wdl, self.json, disable_caching=True,
+                                                extra_options={"workflow_failure_mode": "NoNewCalls",
+                                                               "cpu": 2})
         self.logger.info('Workflow: {}'.format(self.wf))
         self.workflow_id = self.wf['id']
         self.labels = {'username': 'amr', 'foo': 'bar'}

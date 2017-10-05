@@ -173,13 +173,16 @@ class Cromwell:
         r = requests.post(self.url, files=files)
         return json.loads(r.text)
 
-    def jstart_workflow(self, wdl_file, json_file, dependencies=None, wdl_string=False, disable_caching=False):
+    def jstart_workflow(self, wdl_file, json_file, dependencies=None, wdl_string=False, disable_caching=False,
+                        extra_options=None):
         """
         Start a workflow using json file for argument inputs.
         :param wdl_file: Workflow description file or WDL string (specify wdl_string if so).
         :param json_file: JSON file or JSON string containing arguments.
         :param dependencies: The subworkflow zip file. Optional.
         :param wdl_string: If the wdl_file argument is actually a string. Optional.
+        :param disable_caching: Disable Cromwell cacheing.
+        :param extra_options: additional options to be passed to Cromwell.
         :return: Request response json.
         """
 
@@ -192,7 +195,6 @@ class Cromwell:
         else:
             j_args = json_file
 
-        files = None
         if not wdl_string:
             files = {'wdlSource': (wdl_file, open(wdl_file, 'rb'), 'application/octet-stream'),
                  'workflowInputs': ('report.csv', j_args, 'application/json')}
@@ -202,10 +204,16 @@ class Cromwell:
         if dependencies:
             # add dependency as zip file
             files['wdlDependencies'] = (dependencies, open(dependencies, 'rb'), 'application/zip')
-
+        workflow_options = {}
         if disable_caching:
-            files['workflowOptions'] = ('options.json', "{\"read_from_cache\":false}", 'application/json')
-            print('disable_caching enabled')
+            workflow_options.update({"read_from_cache": "false"})
+        if extra_options:
+            workflow_options.update(extra_options)
+        if disable_caching or extra_options:
+            files['workflowOptions'] = ('options.json', json.dumps(workflow_options), 'application/json')
+            print('Enabling the following additional workflow options:')
+            for k, v in workflow_options.items():
+                print("{}:{}".format(k, v))
 
         r = requests.post(self.url, files=files)
         return json.loads(r.text)

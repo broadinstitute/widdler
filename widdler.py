@@ -83,7 +83,8 @@ def call_run(args):
         call_validate(args)
     cromwell = Cromwell(host=args.server)
     result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies,
-                                      disable_caching=args.disable_caching)
+                                      disable_caching=args.disable_caching,
+                                      extra_options=kv_list_to_dict(args.extra_options))
     print("-------------Cromwell Links-------------")
     links = get_cromwell_links(args.server, result['id'], cromwell.port)
     print (links['metadata'])
@@ -119,7 +120,7 @@ def call_query(args):
         return call_list(args)
     if args.label:
         logger.info("Label query requested.")
-        labeled = cromwell.query_labels(labels=labels_to_dict(args.label))
+        labeled = cromwell.query_labels(labels=kv_list_to_dict(args.label))
         return labeled
     if args.status:
         logger.info("Status requested.")
@@ -276,17 +277,22 @@ def call_list(args):
         logger.critical('KeyError: Unable to find key {}'.format(e))
 
 
-def labels_to_dict(labels):
-    labels_dict = dict()
-    for label in labels:
-        (key, val) = label.split(':')
-        labels_dict[key] = val
-    return labels_dict
+def kv_list_to_dict(kv_list):
+    """
+    Converts a list of kv pairs delimited with colon into a dictionary.
+    :param kv_list: kv list: ex ['a:b', 'c:d', 'e:f']
+    :return: a dict, ex: {'a': 'b', 'c': 'd', 'e': 'f'}
+    """
+    new_dict = dict()
+    for item in kv_list:
+        (key, val) = item.split(':')
+        new_dict[key] = val
+    return new_dict
 
 
 def call_label(args):
     cromwell = Cromwell(host=args.server)
-    labels_dict = labels_to_dict(args.label)
+    labels_dict = kv_list_to_dict(args.label)
     response = cromwell.label_workflow(args.workflow_id, labels=labels_dict)
     if response.status_code == 200:
         print("Labels successfully applied:\n{}".format(response.content))
