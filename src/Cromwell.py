@@ -243,6 +243,8 @@ class Cromwell:
         :param labels: A dictionary of labels.
         :return: JSON response
         """
+        if not workflow_id:
+            raise TypeError("Workflow ID can not be {}".format(workflow_id))
         labels_json = json.dumps(labels)
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         return self.patch('labels', workflow_id, labels_json, headers)

@@ -23,7 +23,7 @@ __author__ = "Amr Abouelleil, Paul Cao"
 __copyright__ = "Copyright 2017, The Broad Institute"
 __credits__ = ["Amr Abouelleil", "Paul Cao", "Jean Chang"]
 __license__ = "GPL"
-__version__ = "1.4.5"
+__version__ = "1.4.6"
 __maintainer__ = "Amr Abouelleil"
 __email__ = "amr@broadinstitute.org"
 __status__ = "Production"
@@ -92,14 +92,18 @@ def call_run(args):
     logger.info("Metadata:{}".format(links['metadata']))
     logger.info("Timing Graph:{}".format(links['timing']))
     print ("These will also be e-mailed to you when the workflow completes.")
-    cromwell.label_workflow(result['id'], {'username': args.username})
+    # this sleep is to allow job to get started in Cromwell before labeling or monitoring.
+    # Probably better ways to do this but for now this works.
+    time.sleep(2)
+    args.workflow_id = result['id']
+    cromwell.label_workflow(args.workflow_id, {'username': args.username})
     if args.label:
+
         call_label(args)
     if args.monitor:
         retry = 4
         while retry != 0:
             try:
-                args.workflow_id = result['id']
                 call_monitor(args)
                 retry = 0
             except KeyError as e:
@@ -166,9 +170,7 @@ def call_abort(args):
 
 def call_monitor(args):
     logger.info("Monitoring requested")
-    # this sleep is to allow job to get started in Cromwell before querying. Probably better ways to do this
-    # but for now this works.
-    time.sleep(2)
+
     print("-------------Monitoring Workflow-------------")
     m = Monitor(host=args.server, user=args.username, no_notify=args.no_notify, verbose=args.verbose,
                 interval=args.interval)
@@ -284,16 +286,19 @@ def kv_list_to_dict(kv_list):
     :return: a dict, ex: {'a': 'b', 'c': 'd', 'e': 'f'}
     """
     new_dict = dict()
-    for item in kv_list:
-        (key, val) = item.split(':')
-        new_dict[key] = val
-    return new_dict
+    if kv_list:
+        for item in kv_list:
+            (key, val) = item.split(':')
+            new_dict[key] = val
+        return new_dict
+    else:
+        return None
 
 
 def call_label(args):
     cromwell = Cromwell(host=args.server)
     labels_dict = kv_list_to_dict(args.label)
-    response = cromwell.label_workflow(args.workflow_id, labels=labels_dict)
+    response = cromwell.label_workflow(workflow_id=args.workflow_id, labels=labels_dict)
     if response.status_code == 200:
         print("Labels successfully applied:\n{}".format(response.content))
     else:
