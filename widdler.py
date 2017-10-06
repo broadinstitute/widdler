@@ -91,7 +91,6 @@ def call_run(args):
     print (links['timing'])
     logger.info("Metadata:{}".format(links['metadata']))
     logger.info("Timing Graph:{}".format(links['timing']))
-    print ("These will also be e-mailed to you when the workflow completes.")
     # this sleep is to allow job to get started in Cromwell before labeling or monitoring.
     # Probably better ways to do this but for now this works.
     time.sleep(5)
@@ -100,6 +99,7 @@ def call_run(args):
     if args.label:
         call_label(args)
     if args.monitor:
+        print ("These will also be e-mailed to you when the workflow completes.")
         retry = 4
         while retry != 0:
             try:
