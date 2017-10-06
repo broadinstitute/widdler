@@ -94,11 +94,10 @@ def call_run(args):
     print ("These will also be e-mailed to you when the workflow completes.")
     # this sleep is to allow job to get started in Cromwell before labeling or monitoring.
     # Probably better ways to do this but for now this works.
-    time.sleep(2)
+    time.sleep(5)
     args.workflow_id = result['id']
     cromwell.label_workflow(args.workflow_id, {'username': args.username})
     if args.label:
-
         call_label(args)
     if args.monitor:
         retry = 4
