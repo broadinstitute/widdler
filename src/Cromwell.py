@@ -206,7 +206,7 @@ class Cromwell:
             files['wdlDependencies'] = (dependencies, open(dependencies, 'rb'), 'application/zip')
         workflow_options = {}
         if disable_caching:
-            workflow_options.update({"read_from_cache": "false"})
+            workflow_options.update({"read_from_cache": False})
         if extra_options:
             workflow_options.update(extra_options)
         if disable_caching or extra_options:
