@@ -242,6 +242,26 @@ def call_explain(args):
     args.monitor = True
     return None
 
+def call_log(args):
+    cromwell = Cromwell(host=args.server)
+    res = cromwell.get('logs', args.workflow_id)
+    print res["calls"]
+
+    command = ""
+
+    # for each task, extract the command used
+    for key in res["calls"]:
+        stderr = res["calls"][key][0]["stderr"]
+        script = "/".join(stderr.split("/")[:-1]) + "/script"
+
+        with open(script, 'r') as f:
+            command_log = f.read()
+
+        command = command + key + ":\n\n"
+        command = command + command_log + "\n\n"
+
+    print(command) #print to stdout
+    return None
 
 def call_list(args):
     username = "*" if args.all else args.username
@@ -304,7 +324,7 @@ def call_label(args):
         logger.critical("Unable to apply specified labels:\n{}".format(response.content))
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
-    usage='widdler.py <run | monitor | query | abort | validate |restart | explain | label> [<args>]',
+    usage='widdler.py <run | monitor | query | abort | validate | restart | explain | log | label> [<args>]',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 sub = parser.add_subparsers()
@@ -329,6 +349,16 @@ explain.add_argument('-S', '--server', action='store', required=True, type=str, 
 explain.add_argument('-I', '--input', action='store_true', default=False, help=argparse.SUPPRESS)
 explain.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 explain.set_defaults(func=call_explain)
+
+log = sub.add_parser(name='log',
+                         description='Explain the status of a workflow.',
+                         usage='widdler.py log <workflowid>',
+                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+log.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
+log.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
+                     help='Choose a cromwell server from {}'.format(c.servers))
+log.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
+log.set_defaults(func=call_log)
 
 abort = sub.add_parser(name='abort',
                        description='Abort a submitted workflow.',
