@@ -118,10 +118,10 @@ class Monitor:
                                     (name, job, shard, attempt) = re.split(r"[:.]", job_info)
                                     job_path = '{}/call-{}/shard-{}/execution/'\
                                         .format(jdata['workflowRoot'], job, shard)
-                                    stderr = '{}stderr'.format(job_path)
+                                    stderr = '{}/stderr'.format(job_path)
                                     stdout = '{}stdout'.format(job_path)
-                                    file_dict['stderr'] = stderr
-                                    file_dict['stdout'] = stdout
+                                    file_dict['{}.{}.stderr'.format(job, shard)] = stderr
+                                    file_dict['{}.{}.stdout'.format(job, shard)] = stdout
 
                     attachments = self.generate_attachments(file_dict)
                     for attachment in attachments:
