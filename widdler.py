@@ -448,6 +448,7 @@ email.add_argument('workflow_id', nargs='?', default="None", help='workflow id f
 email.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                    help='Choose a cromwell server from {}'.format(c.servers))
 email.add_argument('-u', '--username', action='store', default=getpass.getuser(), help='username of user to e-mail to')
+email.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 email.set_defaults(func=call_email)
 
 
