@@ -105,6 +105,9 @@ class Monitor:
                 if not self.no_notify:
                     filename = '{}.metadata.json'.format(query_status['id'])
                     filepath = os.path.join(c.log_dir, '{}.metadata.json'.format(query_status['id']))
+                    metadata = open(filepath, 'w+')
+                    json.dump(self.cromwell.query_metadata(workflow_id), indent=4, fp=metadata)
+                    metadata.close()
                     email_content = self.generate_content(query_status=query_status, workflow_id=workflow_id)
                     msg = self.messenger.compose_email(email_content)
 
@@ -128,6 +131,7 @@ class Monitor:
                         if attachment:
                             msg.attach(attachment)
                     self.messenger.send_email(msg)
+                    os.unlink(filepath)
                 return 0
             else:
                 time.sleep(self.interval)
