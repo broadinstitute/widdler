@@ -23,7 +23,7 @@ __author__ = "Amr Abouelleil, Paul Cao"
 __copyright__ = "Copyright 2017, The Broad Institute"
 __credits__ = ["Amr Abouelleil", "Paul Cao", "Jean Chang"]
 __license__ = "GPL"
-__version__ = "1.5.7"
+__version__ = "1.6.0"
 __maintainer__ = "Amr Abouelleil"
 __email__ = "amr@broadinstitute.org"
 __status__ = "Production"
@@ -302,6 +302,13 @@ def call_label(args):
         print("Labels successfully applied:\n{}".format(response.content))
     else:
         logger.critical("Unable to apply specified labels:\n{}".format(response.content))
+
+
+def call_email(args):
+    args.verbose = False
+    args.no_notify = False
+    call_monitor(args)
+
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
     usage='widdler.py <run | monitor | query | abort | validate |restart | explain | label> [<args>]',
@@ -431,6 +438,17 @@ label.add_argument('-S', '--server', action='store', required=True, type=str, ch
 label.add_argument('-l', '--label', action='append', help='A key:value pair to assign. May be used multiple times.')
 label.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 label.set_defaults(func=call_label)
+
+email = sub.add_parser(name ='email',
+                       description='Email data to user regarding a workflow.',
+                       usage='widdler.py label <workflow_id> [<args>]',
+                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+email.add_argument('workflow_id', nargs='?', default="None", help='workflow id for workflow to label.')
+email.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
+                   help='Choose a cromwell server from {}'.format(c.servers))
+email.add_argument('-u', '--username', action='store', default=getpass.getuser(), help='username of user to e-mail to')
+email.set_defaults(func=call_email)
+
 
 args = parser.parse_args()
 

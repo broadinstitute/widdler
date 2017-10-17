@@ -4,9 +4,8 @@ import logging
 import time
 import json
 import os
+import re
 from dateutil.parser import parse
-from multiprocessing import Pool
-from functools import partial
 import src.config as c
 from src.Cromwell import Cromwell
 from src.Messenger import Messenger
@@ -106,48 +105,90 @@ class Monitor:
                 if not self.no_notify:
                     filename = '{}.metadata.json'.format(query_status['id'])
                     filepath = os.path.join(c.log_dir, '{}.metadata.json'.format(query_status['id']))
-                    jdata = self.cromwell.query_metadata(workflow_id)
-
-                    metadata = open(filepath, 'w+')
-                    json.dump(self.cromwell.query_metadata(workflow_id), indent=4, fp=metadata)
-                    metadata.close()
-                    read_data = open(filepath, 'r')
-                    attachment = MIMEText(read_data.read())
-                    read_data.close()
-                    os.unlink(filepath)
-                    attachment.add_header('Content-Disposition', 'attachment', filename=filename)
-                    summary = ""
-                    if 'start' in jdata:
-                        summary += "<br><b>Started:</b> {}".format(jdata['start'])
-                    if 'end' in jdata:
-                        summary += "<br><b>Ended:</b> {}".format(jdata['end'])
-                    if 'start' in jdata and 'end' in jdata:
-                        start = parse(jdata['start'])
-                        end = parse(jdata['end'])
-                        duration = (end - start)
-                        hours, remainder = divmod(duration.seconds, 3600)
-                        minutes, seconds = divmod(remainder, 60)
-                        summary += '<br><b>Duration:</b> {} hours, {} minutes, {} seconds'.format(hours, minutes, seconds)
-                    if 'Failed' in query_status['status']:
-                        fail_summary = "<br><b>Failures:</b> {}".format(json.dumps(jdata['failures']))
-                        fail_summary = fail_summary.replace(',', '<br>')
-                        summary += fail_summary.replace('\n', '<br>')
-                    if 'workflowName' in jdata:
-                        summary = "<b>Workflow Name:</b> {}{}".format(jdata['workflowName'], summary)
-                    if 'workflowRoot' in jdata:
-                        summary += "<br><b>workflowRoot:</b> {}".format(jdata['workflowRoot'])
-                    summary += "<br><b>Timing graph:</b> http://{}:9000/api/workflows/v2/{}/timing".format(self.host,
-                                                                                                    query_status['id'])
-
-                    email_content = {
-                        'user': self.user,
-                        'workflow_id': query_status['id'],
-                        'status': query_status['status'],
-                        'summary': summary
-                    }
+                    email_content = self.generate_content(query_status=query_status, workflow_id=workflow_id)
                     msg = self.messenger.compose_email(email_content)
-                    msg.attach(attachment)
+
+                    file_dict = {filename: filepath}
+                    if 'Failed' in query_status['status']:
+                        jdata = self.cromwell.query_metadata(workflow_id)
+                        if 'workflowRoot' in jdata:
+                            for failure in jdata['failures']:
+                                if failure['message'].startswith('Job'):
+                                    job_info = failure['message'].split(' ')[1]
+                                    (name, job, shard, attempt) = re.split(r"[:.]", job_info)
+                                    job_path = '{}/call-{}/shard-{}/execution/'\
+                                        .format(jdata['workflowRoot'], job, shard)
+                                    stderr = '{}stderr'.format(job_path)
+                                    stdout = '{}stdout'.format(job_path)
+                                    file_dict['stderr'] = stderr
+                                    file_dict['stdout'] = stdout
+
+                    attachments = self.generate_attachments(file_dict)
+                    for attachment in attachments:
+                        if attachment:
+                            msg.attach(attachment)
                     self.messenger.send_email(msg)
                 return 0
-            time.sleep(self.interval)
+            else:
+                time.sleep(self.interval)
 
+    @staticmethod
+    def generate_attachment(filename, filepath):
+        """
+        Convert a file
+        :param filename: The name to assign to the attachment.
+        :param filepath: The absolute path of the file including the file itself.
+        :return: An attachment object.
+        """
+        try:
+            read_data = open(filepath, 'r')
+            attachment = MIMEText(read_data.read())
+            read_data.close()
+            attachment.add_header('Content-Disposition', 'attachment', filename=filename)
+            return attachment
+        except IOError as e:
+            logging.warn('Unable to generate attachment for {}:\n{}'.format(filename, e))
+
+    def generate_attachments(self, file_dict):
+        """
+        Generates a list of attachments to be added to an e-mail
+        :param file_dict: A dictionary of filename:filepath pairs. Not the name is what the file will be called, and
+        does not refer to the name of the file as it exists prior to attaching. That should be part of the filepath.
+        :return: A list of attachments
+        """
+        attachments = list()
+        for name, path in file_dict.items():
+            attachments.append(self.generate_attachment(name, path))
+        return attachments
+
+    def generate_content(self, query_status, workflow_id):
+        jdata = self.cromwell.query_metadata(workflow_id)
+        summary = ""
+        if 'start' in jdata:
+            summary += "<br><b>Started:</b> {}".format(jdata['start'])
+        if 'end' in jdata:
+            summary += "<br><b>Ended:</b> {}".format(jdata['end'])
+        if 'start' in jdata and 'end' in jdata:
+            start = parse(jdata['start'])
+            end = parse(jdata['end'])
+            duration = (end - start)
+            hours, remainder = divmod(duration.seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            summary += '<br><b>Duration:</b> {} hours, {} minutes, {} seconds'.format(hours, minutes, seconds)
+        if 'Failed' in query_status['status']:
+            fail_summary = "<br><b>Failures:</b> {}".format(json.dumps(jdata['failures']))
+            fail_summary = fail_summary.replace(',', '<br>')
+            summary += fail_summary.replace('\n', '<br>')
+        if 'workflowName' in jdata:
+            summary = "<b>Workflow Name:</b> {}{}".format(jdata['workflowName'], summary)
+        if 'workflowRoot' in jdata:
+            summary += "<br><b>workflowRoot:</b> {}".format(jdata['workflowRoot'])
+        summary += "<br><b>Timing graph:</b> http://{}:9000/api/workflows/v2/{}/timing".format(self.host,
+                                                                                               query_status['id'])
+        email_content = {
+            'user': self.user,
+            'workflow_id': query_status['id'],
+            'status': query_status['status'],
+            'summary': summary
+        }
+        return email_content
