@@ -307,6 +307,7 @@ def call_label(args):
 def call_email(args):
     args.verbose = False
     args.no_notify = False
+    args.interval = 0
     call_monitor(args)
 
 parser = argparse.ArgumentParser(
