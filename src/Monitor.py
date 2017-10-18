@@ -119,8 +119,12 @@ class Monitor:
                                 if failure['message'].startswith('Job'):
                                     job_info = failure['message'].split(' ')[1]
                                     (name, job, shard, attempt) = re.split(r"[:.]", job_info)
-                                    job_path = '{}/call-{}/shard-{}/execution/'\
-                                        .format(jdata['workflowRoot'], job, shard)
+                                    if 'NA' in shard:
+                                        job_path = '{}/call-{}/execution/' \
+                                            .format(jdata['workflowRoot'], job, shard)
+                                    else:
+                                        job_path = '{}/call-{}/shard-{}/execution/'\
+                                            .format(jdata['workflowRoot'], job, shard)
                                     stderr = '{}/stderr'.format(job_path)
                                     stdout = '{}stdout'.format(job_path)
                                     file_dict['{}.{}.stderr'.format(job, shard)] = stderr
