@@ -1,7 +1,7 @@
 import os
 import sys
 
-servers = ['ale', 'btl-cromwell', 'localhost', 'gscid-cromwell']
+servers = ['ale1', 'btl-cromwell', 'localhost', 'gscid-cromwell']
 resource_dir = os.path.abspath(os.path.dirname(__file__)).replace('src', 'resources')
 
 if sys.platform == 'win32':
