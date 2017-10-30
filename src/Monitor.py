@@ -157,6 +157,7 @@ class Monitor:
         except IOError as e:
             logging.warn('Unable to generate attachment for {}:\n{}'.format(filename, e))
 
+    # TODO: Widdler only generates the stdout attachments when workflow_failure_mode is set to NoNewCalls. Need to fix.
     def generate_attachments(self, file_dict):
         """
         Generates a list of attachments to be added to an e-mail
