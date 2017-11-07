@@ -4,12 +4,15 @@ import logging
 import time
 import json
 import os
-import re
+import zipfile
+import zlib
 from dateutil.parser import parse
 import src.config as c
 from src.Cromwell import Cromwell
 from src.Messenger import Messenger
 from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
 __author__ = "Amr Abouelleil"
 
@@ -114,21 +117,27 @@ class Monitor:
                     file_dict = {filename: filepath}
                     if 'Failed' in query_status['status']:
                         jdata = self.cromwell.query_metadata(workflow_id)
-                        if 'workflowRoot' in jdata:
-                            for failure in jdata['failures']:
-                                if failure['message'].startswith('Job'):
-                                    job_info = failure['message'].split(' ')[1]
-                                    (name, job, shard, attempt) = re.split(r"[:.]", job_info)
-                                    if 'NA' in shard:
-                                        job_path = '{}/call-{}/execution/' \
-                                            .format(jdata['workflowRoot'], job, shard)
-                                    else:
-                                        job_path = '{}/call-{}/shard-{}/execution/'\
-                                            .format(jdata['workflowRoot'], job, shard)
-                                    stderr = '{}/stderr'.format(job_path)
-                                    stdout = '{}stdout'.format(job_path)
-                                    file_dict['{}.{}.stderr'.format(job, shard)] = stderr
-                                    file_dict['{}.{}.stdout'.format(job, shard)] = stdout
+                        # TODO Replace everything in this 'failed' condition block with new code that:
+                        """
+                        1. Iterates through the 'calls' 
+                        2. For each call, iterate through each shard.
+                        3. For each shard, evaluate the executionStatus. If 'failed', add stderr and stdout to files dict. 
+                        """
+                        for task, call in jdata['calls'].items():
+                            for shard in call:
+                                if 'Failed' in shard['executionStatus']:
+                                    attach_prefix = "{}.{}".format(task, shard['shardIndex'])
+                                    stdout = "{}.stdout".format(attach_prefix)
+                                    stderr = "{}.stderr".format(attach_prefix)
+                                    try:
+                                        file_dict[stdout] = shard['stdout']
+                                    except Exception as e:
+                                        logging.warn(str(e))
+                                    try:
+                                        file_dict[stderr] = shard['stderr']
+                                    except Exception as e:
+                                        logging.warn(str(e))
+                                    break
 
                     attachments = self.generate_attachments(file_dict)
                     for attachment in attachments:
@@ -154,18 +163,32 @@ class Monitor:
             read_data.close()
             attachment.add_header('Content-Disposition', 'attachment', filename=filename)
             return attachment
-        except IOError as e:
+        except Exception as e:
             logging.warn('Unable to generate attachment for {}:\n{}'.format(filename, e))
 
     # TODO: Widdler only generates the stdout attachments when workflow_failure_mode is set to NoNewCalls. Need to fix.
     def generate_attachments(self, file_dict):
         """
         Generates a list of attachments to be added to an e-mail
-        :param file_dict: A dictionary of filename:filepath pairs. Not the name is what the file will be called, and
+        :param file_dict: A dictionary of filename:filepath pairs. Note the name is what the file will be called, and
         does not refer to the name of the file as it exists prior to attaching. That should be part of the filepath.
         :return: A list of attachments
         """
         attachments = list()
+        # if file_dict.items() > 3:
+        #     attachment = MIMEBase('application', 'zip')
+        #     zf = zipfile.ZipFile('workflow_logs.zip', mode='w')
+        #     for file_name, path in file_dict.items():
+        #         try:
+        #             zf.write(path, arcname=file_name, compress_type=zipfile.ZIP_DEFLATED)
+        #         except Exception as e:
+        #             logging.warn('Unable to generate attachment for {}:\n{}'.format(file_name, e))
+        #     zf.close()
+        #     attachment.set_payload('workflow_logs.zip')
+        #     encoders.encode_base64(attachment)
+        #     attachment.add_header('Content-Disposition', 'attachment', filename='workflow_logs.zip')
+        #     attachments.append(attachment)
+        # else:
         for name, path in file_dict.items():
             attachments.append(self.generate_attachment(name, path))
         return attachments
