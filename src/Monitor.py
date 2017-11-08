@@ -5,7 +5,6 @@ import time
 import json
 import os
 import zipfile
-import zlib
 from dateutil.parser import parse
 import src.config as c
 from src.Cromwell import Cromwell
@@ -61,7 +60,6 @@ class Monitor:
         """
         print('Determining {}\'s workflows...'.format(self.user))
         user_workflows = []
-
         results = None
         if self.user == "*":
             results = self.cromwell.query_labels({}, start_time=start_time, status_filter=self.status_filter)
@@ -76,7 +74,8 @@ class Monitor:
             for result in results['results']:
                 if result['status'] in c.run_states:
                     user_workflows.append(result['id'])
-        except KeyError as e:
+        except Exception as e:
+            logging.error(str(e))
             print('No user workflows found with username {}.'.format(self.user))
         return user_workflows
 
@@ -117,12 +116,6 @@ class Monitor:
                     file_dict = {filename: filepath}
                     if 'Failed' in query_status['status']:
                         jdata = self.cromwell.query_metadata(workflow_id)
-                        # TODO Replace everything in this 'failed' condition block with new code that:
-                        """
-                        1. Iterates through the 'calls' 
-                        2. For each call, iterate through each shard.
-                        3. For each shard, evaluate the executionStatus. If 'failed', add stderr and stdout to files dict. 
-                        """
                         for task, call in jdata['calls'].items():
                             for shard in call:
                                 if 'Failed' in shard['executionStatus']:
@@ -137,7 +130,7 @@ class Monitor:
                                         file_dict[stderr] = shard['stderr']
                                     except Exception as e:
                                         logging.warn(str(e))
-                                    break
+                                    #break
 
                     attachments = self.generate_attachments(file_dict)
                     for attachment in attachments:
@@ -166,7 +159,6 @@ class Monitor:
         except Exception as e:
             logging.warn('Unable to generate attachment for {}:\n{}'.format(filename, e))
 
-    # TODO: Widdler only generates the stdout attachments when workflow_failure_mode is set to NoNewCalls. Need to fix.
     def generate_attachments(self, file_dict):
         """
         Generates a list of attachments to be added to an e-mail
@@ -175,22 +167,22 @@ class Monitor:
         :return: A list of attachments
         """
         attachments = list()
-        # if file_dict.items() > 3:
-        #     attachment = MIMEBase('application', 'zip')
-        #     zf = zipfile.ZipFile('workflow_logs.zip', mode='w')
-        #     for file_name, path in file_dict.items():
-        #         try:
-        #             zf.write(path, arcname=file_name, compress_type=zipfile.ZIP_DEFLATED)
-        #         except Exception as e:
-        #             logging.warn('Unable to generate attachment for {}:\n{}'.format(file_name, e))
-        #     zf.close()
-        #     attachment.set_payload('workflow_logs.zip')
-        #     encoders.encode_base64(attachment)
-        #     attachment.add_header('Content-Disposition', 'attachment', filename='workflow_logs.zip')
-        #     attachments.append(attachment)
-        # else:
-        for name, path in file_dict.items():
-            attachments.append(self.generate_attachment(name, path))
+        if file_dict.items() > 3:
+            attachment = MIMEBase('application', 'zip')
+            zf = zipfile.ZipFile('workflow_logs.zip', mode='w')
+            for file_name, path in file_dict.items():
+                try:
+                    zf.write(path, os.path.basename(file_name))
+                except Exception as e:
+                    logging.warn('Unable to generate attachment for {}:\n{}'.format(file_name, e))
+            zf.close()
+            attachment.set_payload('workflow_logs.zip')
+            encoders.encode_base64(attachment)
+            attachment.add_header('Content-Disposition', 'attachment', filename='workflow_logs.zip')
+            attachments.append(attachment)
+        else:
+            for name, path in file_dict.items():
+                attachments.append(self.generate_attachment(name, path))
         return attachments
 
     def generate_content(self, query_status, workflow_id):
