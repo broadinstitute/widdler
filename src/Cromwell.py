@@ -25,6 +25,7 @@ class Cromwell:
         else:
             self.port = port
         self.url = 'http://' + host + ':' + str(self.port) + '/api/workflows/v1'
+        self.url2 = 'http://' + host + ':' + str(self.port) + '/api/workflows/v2'
         self.logger = logging.getLogger('widdler.cromwell.Cromwell')
         self.logger.info('URL:{}'.format(self.url))
 
@@ -81,7 +82,7 @@ class Cromwell:
             workflow_input = metadata['submittedFiles']['inputs']
             wdl = metadata['submittedFiles']['workflow']
             self.logger.info('Workflow restarting with inputs: {}'.format(workflow_input))
-            return self.jstart_workflow(wdl, workflow_input, wdl_string=True, disable_caching=disable_caching)
+            return self.jstart_workflow(wdl, workflow_input, wdl_string=True, disable_caching=disable_caching, v2=True)
         except KeyError:
             return None
 
@@ -173,7 +174,7 @@ class Cromwell:
         r = requests.post(self.url, files=files)
         return json.loads(r.text)
 
-    def jstart_workflow(self, wdl_file, json_file, dependencies=None, wdl_string=False, disable_caching=False):
+    def jstart_workflow(self, wdl_file, json_file, dependencies=None, wdl_string=False, disable_caching=False, v2=False):
         """
         Start a workflow using json file for argument inputs.
         :param wdl_file: Workflow description file or WDL string (specify wdl_string if so).
@@ -207,7 +208,7 @@ class Cromwell:
             files['workflowOptions'] = ('options.json', "{\"read_from_cache\":false}", 'application/json')
             print('disable_caching enabled')
 
-        r = requests.post(self.url, files=files)
+        r = requests.post(self.url, files=files) if not v2 else requests.post(self.url2, files=files)
         return json.loads(r.text)
 
     def stop_workflow(self, workflow_id):

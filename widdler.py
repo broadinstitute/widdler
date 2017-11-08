@@ -191,6 +191,27 @@ def get_cromwell_links(server, workflow_id, port):
             'timing': 'http://{}:{}/api/workflows/v1/{}/timing'.format(server, port, workflow_id)}
 
 
+def call_log(args):
+    cromwell = Cromwell(host=args.server)
+    res = cromwell.get('logs', args.workflow_id)
+    print res["calls"]
+
+    command = ""
+    for key in res["calls"]:
+        stderr = res["calls"][key][0]["stderr"]
+        script = "/".join(stderr.split("/")[:-1]) + "/script"
+
+        with open(script, 'r') as f:
+            command_log = f.read()
+
+        command = command + key + ":\n\n"
+        command = command + command_log + "\n\n"
+
+    print command
+
+    return None
+
+
 def call_explain(args):
     logger.info("Explain requested")
     cromwell = Cromwell(host=args.server)
@@ -302,9 +323,20 @@ explain = sub.add_parser(name='explain',
 explain.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
 explain.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                      help='Choose a cromwell server from {}'.format(c.servers))
+explain.add_argument('-l', '--log', action='store_true', help='Output the commands used in this log.')
 explain.add_argument('-I', '--input', action='store_true', default=False, help=argparse.SUPPRESS)
 explain.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 explain.set_defaults(func=call_explain)
+
+log = sub.add_parser(name='log',
+                         description='Explain the status of a workflow.',
+                         usage='widdler.py log <workflowid>',
+                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+log.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
+log.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
+                     help='Choose a cromwell server from {}'.format(c.servers))
+log.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
+log.set_defaults(func=call_log)
 
 abort = sub.add_parser(name='abort',
                        description='Abort a submitted workflow.',
