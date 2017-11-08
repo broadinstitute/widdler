@@ -130,7 +130,7 @@ class Monitor:
                                         file_dict[stderr] = shard['stderr']
                                     except Exception as e:
                                         logging.warn(str(e))
-                                    #break
+                                    break
 
                     attachments = self.generate_attachments(file_dict)
                     for attachment in attachments:
@@ -167,22 +167,22 @@ class Monitor:
         :return: A list of attachments
         """
         attachments = list()
-        if file_dict.items() > 3:
-            attachment = MIMEBase('application', 'zip')
-            zf = zipfile.ZipFile('workflow_logs.zip', mode='w')
-            for file_name, path in file_dict.items():
-                try:
-                    zf.write(path, os.path.basename(file_name))
-                except Exception as e:
-                    logging.warn('Unable to generate attachment for {}:\n{}'.format(file_name, e))
-            zf.close()
-            attachment.set_payload('workflow_logs.zip')
-            encoders.encode_base64(attachment)
-            attachment.add_header('Content-Disposition', 'attachment', filename='workflow_logs.zip')
-            attachments.append(attachment)
-        else:
-            for name, path in file_dict.items():
-                attachments.append(self.generate_attachment(name, path))
+        # if file_dict.items() > 3:
+        #     attachment = MIMEBase('application', 'zip')
+        #     with zipfile.ZipFile('workflow_logs.zip', mode='w') as zf:
+        #         for file_name, path in file_dict.items():
+        #             try:
+        #                 zf.write(path, os.path.basename(file_name))
+        #             except Exception as e:
+        #                 logging.warn('Unable to generate attachment for {}:\n{}'.format(file_name, e))
+        #     zf.close()
+        #     attachment.set_payload('workflow_logs.zip')
+        #     encoders.encode_base64(attachment)
+        #     attachment.add_header('Content-Disposition', 'attachment', filename='workflow_logs.zip')
+        #     attachments.append(attachment)
+        # else:
+        for name, path in file_dict.items():
+            attachments.append(self.generate_attachment(name, path))
         return attachments
 
     def generate_content(self, query_status, workflow_id):
