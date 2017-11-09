@@ -174,13 +174,16 @@ class Cromwell:
         r = requests.post(self.url, files=files)
         return json.loads(r.text)
 
-    def jstart_workflow(self, wdl_file, json_file, dependencies=None, wdl_string=False, disable_caching=False, v2=False):
+    def jstart_workflow(self, wdl_file, json_file, dependencies=None, wdl_string=False, disable_caching=False,
+                        extra_options=None, v2=False):
         """
         Start a workflow using json file for argument inputs.
         :param wdl_file: Workflow description file or WDL string (specify wdl_string if so).
         :param json_file: JSON file or JSON string containing arguments.
         :param dependencies: The subworkflow zip file. Optional.
         :param wdl_string: If the wdl_file argument is actually a string. Optional.
+        :param disable_caching: Disable Cromwell cacheing.
+        :param extra_options: additional options to be passed to Cromwell.
         :return: Request response json.
         """
 
@@ -193,7 +196,6 @@ class Cromwell:
         else:
             j_args = json_file
 
-        files = None
         if not wdl_string:
             files = {'wdlSource': (wdl_file, open(wdl_file, 'rb'), 'application/octet-stream'),
                  'workflowInputs': ('report.csv', j_args, 'application/json')}
@@ -203,10 +205,16 @@ class Cromwell:
         if dependencies:
             # add dependency as zip file
             files['wdlDependencies'] = (dependencies, open(dependencies, 'rb'), 'application/zip')
-
+        workflow_options = {}
         if disable_caching:
-            files['workflowOptions'] = ('options.json', "{\"read_from_cache\":false}", 'application/json')
-            print('disable_caching enabled')
+            workflow_options.update({"read_from_cache": False})
+        if extra_options:
+            workflow_options.update(extra_options)
+        if disable_caching or extra_options:
+            files['workflowOptions'] = ('options.json', json.dumps(workflow_options), 'application/json')
+            print('Enabling the following additional workflow options:')
+            for k, v in workflow_options.items():
+                print("{}:{}".format(k, v))
 
         r = requests.post(self.url, files=files) if not v2 else requests.post(self.url2, files=files)
         return json.loads(r.text)
@@ -236,11 +244,13 @@ class Cromwell:
         :param labels: A dictionary of labels.
         :return: JSON response
         """
+        if not workflow_id:
+            raise TypeError("Workflow ID can not be {}".format(workflow_id))
         labels_json = json.dumps(labels)
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         return self.patch('labels', workflow_id, labels_json, headers)
 
-    def query_labels(self, labels, start_time=None, running_jobs=False):
+    def query_labels(self, labels, start_time=None, status_filter=None):
         """
         Query cromwell database with a given set of labels.
         :param labels: A dictionary of label keys and values.
@@ -249,11 +259,15 @@ class Cromwell:
         label_dict = {}
         for k, v in labels.items():
             label_dict["label=" + k] = v
+        time_query = "start=" + start_time if start_time != None else ""
+        status_query = ""
+        if status_filter:
+            for status in status_filter:
+                status_query += "status={}&".format(status)
 
-        time_query = "start=" + start_time + "&" if start_time != None else ""
-        running_query = "status=Submitted&status=Running" if running_jobs else ""
-        url = self.build_query_url(self.url + '/query?' + time_query + running_query, label_dict, ':')
-        r = requests.get(url)
+        url = self.build_query_url(self.url + '/query?' + "&".join([time_query, status_query]).lstrip("&"), label_dict, "%3A")
+        # In some cases we can get a dangling & so this removed that.
+        r = requests.get(url.rstrip('&'))
         return json.loads(r.content)
 
     def query_status(self, workflow_id):
