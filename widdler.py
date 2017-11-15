@@ -329,6 +329,7 @@ def call_log(args):
     print(command) #print to stdout
     return None
 
+
 def call_email(args):
     args.verbose = False
     args.no_notify = False
