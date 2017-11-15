@@ -23,7 +23,7 @@ __author__ = "Amr Abouelleil, Paul Cao"
 __copyright__ = "Copyright 2017, The Broad Institute"
 __credits__ = ["Amr Abouelleil", "Paul Cao", "Jean Chang"]
 __license__ = "GPL"
-__version__ = "1.2.4"
+__version__ = "1.6.0"
 __maintainer__ = "Amr Abouelleil"
 __email__ = "amr@broadinstitute.org"
 __status__ = "Production"
@@ -32,7 +32,8 @@ __status__ = "Production"
 logger = logging.getLogger('widdler')
 logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
-fh = logging.FileHandler(os.path.join(c.log_dir, '{}.widdler.log'.format(str(time.time()))))
+logfile = os.path.join(c.log_dir, '{}.{}.widdler.log'.format(getpass.getuser(), str(time.strftime("%m.%d.%Y"))))
+fh = logging.FileHandler(logfile)
 fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
@@ -82,23 +83,29 @@ def call_run(args):
     if args.validate:
         call_validate(args)
     cromwell = Cromwell(host=args.server)
-    result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies)
+    result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies,
+                                      disable_caching=args.disable_caching,
+                                      extra_options=kv_list_to_dict(args.extra_options))
     print("-------------Cromwell Links-------------")
     links = get_cromwell_links(args.server, result['id'], cromwell.port)
     print (links['metadata'])
     print (links['timing'])
     logger.info("Metadata:{}".format(links['metadata']))
     logger.info("Timing Graph:{}".format(links['timing']))
-    print ("These will also be e-mailed to you when the workflow completes.")
-    cromwell.label_workflow(result['id'], {'username': getpass.getuser()})
+    # this sleep is to allow job to get started in Cromwell before labeling or monitoring.
+    # Probably better ways to do this but for now this works.
+    time.sleep(5)
+    args.workflow_id = result['id']
+    cromwell.label_workflow(args.workflow_id, {'username': args.username})
+    if args.label:
+        call_label(args)
     if args.monitor:
-        time.sleep(2)
+        print ("These will also be e-mailed to you when the workflow completes.")
         retry = 4
         while retry != 0:
             try:
-                args.workflow_id = result['id']
                 call_monitor(args)
-                break
+                retry = 0
             except KeyError as e:
                 logger.debug(e)
                 retry = retry - 1
@@ -113,10 +120,12 @@ def call_query(args):
     """
     cromwell = Cromwell(host=args.server)
     responses = []
-
-    if args.workflow_id == None or args.workflow_id == "None":
+    if args.workflow_id == None or args.workflow_id == "None" and not args.label:
         return call_list(args)
-
+    if args.label:
+        logger.info("Label query requested.")
+        labeled = cromwell.query_labels(labels=kv_list_to_dict(args.label))
+        return labeled
     if args.status:
         logger.info("Status requested.")
         status = cromwell.query_status(args.workflow_id)
@@ -161,6 +170,7 @@ def call_abort(args):
 
 def call_monitor(args):
     logger.info("Monitoring requested")
+
     print("-------------Monitoring Workflow-------------")
     m = Monitor(host=args.server, user=args.username, no_notify=args.no_notify, verbose=args.verbose,
                 interval=args.interval)
@@ -179,6 +189,9 @@ def call_restart(args):
         msg = "Workflow restarted successfully; new workflow-id: " + str(result['id'])
         print(msg)
         logger.info(msg)
+        # transfer previous workflow labels
+        cromwell.transfer_labels(args.workflow_id, result['id'])
+        # add current username as label
         cromwell.label_workflow(result['id'], {'username': getpass.getuser()})
     else:
         msg = "Workflow was not restarted successfully; server response: " + str(result)
@@ -189,27 +202,6 @@ def call_restart(args):
 def get_cromwell_links(server, workflow_id, port):
     return {'metadata': 'http://{}:{}/api/workflows/v1/{}/metadata'.format(server, port, workflow_id),
             'timing': 'http://{}:{}/api/workflows/v1/{}/timing'.format(server, port, workflow_id)}
-
-
-def call_log(args):
-    cromwell = Cromwell(host=args.server)
-    res = cromwell.get('logs', args.workflow_id)
-    print res["calls"]
-
-    command = ""
-    for key in res["calls"]:
-        stderr = res["calls"][key][0]["stderr"]
-        script = "/".join(stderr.split("/")[:-1]) + "/script"
-
-        with open(script, 'r') as f:
-            command_log = f.read()
-
-        command = command + key + ":\n\n"
-        command = command + command_log + "\n\n"
-
-    print command
-
-    return None
 
 
 def call_explain(args):
@@ -258,7 +250,7 @@ def call_explain(args):
 def call_list(args):
     username = "*" if args.all else args.username
     m = Monitor(host=args.server, user=username, no_notify=True, verbose=True,
-                interval=None)
+                interval=None, status_filter=args.filter)
 
     def get_iso_date(dt):
         tz = pytz.timezone("US/Eastern")
@@ -277,31 +269,74 @@ def call_list(args):
         return pprint._safe_repr(object, context, maxlevels, level)
 
     start_date_str = get_iso_date(datetime.datetime.now() - datetime.timedelta(days=int(args.days)))
-    result = m.get_user_workflows(raw=True, start_time=start_date_str)["results"]
+    q = m.get_user_workflows(raw=True, start_time=start_date_str)
+    try:
+        result = q["results"]
+        result = map(lambda j: process_job(j), result)
+        printer = pprint.PrettyPrinter()
+        printer.format = my_safe_repr
+        printer.pprint(result)
+        args.monitor = True
+        return None
+    except KeyError as e:
+        logger.critical('KeyError: Unable to find key {}'.format(e))
 
-    result = map(lambda j:process_job(j), result)
-    printer = pprint.PrettyPrinter()
-    printer.format = my_safe_repr
-    printer.pprint(result)
 
-    args.monitor = True
-    return None
+def kv_list_to_dict(kv_list):
+    """
+    Converts a list of kv pairs delimited with colon into a dictionary.
+    :param kv_list: kv list: ex ['a:b', 'c:d', 'e:f']
+    :return: a dict, ex: {'a': 'b', 'c': 'd', 'e': 'f'}
+    """
+    new_dict = dict()
+    if kv_list:
+        for item in kv_list:
+            (key, val) = item.split(':')
+            new_dict[key] = val
+        return new_dict
+    else:
+        return None
 
 
 def call_label(args):
     cromwell = Cromwell(host=args.server)
-    # cromwell.label_workflow(args.workflow_id)
-    labels_dict = dict()
-    for label in args.label:
-        (key, val) = label.split(':')
-        labels_dict[key] = val
-    response = cromwell.label_workflow(args.workflow_id, labels=labels_dict)
-    print(response)
+    labels_dict = kv_list_to_dict(args.label)
+    response = cromwell.label_workflow(workflow_id=args.workflow_id, labels=labels_dict)
+    if response.status_code == 200:
+        print("Labels successfully applied:\n{}".format(response.content))
+    else:
+        logger.critical("Unable to apply specified labels:\n{}".format(response.content))
 
+def call_log(args):
+    cromwell = Cromwell(host=args.server)
+    res = cromwell.get('logs', args.workflow_id)
+    print res["calls"]
+
+    command = ""
+
+    # for each task, extract the command used
+    for key in res["calls"]:
+        stderr = res["calls"][key][0]["stderr"]
+        script = "/".join(stderr.split("/")[:-1]) + "/script"
+
+        with open(script, 'r') as f:
+            command_log = f.read()
+
+        command = command + key + ":\n\n"
+        command = command + command_log + "\n\n"
+
+    print(command) #print to stdout
+    return None
+
+def call_email(args):
+    args.verbose = False
+    args.no_notify = False
+    args.interval = 0
+    call_monitor(args)
 
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
-    usage='widdler.py <run | monitor | query | abort | validate |restart | explain | label> [<args>]',
+    usage='widdler.py <run | monitor | query | abort | validate |restart | explain | log | label> [<args>]',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 sub = parser.add_subparsers()
@@ -313,7 +348,7 @@ restart.add_argument('workflow_id', action='store', help='workflow id of workflo
 restart.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                      help='Choose a cromwell server from {}'.format(c.servers))
 restart.add_argument('-M', '--monitor', action='store_true', default=True, help=argparse.SUPPRESS)
-restart.add_argument('-D', '--disable_caching', action='store_true', default=False, help=argparse.SUPPRESS)
+restart.add_argument('-D', '--disable_caching', action='store_true', default=False, help="Don't used cached data.")
 restart.set_defaults(func=call_restart)
 
 explain = sub.add_parser(name='explain',
@@ -323,7 +358,6 @@ explain = sub.add_parser(name='explain',
 explain.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
 explain.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                      help='Choose a cromwell server from {}'.format(c.servers))
-explain.add_argument('-l', '--log', action='store_true', help='Output the commands used in this log.')
 explain.add_argument('-I', '--input', action='store_true', default=False, help=argparse.SUPPRESS)
 explain.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 explain.set_defaults(func=call_explain)
@@ -377,10 +411,13 @@ query.add_argument('workflow_id', nargs='?', default="None", help='workflow id f
 query.add_argument('-s', '--status', action='store_true', default=False, help='Print status for workflow to stdout')
 query.add_argument('-m', '--metadata', action='store_true', default=False, help='Print metadata for workflow to stdout')
 query.add_argument('-l', '--logs', action='store_true', default=False, help='Print logs for workflow to stdout')
-query.add_argument('-u', '--username', action='store', default=getpass.getuser(),help='Owner of workflows to monitor.')
+query.add_argument('-u', '--username', action='store', default=getpass.getuser(), help='Owner of workflows to monitor.')
+query.add_argument('-L', '--label', action='append', help='Query status of all workflows with specific label(s).')
 query.add_argument('-d', '--days', action='store', default=7, help='Last n days to query.')
 query.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                    help='Choose a cromwell server from {}'.format(c.servers))
+query.add_argument('-f', '--filter', action='append', type=str, choices=c.run_states + c.terminal_states,
+                   help='Filter by a workflow status from those listed above. May be specified more than once.')
 query.add_argument('-a', '--all', action='store_true', default=False, help='Query for all users.')
 query.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 
@@ -395,19 +432,24 @@ run.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL to 
 run.add_argument('json', action='store', type=is_valid, help='Path the json inputs file.')
 run.add_argument('-v', '--validate', action='store_true', default=False,
                  help='Validate WDL inputs in json file.')
+run.add_argument('-l', '--label', action='append', help='A key:value pair to assign. May be used multiple times.')
 run.add_argument('-m', '--monitor', action='store_true', default=False,
                  help='Monitor the workflow and receive an e-mail notification when it terminates.')
 run.add_argument('-i', '--interval', action='store', default=30, type=int,
                  help='If --monitor is selected, the amount of time in seconds to elapse between status checks.')
+run.add_argument('-o', '--extra_options', action='append',
+                 help='Additional workflow options to pass to Cromwell. Specify as k:v pairs. May be specified multiple'
+                      + 'times for multiple options. See https://github.com/broadinstitute/cromwell#workflow-options' +
+                      'for available options.')
 run.add_argument('-V', '--verbose', action='store_true', default=False,
                  help='If selected, widdler will write the current status to STDOUT until completion while monitoring.')
 run.add_argument('-n', '--no_notify', action='store_true', default=False,
-                     help='When selected, disable widdler e-mail notification of workflow completion.')
+                 help='When selected, disable widdler e-mail notification of workflow completion.')
 run.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
                  help='A zip file containing one or more WDL files that the main WDL imports.')
+run.add_argument('-D', '--disable_caching', action='store_true', default=False, help="Don't used cached data.")
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                  help='Choose a cromwell server from {}'.format(c.servers))
-run.add_argument('-l', '--label', action='append', help='A key:value pair to assign. May be used multiple times.')
 run.add_argument('-u', '--username', action='store', default=getpass.getuser(), help=argparse.SUPPRESS)
 run.add_argument('-w', '--workflow_id', help=argparse.SUPPRESS)
 run.set_defaults(func=call_run)
@@ -430,8 +472,19 @@ label.add_argument('-S', '--server', action='store', required=True, type=str, ch
                    help='Choose a cromwell server from {}'.format(c.servers))
 label.add_argument('-l', '--label', action='append', help='A key:value pair to assign. May be used multiple times.')
 label.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
-
 label.set_defaults(func=call_label)
+
+email = sub.add_parser(name ='email',
+                       description='Email data to user regarding a workflow.',
+                       usage='widdler.py label <workflow_id> [<args>]',
+                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+email.add_argument('workflow_id', nargs='?', default="None", help='workflow id for workflow to label.')
+email.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
+                   help='Choose a cromwell server from {}'.format(c.servers))
+email.add_argument('-u', '--username', action='store', default=getpass.getuser(), help='username of user to e-mail to')
+email.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
+email.set_defaults(func=call_email)
+
 
 args = parser.parse_args()
 
