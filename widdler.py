@@ -311,7 +311,7 @@ def call_label(args):
 def call_log(args):
     cromwell = Cromwell(host=args.server)
     res = cromwell.get('logs', args.workflow_id)
-    # print res["calls"]
+    print res["calls"]
 
     command = ""
 
