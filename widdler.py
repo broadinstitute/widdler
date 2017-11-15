@@ -32,7 +32,8 @@ __status__ = "Production"
 logger = logging.getLogger('widdler')
 logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
-fh = logging.FileHandler(os.path.join(c.log_dir, '{}.widdler.log'.format(str(time.strftime("%m.%d.%Y")))))
+logfile = os.path.join(c.log_dir, '{}.{}.widdler.log'.format(getpass.getuser(), str(time.strftime("%m.%d.%Y"))))
+fh = logging.FileHandler(logfile)
 fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
