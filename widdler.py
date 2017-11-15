@@ -188,6 +188,9 @@ def call_restart(args):
         msg = "Workflow restarted successfully; new workflow-id: " + str(result['id'])
         print(msg)
         logger.info(msg)
+        # transfer previous workflow labels
+        cromwell.transfer_labels(args.workflow_id, result['id'])
+        # add current username as label
         cromwell.label_workflow(result['id'], {'username': getpass.getuser()})
     else:
         msg = "Workflow was not restarted successfully; server response: " + str(result)

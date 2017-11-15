@@ -63,9 +63,27 @@ class Cromwell:
         return json.loads(r.text)
 
     def patch(self, rtype, workflow_id, payload, headers):
+        """
+        Make a patch request to the Cromwell server.
+        :param rtype: the request type (ex: label)
+        :param workflow_id: the workflow id for the workflow to patch
+        :param payload: the json data to patch.
+        :param headers: payload headers.
+        :return: request result
+        """
         workflow_url = self.url + '/' + workflow_id + '/' + rtype
         self.logger.info("POST REQUEST:{}".format(workflow_url))
-        r = requests.patch(url=workflow_url, data=payload, headers=headers)
+        tries = 4
+        while tries != 0:
+            r = requests.patch(url=workflow_url, data=payload, headers=headers)
+            if r.status_code == 200:
+                logging.info('{} request succeeded.'.format(rtype))
+                tries = 0
+            else:
+                logging.warning("{} failed. Error {}: {}".format(rtype, r.status_code, json.loads(r.text)['message']))
+                logging.info("Retrying...")
+                tries -= tries
+        # Should return none only if patch request fails.
         return r
 
     def restart_workflow(self, workflow_id, disable_caching=False):
@@ -235,6 +253,25 @@ class Cromwell:
         """
         self.logger.info('Querying metadata for workflow {}'.format(workflow_id))
         return self.get('metadata', workflow_id, {'Accept': 'application/json', 'Accept-Encoding': 'identity'})
+
+    def transfer_labels(self, old_id, new_id):
+        """
+        Transfer the labels from an old workflow id to a new one. Labels applied by the system are removed so as to
+        avoid conflicts.
+        :param old_id: The old workflow to take labels from.
+        :param new_id: The new workflow id to apply the labels to.
+        :return: void.
+        """
+        old_labels = self.query_metadata(old_id)['labels']
+        try:
+            del old_labels['cromwell-workflow-id']
+            del old_labels['username']
+        except KeyError as e:
+            logging.debug("{}. No cromwell-workflow-id in old labels.".format(str(e.message)))
+        if len(old_labels) > 0:
+            self.label_workflow(new_id, old_labels)
+        else:
+            logging.debug('No custom labels in {} to transfer to {}.'.format(old_id, new_id))
 
     def label_workflow(self, workflow_id, labels):
         """
