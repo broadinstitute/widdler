@@ -23,17 +23,15 @@ Below is widdler's basic help text. Widdler expects one of three usage modes to
 be indicated as it's first argument: run, query, or abort.
 
 ```
-usage: widdler.py <run | monitor | query | abort | validate |restart | explain> [<args>]
+usage: widdler.py <positional argument> [<args>]
 
 Description: A tool for executing and monitoring WDLs to Cromwell instances.
 
 positional arguments:
-  {restart,explain,abort,monitor,query,run,validate}
+  {restart,explain,log,abort,monitor,query,run,validate,label,email}
 
 optional arguments:
   -h, --help            show this help message and exit
-
-
 ```
 
 ### widdler.py run
@@ -54,22 +52,33 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -v, --validate        Validate WDL inputs in json file. (default: False)
+  -l LABEL, --label LABEL
+                        A key:value pair to assign. May be used multiple
+                        times. (default: None)
   -m, --monitor         Monitor the workflow and receive an e-mail
                         notification when it terminates. (default: False)
   -i INTERVAL, --interval INTERVAL
                         If --monitor is selected, the amount of time in
                         seconds to elapse between status checks. (default: 30)
+  -o EXTRA_OPTIONS, --extra_options EXTRA_OPTIONS
+                        Additional workflow options to pass to Cromwell.
+                        Specify as k:v pairs. May be specified multipletimes
+                        for multiple options. See
+                        https://github.com/broadinstitute/cromwell#workflow-
+                        optionsfor available options. (default: None)
   -V, --verbose         If selected, widdler will write the current status to
                         STDOUT until completion while monitoring. (default:
                         False)
-  -n, --no_notify       If selected, disnable widdler monitoring e-mail
-                        notification of workflow completion. (default: True)
+  -n, --no_notify       When selected, disable widdler e-mail notification of
+                        workflow completion. (default: False)
   -d DEPENDENCIES, --dependencies DEPENDENCIES
                         A zip file containing one or more WDL files that the
                         main WDL imports. (default: None)
-  -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
-                        Choose a cromwell server from ['ale', 'btl-cromwell']
-                        (default: None)
+  -D, --disable_caching
+                        Don't used cached data. (default: False)
+  -S {ale1,btl-cromwell,localhost,gscid-cromwell}, --server {ale1,btl-cromwell,localhost,gscid-cromwell}
+                        Choose a cromwell server from ['ale1', 'btl-cromwell',
+                        'localhost', 'gscid-cromwell'] (default: None)
 ```
 
 For example:
@@ -119,28 +128,40 @@ Will restart workflow b931xxx and return the new workflow id like so:
 Workflow restarted successfully; new workflow-id: 164678b8-2a52-40f3-976c-417c777c78ef
 ```
 
+Finally, any restarted workflows will inherit the labels of it's originating workflow.
 
 ### widdler.py query
 
 Below is widdler's query help text. Aside from the workflow ID it expects one or more optional
 arguments to request basic status, metadata, and/or logs. 
 
-```usage: widdler.py query <workflow id> [<args>]
+```
+    usage: widdler.py query <workflow id> [<args>]
    
    Query cromwell for information on the submitted workflow.
    
    positional arguments:
      workflow_id           workflow id for workflow execution of interest.
+                           (default: None)
    
    optional arguments:
      -h, --help            show this help message and exit
      -s, --status          Print status for workflow to stdout (default: False)
      -m, --metadata        Print metadata for workflow to stdout (default: False)
      -l, --logs            Print logs for workflow to stdout (default: False)
-     -S {ale,btl-cromwell}, --server {ale,btl-cromwell}
-                           Choose a cromwell server from ['ale', 'btl-cromwell']
+     -u USERNAME, --username USERNAME
+                           Owner of workflows to monitor. (default: amr)
+     -L LABEL, --label LABEL
+                           Query status of all workflows with specific label(s).
                            (default: None)
-   
+     -d DAYS, --days DAYS  Last n days to query. (default: 7)
+     -S {ale1,btl-cromwell,localhost,gscid-cromwell}, --server {ale1,btl-cromwell,localhost,gscid-cromwell}
+                           Choose a cromwell server from ['ale1', 'btl-cromwell',
+                           'localhost', 'gscid-cromwell'] (default: None)
+     -f {Running,Submitted,QueuedInCromwell,Failed,Aborted,Succeeded}, --filter {Running,Submitted,QueuedInCromwell,Failed,Aborted,Succeeded}
+                           Filter by a workflow status from those listed above.
+                           May be specified more than once. (default: None)
+     -a, --all             Query for all users. (default: False)  
 ```
 
 For example:
@@ -294,6 +315,39 @@ gatk.tcir: False is not a valid Boolean. Note that JSON boolean values must not 
 gatk.ploidy: 2.0 is not a valid Int.
 Required parameter gatk.snp_annotation is missing from input json.
 Required parameter gatk.ref_file is missing from input json.
+```
+
+### widdler.py log
+
+Running 'widdler.py log' will print to screen the commands used by each task of a workflow. For example, running:
+
+```
+widdler.py log becb307f-4718-4d8b-836f-5780d64c4a82 -S btl-cromwell 
+```
+
+Results in the following:
+
+```
+{u'hello.helloWorld': [{u'attempt': 1, u'shardIndex': -1, u'stderr': u'/btl/store/cromwell_executions/hello/becb307f-4718-4d8b-836f-5780d64c4a82/call-helloWorld/execution/stderr', u'stdout': u'/btl/store/cromwell_executions/hello/becb307f-4718-4d8b-836f-5780d64c4a82/call-helloWorld/execution/stdout'}]}
+hello.helloWorld:
+
+#!/bin/bash
+tmpDir=$(mktemp -d /cil/shed/apps/internal/cromwell_new/cromwell-executions/hello/d90bf4f3-d9fb-4f07-92d9-0d46c40355f1/call-helloWorld/execution/tmp.XXXXXX)
+chmod 777 $tmpDir
+export _JAVA_OPTIONS=-Djava.io.tmpdir=$tmpDir
+export TMPDIR=$tmpDir
+
+(
+cd /cil/shed/apps/internal/cromwell_new/cromwell-executions/hello/d90bf4f3-d9fb-4f07-92d9-0d46c40355f1/call-helloWorld/execution
+echo Hello, amr
+)
+echo $? > /cil/shed/apps/internal/cromwell_new/cromwell-executions/hello/d90bf4f3-d9fb-4f07-92d9-0d46c40355f1/call-helloWorld/execution/rc.tmp
+(
+cd /cil/shed/apps/internal/cromwell_new/cromwell-executions/hello/d90bf4f3-d9fb-4f07-92d9-0d46c40355f1/call-helloWorld/execution
+
+)
+sync
+mv /cil/shed/apps/internal/cromwell_new/cromwell-executions/hello/d90bf4f3-d9fb-4f07-92d9-0d46c40355f1/call-helloWorld/execution/rc.tmp /cil/shed/apps/internal/cromwell_new/cromwell-executions/hello/d90bf4f3-d9fb-4f07-92d9-0d46c40355f1/call-helloWorld/execution/rc
 ```
 
 
