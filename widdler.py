@@ -336,7 +336,7 @@ def call_email(args):
 
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
-    usage='widdler.py <run | monitor | query | abort | validate |restart | explain | log | label> [<args>]',
+    usage='widdler.py <positional argument> [<args>]',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 sub = parser.add_subparsers()
