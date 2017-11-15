@@ -307,10 +307,11 @@ def call_label(args):
     else:
         logger.critical("Unable to apply specified labels:\n{}".format(response.content))
 
+
 def call_log(args):
     cromwell = Cromwell(host=args.server)
     res = cromwell.get('logs', args.workflow_id)
-    print res["calls"]
+    # print res["calls"]
 
     command = ""
 
