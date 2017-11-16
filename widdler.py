@@ -365,10 +365,10 @@ explain.add_argument('-M', '--monitor', action='store_false', default=False, hel
 explain.set_defaults(func=call_explain)
 
 log = sub.add_parser(name='log',
-                         description='Explain the status of a workflow.',
+                         description='Print the commands used in a workflow.',
                          usage='widdler.py log <workflowid>',
                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-log.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
+log.add_argument('workflow_id', action='store', help='workflow id of workflow to print commands for.')
 log.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                      help='Choose a cromwell server from {}'.format(c.servers))
 log.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
