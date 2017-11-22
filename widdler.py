@@ -249,7 +249,7 @@ def call_explain(args):
 def call_list(args):
     username = "*" if args.all else args.username
     m = Monitor(host=args.server, user=username, no_notify=True, verbose=True,
-                interval=None, status_filter=args.filter)
+                interval=None)
 
     def get_iso_date(dt):
         tz = pytz.timezone("US/Eastern")
