@@ -307,6 +307,7 @@ def call_label(args):
     else:
         logger.critical("Unable to apply specified labels:\n{}".format(response.content))
 
+
 def call_log(args):
     cromwell = Cromwell(host=args.server)
     res = cromwell.get('logs', args.workflow_id)
@@ -328,6 +329,7 @@ def call_log(args):
     print(command) #print to stdout
     return None
 
+
 def call_email(args):
     args.verbose = False
     args.no_notify = False
@@ -336,7 +338,7 @@ def call_email(args):
 
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
-    usage='widdler.py <run | monitor | query | abort | validate |restart | explain | log | label> [<args>]',
+    usage='widdler.py <positional argument> [<args>]',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 sub = parser.add_subparsers()
@@ -363,10 +365,10 @@ explain.add_argument('-M', '--monitor', action='store_false', default=False, hel
 explain.set_defaults(func=call_explain)
 
 log = sub.add_parser(name='log',
-                         description='Explain the status of a workflow.',
+                         description='Print the commands used in a workflow.',
                          usage='widdler.py log <workflowid>',
                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-log.add_argument('workflow_id', action='store', help='workflow id of workflow to abort.')
+log.add_argument('workflow_id', action='store', help='workflow id of workflow to print commands for.')
 log.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                      help='Choose a cromwell server from {}'.format(c.servers))
 log.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)

@@ -43,7 +43,7 @@ class Monitor:
     A class for monitoring a user's workflows, providing status reports at regular intervals
     as well as e-mail notification.
     """
-    def __init__(self, user, host, no_notify, verbose, interval, status_filter=None):
+    def __init__(self, user, host, no_notify, verbose, interval):
         self.host = host
         self.user = user
         self.interval = interval
@@ -51,7 +51,6 @@ class Monitor:
         self.messenger = Messenger(self.user)
         self.no_notify = no_notify
         self.verbose = verbose
-        self.status_filter = status_filter
 
     def get_user_workflows(self, raw=False, start_time=None):
         """
@@ -62,10 +61,9 @@ class Monitor:
         user_workflows = []
         results = None
         if self.user == "*":
-            results = self.cromwell.query_labels({}, start_time=start_time, status_filter=self.status_filter)
+            results = self.cromwell.query_labels({}, start_time=start_time, running_jobs=True)
         else:
-            results = self.cromwell.query_labels({'username': self.user}, start_time=start_time,
-                                                 status_filter=self.status_filter)
+            results = self.cromwell.query_labels({'username': self.user}, start_time=start_time)
 
         if raw:
             return results
