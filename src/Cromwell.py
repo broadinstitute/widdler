@@ -100,7 +100,8 @@ class Cromwell:
             workflow_input = metadata['submittedFiles']['inputs']
             wdl = metadata['submittedFiles']['workflow']
             self.logger.info('Workflow restarting with inputs: {}'.format(workflow_input))
-            return self.jstart_workflow(wdl, workflow_input, wdl_string=True, disable_caching=disable_caching, v2=True)
+            new_id = self.jstart_workflow(wdl, workflow_input, wdl_string=True, disable_caching=disable_caching, v2=True)['id']
+            self.transfer_labels(workflow_id, new_id)
         except KeyError:
             return None
 
