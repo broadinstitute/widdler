@@ -85,7 +85,8 @@ def call_run(args):
     cromwell = Cromwell(host=args.server)
     result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies,
                                       disable_caching=args.disable_caching,
-                                      extra_options=kv_list_to_dict(args.extra_options))
+                                      extra_options=kv_list_to_dict(args.extra_options),
+                                      custom_labels={'username': args.username})
     print("-------------Cromwell Links-------------")
     links = get_cromwell_links(args.server, result['id'], cromwell.port)
     print (links['metadata'])
@@ -96,7 +97,6 @@ def call_run(args):
     # Probably better ways to do this but for now this works.
     time.sleep(5)
     args.workflow_id = result['id']
-    cromwell.label_workflow(args.workflow_id, {'username': args.username})
     if args.label:
         call_label(args)
     if args.monitor:
@@ -189,10 +189,6 @@ def call_restart(args):
         msg = "Workflow restarted successfully; new workflow-id: " + str(result['id'])
         print(msg)
         logger.info(msg)
-        # transfer previous workflow labels
-        cromwell.transfer_labels(args.workflow_id, result['id'])
-        # add current username as label
-        cromwell.label_workflow(result['id'], {'username': getpass.getuser()})
     else:
         msg = "Workflow was not restarted successfully; server response: " + str(result)
         print(msg)
