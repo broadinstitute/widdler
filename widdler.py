@@ -83,23 +83,30 @@ def call_run(args):
     if args.validate:
         call_validate(args)
     cromwell = Cromwell(host=args.server)
+
+    #prep labels and add user
+    labels_dict = kv_list_to_dict(args.label)
+    labels_dict['username'] = args.username
+
     result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies,
                                       disable_caching=args.disable_caching,
                                       extra_options=kv_list_to_dict(args.extra_options),
-                                      custom_labels={'username': args.username})
+                                      custom_labels=labels_dict)
+
     print("-------------Cromwell Links-------------")
     links = get_cromwell_links(args.server, result['id'], cromwell.port)
     print (links['metadata'])
     print (links['timing'])
     logger.info("Metadata:{}".format(links['metadata']))
     logger.info("Timing Graph:{}".format(links['timing']))
-    # this sleep is to allow job to get started in Cromwell before labeling or monitoring.
-    # Probably better ways to do this but for now this works.
-    time.sleep(5)
+
     args.workflow_id = result['id']
-    if args.label:
-        call_label(args)
+
     if args.monitor:
+        # this sleep is to allow job to get started in Cromwell before labeling or monitoring.
+        # Probably better ways to do this but for now this works.
+        time.sleep(5)
+
         print ("These will also be e-mailed to you when the workflow completes.")
         retry = 4
         while retry != 0:

@@ -95,14 +95,14 @@ class Cromwell:
         :return: Request response json.
         """
         metadata = self.query_metadata(workflow_id)
-        processed_metadata = self.process_metadata_label(metadata)
+        processed_labels = self.process_metadata_label(metadata)
 
         try:
             workflow_input = metadata['submittedFiles']['inputs']
             wdl = metadata['submittedFiles']['workflow']
             self.logger.info('Workflow restarting with inputs: {}'.format(workflow_input))
             restarted_wf = self.jstart_workflow(wdl, workflow_input, wdl_string=True, disable_caching=disable_caching,
-                                                custom_labels=processed_metadata, v2=True)
+                                                custom_labels=processed_labels, v2=True)
             return restarted_wf
         except KeyError:
             return None
