@@ -95,12 +95,15 @@ class Cromwell:
         :return: Request response json.
         """
         metadata = self.query_metadata(workflow_id)
+        processed_labels = self.process_metadata_label(metadata)
 
         try:
             workflow_input = metadata['submittedFiles']['inputs']
             wdl = metadata['submittedFiles']['workflow']
             self.logger.info('Workflow restarting with inputs: {}'.format(workflow_input))
-            return self.jstart_workflow(wdl, workflow_input, wdl_string=True, disable_caching=disable_caching, v2=True)
+            restarted_wf = self.jstart_workflow(wdl, workflow_input, wdl_string=True, disable_caching=disable_caching,
+                                                custom_labels=processed_labels, v2=True)
+            return restarted_wf
         except KeyError:
             return None
 
@@ -193,7 +196,7 @@ class Cromwell:
         return json.loads(r.text)
 
     def jstart_workflow(self, wdl_file, json_file, dependencies=None, wdl_string=False, disable_caching=False,
-                        extra_options=None, v2=False):
+                        extra_options=None, custom_labels={}, v2=False):
         """
         Start a workflow using json file for argument inputs.
         :param wdl_file: Workflow description file or WDL string (specify wdl_string if so).
@@ -216,10 +219,12 @@ class Cromwell:
 
         if not wdl_string:
             files = {'wdlSource': (wdl_file, open(wdl_file, 'rb'), 'application/octet-stream'),
-                 'workflowInputs': ('report.csv', j_args, 'application/json')}
+                 'workflowInputs': ('report.csv', j_args, 'application/json'),
+                 'customLabels': ('labels.json', json.dumps(custom_labels), 'application/json')}
         else:
             files = {'wdlSource': ('workflow.wdl', wdl_file, 'application/text-plain'),
-                  'workflowInputs': ('report.csv', j_args, 'application/json')}
+                  'workflowInputs': ('report.csv', j_args, 'application/json'),
+                  'customLabels': ('labels.json', json.dumps(custom_labels), 'application/json')}
         if dependencies:
             # add dependency as zip file
             files['wdlDependencies'] = (dependencies, open(dependencies, 'rb'), 'application/zip')
@@ -255,7 +260,7 @@ class Cromwell:
         self.logger.info('Querying metadata for workflow {}'.format(workflow_id))
         return self.get('metadata', workflow_id, {'Accept': 'application/json', 'Accept-Encoding': 'identity'})
 
-    def transfer_labels(self, old_id, new_id):
+    def process_metadata_label(self, metadata):
         """
         Transfer the labels from an old workflow id to a new one. Labels applied by the system are removed so as to
         avoid conflicts.
@@ -263,16 +268,15 @@ class Cromwell:
         :param new_id: The new workflow id to apply the labels to.
         :return: void.
         """
-        old_labels = self.query_metadata(old_id)['labels']
+        processed_labels = metadata['labels']
         try:
-            del old_labels['cromwell-workflow-id']
-            del old_labels['username']
+            del processed_labels['cromwell-workflow-id']
+            del processed_labels['username']
+            processed_labels['username'] = getpass.getuser()
         except KeyError as e:
             logging.debug("{}. No cromwell-workflow-id in old labels.".format(str(e.message)))
-        if len(old_labels) > 0:
-            self.label_workflow(new_id, old_labels)
-        else:
-            logging.debug('No custom labels in {} to transfer to {}.'.format(old_id, new_id))
+
+        return processed_labels
 
     def label_workflow(self, workflow_id, labels):
         """
@@ -287,7 +291,7 @@ class Cromwell:
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         return self.patch('labels', workflow_id, labels_json, headers)
 
-    def query_labels(self, labels, start_time=None, status_filter=None):
+    def query_labels(self, labels, start_time=None, status_filter=None, running_jobs=False):
         """
         Query cromwell database with a given set of labels.
         :param labels: A dictionary of label keys and values.
@@ -303,6 +307,8 @@ class Cromwell:
                 status_query += "status={}&".format(status)
 
         url = self.build_query_url(self.url + '/query?' + "&".join([time_query, status_query]).lstrip("&"), label_dict, "%3A")
+        url = url + 'status=Running' if running_jobs else url
+
         # In some cases we can get a dangling & so this removed that.
         r = requests.get(url.rstrip('&'))
         return json.loads(r.content)

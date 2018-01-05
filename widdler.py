@@ -83,23 +83,30 @@ def call_run(args):
     if args.validate:
         call_validate(args)
     cromwell = Cromwell(host=args.server)
+
+    #prep labels and add user
+    labels_dict = kv_list_to_dict(args.label)
+    labels_dict['username'] = args.username
+
     result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies,
                                       disable_caching=args.disable_caching,
-                                      extra_options=kv_list_to_dict(args.extra_options))
+                                      extra_options=kv_list_to_dict(args.extra_options),
+                                      custom_labels=labels_dict)
+
     print("-------------Cromwell Links-------------")
     links = get_cromwell_links(args.server, result['id'], cromwell.port)
     print (links['metadata'])
     print (links['timing'])
     logger.info("Metadata:{}".format(links['metadata']))
     logger.info("Timing Graph:{}".format(links['timing']))
-    # this sleep is to allow job to get started in Cromwell before labeling or monitoring.
-    # Probably better ways to do this but for now this works.
-    time.sleep(5)
+
     args.workflow_id = result['id']
-    cromwell.label_workflow(args.workflow_id, {'username': args.username})
-    if args.label:
-        call_label(args)
+
     if args.monitor:
+        # this sleep is to allow job to get started in Cromwell before labeling or monitoring.
+        # Probably better ways to do this but for now this works.
+        time.sleep(5)
+
         print ("These will also be e-mailed to you when the workflow completes.")
         retry = 4
         while retry != 0:
@@ -189,10 +196,6 @@ def call_restart(args):
         msg = "Workflow restarted successfully; new workflow-id: " + str(result['id'])
         print(msg)
         logger.info(msg)
-        # transfer previous workflow labels
-        cromwell.transfer_labels(args.workflow_id, result['id'])
-        # add current username as label
-        cromwell.label_workflow(result['id'], {'username': getpass.getuser()})
     else:
         msg = "Workflow was not restarted successfully; server response: " + str(result)
         print(msg)
@@ -250,7 +253,7 @@ def call_explain(args):
 def call_list(args):
     username = "*" if args.all else args.username
     m = Monitor(host=args.server, user=username, no_notify=True, verbose=True,
-                interval=None, status_filter=args.filter)
+                interval=None)
 
     def get_iso_date(dt):
         tz = pytz.timezone("US/Eastern")

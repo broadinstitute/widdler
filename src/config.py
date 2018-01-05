@@ -1,7 +1,7 @@
 import os
 import sys
 
-servers = ['ale1', 'btl-cromwell', 'localhost', 'gscid-cromwell']
+servers = ['ale', 'ale1', 'btl-cromwell', 'localhost', 'gscid-cromwell']
 resource_dir = os.path.abspath(os.path.dirname(__file__)).replace('src', 'resources')
 run_states = ['Running', 'Submitted', 'QueuedInCromwell']
 terminal_states = ['Failed', 'Aborted', 'Succeeded']
