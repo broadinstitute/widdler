@@ -85,7 +85,7 @@ def call_run(args):
     cromwell = Cromwell(host=args.server)
 
     #prep labels and add user
-    labels_dict = kv_list_to_dict(args.label)
+    labels_dict = kv_list_to_dict(args.label) if kv_list_to_dict(args.label) != None else {}
     labels_dict['username'] = args.username
 
     result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies,
