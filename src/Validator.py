@@ -96,6 +96,7 @@ class Validator:
                 # checked. This indicates the user didn't specify the parameter. If the param is optional that's ok
                 # but if it isn't, we should add it to errors.
                 del wdict[param]
+        # make sure that no required parameters are missing from input json.
         for k, v in wdict.items():
             if 'optional' not in v:
                 errors.append('Required parameter {} is missing from input json.'.format(k))
@@ -105,7 +106,7 @@ class Validator:
         """
         Validates a TSV sample file array (passed as an array) used in WDL inputs.
         Assumes that last column of each row contains an absolute path to a file.
-        :param samples_file: a tab-delimitted file with the last column of each row containing a file path.
+        :param samples_array: an array with the last column of each row containing a file path.
         :return: A list of errors. If list is empty, there were no errors.
         """
         errors = []

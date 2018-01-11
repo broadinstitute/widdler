@@ -150,6 +150,12 @@ def call_query(args):
 
 
 def call_validate(args):
+    """
+    Calls the Validator to validate input json. Exits with feedback to user regarding errors in json or reports no
+    errors found.
+    :param args: validation subparser arguments.
+    :return:
+    """
     logger.info("Validation requested.")
     validator = Validator(wdl=args.wdl, json=args.json)
     result = validator.validate_json()
@@ -157,7 +163,7 @@ def call_validate(args):
         e = "{} input file contains the following errors:\n{}".format(args.json, "\n".join(result))
         # This will also print to stdout so no need for a print statement
         logger.critical(e)
-        sys.exit(-1)
+        sys.exit(1)
     else:
         s = 'No errors found in {}'.format(args.wdl)
         print(s)
@@ -176,6 +182,11 @@ def call_abort(args):
 
 
 def call_monitor(args):
+    """
+    Calls Monitoring to report to user the status of their workflow at regular intervals.
+    :param args: 'monitor' subparser arguments.
+    :return:
+    """
     logger.info("Monitoring requested")
 
     print("-------------Monitoring Workflow-------------")
@@ -188,6 +199,11 @@ def call_monitor(args):
 
 
 def call_restart(args):
+    """
+    Call cromwell restart to restart a failed workflow.
+    :param args: restart subparser arguments.
+    :return:
+    """
     logger.info("Restart requested")
     cromwell = Cromwell(host=args.server)
     result = cromwell.restart_workflow(workflow_id=args.workflow_id, disable_caching=args.disable_caching)
@@ -203,6 +219,13 @@ def call_restart(args):
 
 
 def get_cromwell_links(server, workflow_id, port):
+    """
+    Get metadata and timing graph URLs.
+    :param server: cromwell host
+    :param workflow_id: UUID for workflow
+    :param port: port for cromwell server of interest
+    :return: Dictionary containing useful links
+    """
     return {'metadata': 'http://{}:{}/api/workflows/v1/{}/metadata'.format(server, port, workflow_id),
             'timing': 'http://{}:{}/api/workflows/v1/{}/timing'.format(server, port, workflow_id)}
 
@@ -302,6 +325,11 @@ def kv_list_to_dict(kv_list):
 
 
 def call_label(args):
+    """
+    Apply labels to a workflow that currently exists in the database.
+    :param args: label subparser arguments
+    :return:
+    """
     cromwell = Cromwell(host=args.server)
     labels_dict = kv_list_to_dict(args.label)
     response = cromwell.label_workflow(workflow_id=args.workflow_id, labels=labels_dict)
@@ -312,6 +340,11 @@ def call_label(args):
 
 
 def call_log(args):
+    """
+    Get workflow logs via cromwell API.
+    :param args: log subparser arguments.
+    :return:
+    """
     cromwell = Cromwell(host=args.server)
     res = cromwell.get('logs', args.workflow_id)
     print res["calls"]
@@ -334,6 +367,12 @@ def call_log(args):
 
 
 def call_email(args):
+    """
+    MVP pass-through function for testing desirability of a call_email feature. If users want a full-fledged function
+    we can rework this.
+    :param args: email subparser args.
+    :return:
+    """
     args.verbose = False
     args.no_notify = False
     args.interval = 0
@@ -495,11 +534,13 @@ args = parser.parse_args()
 
 
 def main():
+    # Get user's username so we can tag workflows and logs for them.
     user = getpass.getuser()
     logger.info("\n-------------New Widdler Execution by {}-------------".format(user))
     logger.info("Parameters chosen: {}".format(vars(args)))
     result = args.func(args)
     logger.info("Result: {}".format(result))
+    # If we aren't using persistent monitoring, we'll give the user a basically formated json dump to stdout.
     if not args.monitor:
         print(json.dumps(result, indent=4))
     logger.info("\n-------------End Widdler Execution by {}-------------".format(user))

@@ -143,7 +143,7 @@ class Monitor:
     @staticmethod
     def generate_attachment(filename, filepath):
         """
-        Convert a file
+        Create attachment from a file.
         :param filename: The name to assign to the attachment.
         :param filepath: The absolute path of the file including the file itself.
         :return: An attachment object.
