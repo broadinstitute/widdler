@@ -110,17 +110,20 @@ class Cromwell:
     @staticmethod
     def getCalls(status, call_arr, full_logs=False, limit_n=3):
 
-        filteredCalls = list(filter(lambda c:c[0]['executionStatus'] == status, call_arr))
-        filteredCalls = map(lambda c:c[0], filteredCalls)
+        filteredCalls = list(filter(lambda c:c[1][0]['executionStatus'] == status, call_arr.items()))
+        filteredCalls = map(lambda c:(c[0], c[1][0]), filteredCalls)
 
-        def parse_logs(call):
+        def parse_logs(call_tuple):
+            call = call_tuple[1]
+            task = call_tuple[0]
+
             log = {}
             try:
-                log['stdout'] = {'name': call['stdout']}
+                log['stdout'] = {'name': call['stdout'], 'label': task + "." + str(call["shardIndex"]) + ".stdout"}
             except KeyError as e:
                 log['stddout'] = e
             try:
-                log['stderr'] = {'name': call['stderr']}
+                log['stderr'] = {'name': call['stderr'], 'label': task + "." + str(call["shardIndex"]) + ".stderr"}
             except KeyError as e:
                 log['stderr'] = e
             if full_logs:
@@ -155,11 +158,11 @@ class Cromwell:
             assign(result, explain_res, 'id')
             assign(result, explain_res, 'workflowRoot')
             if explain_res["status"] == "Failed":
-                stdout_res["failed_jobs"] = Cromwell.getCalls('Failed', result['calls'].values(),
+                stdout_res["failed_jobs"] = Cromwell.getCalls('Failed', result['calls'],
                                                               full_logs=True)
 
             elif explain_res["status"] == "Running":
-                explain_res["running_jobs"] = Cromwell.getCalls('Running', result['calls'].values())
+                explain_res["running_jobs"] = Cromwell.getCalls('Running', result['calls'])
 
             if include_inputs:
                 additional_res["inputs"] = result["inputs"]

@@ -232,9 +232,11 @@ def call_explain(args):
         if len(stdout_res) > 0:
             for log in stdout_res["failed_jobs"]:
                 print("-------------Failed Stdout-------------")
+                print ("Shard: "+ log["stdout"]["label"])
                 print (log["stdout"]["name"] + ":")
                 print (log["stdout"]["log"])
                 print ("-------------Failed Stderr-------------")
+                print ("Shard: " + log["stderr"]["label"])
                 print (log["stderr"]["name"] + ":")
                 print (log["stderr"]["log"])
 
