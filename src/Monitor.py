@@ -13,10 +13,15 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
+import config
+import datetime
+from Models import Workflow,User,Base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 __author__ = "Amr Abouelleil"
 
 module_logger = logging.getLogger('widdler.Monitor')
-
 
 def is_user_workflow(host, user, workflow_id):
     """
@@ -43,7 +48,7 @@ class Monitor:
     A class for monitoring a user's workflows, providing status reports at regular intervals
     as well as e-mail notification.
     """
-    def __init__(self, user, host, no_notify, verbose, interval):
+    def __init__(self, user, host, no_notify, verbose, interval, workflow_id=None):
         self.host = host
         self.user = user
         self.interval = interval
@@ -51,6 +56,94 @@ class Monitor:
         self.messenger = Messenger(self.user)
         self.no_notify = no_notify
         self.verbose = verbose
+        self.session = self.getDBSession()
+        self.workflow_id = workflow_id
+
+    def get_user_workflows(self, raw=False, start_time=None):
+        """
+        A function for creating a list of workflows owned by a particular user.
+        :return: A list of workflow IDs owned by the user.
+        """
+        print('Determining {}\'s workflows...'.format(self.user))
+        user_workflows = []
+        results = None
+        if self.user == "*":
+            results = self.cromwell.query_labels({}, start_time=start_time, running_jobs=True)
+        else:
+            results = self.cromwell.query_labels({'username': self.user}, start_time=start_time)
+
+        if raw:
+            return results
+
+        try:
+            for result in results['results']:
+                if result['status'] in c.run_states:
+                    user_workflows.append(result['id'])
+        except Exception as e:
+            logging.error(str(e))
+            print('No user workflows found with username {}.'.format(self.user))
+        return user_workflows
+
+    def getDBSession(self):
+        engine = create_engine("sqlite:///" + config.workflow_db)
+        Base.metadata.bind = engine
+        DBSession = sessionmaker()
+        DBSession.bind = engine
+        return DBSession()
+
+    def run(self):
+        while True:
+            workflow_query = self.session.query(Workflow)
+
+            db_workflow_ids = None
+            db_workflows = None
+
+            if self.workflow_id is None:
+                db_workflows = list(workflow_query.filter( (Workflow.status=="Running") | (Workflow.status=="Submitted") ))
+            else:
+                db_workflows = list(workflow_query.filter(Workflow.workflow_id==self.workflow_id).\
+                                                filter( (Workflow.status=="Running") | Workflow.status=="Submitted"))
+            db_workflow_ids = list(map(lambda w:w.id, db_workflows))
+
+            cromwell_workflows = self.get_user_workflows(raw=True)['results']
+            cromwell_inprogress_workflows = list(filter(lambda w:w["status"]=="Running" or w["status"]=="Submitted", \
+                                                   cromwell_workflows))
+            cromwell_completed_workflows = filter(lambda w:w["status"]=="Failed" or w["status"]=="Aborted" or w["status"]=="Succeeded", \
+                                                   cromwell_workflows)
+            cromwell_completed_workflows_dict = dict((w["id"], w) for w in cromwell_completed_workflows)
+
+            #add new workflows from Cromwell, not yet registered in monitoring database
+            cromwell_new_workflows = filter(lambda w:w["id"] not in db_workflow_ids, cromwell_inprogress_workflows)
+
+            parse_time = lambda d:datetime.datetime.strptime(d.split(".")[0], "%Y-%m-%dT%H:%M:%S")
+
+            db_new_workflows = map(lambda w:Workflow(id=w["id"], name=w["name"], \
+                                                     status=w["status"], start=parse_time(w["start"])),
+                                   cromwell_new_workflows)
+
+            for new_w in db_new_workflows:
+                self.session.add(new_w)
+            self.session.flush()
+
+            #update and notify users of workflows that have finished
+            matching_workflows = filter(lambda w:w.id in cromwell_completed_workflows_dict, db_workflows)
+            for m in matching_workflows:
+                current_status = cromwell_completed_workflows_dict[m.id]["status"]
+
+                if m.status != current_status:
+                    m.status = current_status
+                    metadata = self.cromwell.query_metadata(m.id)
+                    email_content = self.generate_content(query_status=current_status, workflow_id=m.id, metadata=metadata)
+                    msg = self.messenger.compose_email(email_content)
+
+                    failed_jobs = Cromwell.getCalls('Failure', metadata['calls'].values(), full_logs=True)
+
+                    #attachments = self.generate_attachments(file_dict)
+                    self.messenger.send_email(msg)
+
+            self.session.flush()
+            self.session.commit()
+
 
     def get_user_workflows(self, raw=False, start_time=None):
         """
@@ -183,8 +276,8 @@ class Monitor:
             attachments.append(self.generate_attachment(name, path))
         return attachments
 
-    def generate_content(self, query_status, workflow_id):
-        jdata = self.cromwell.query_metadata(workflow_id)
+    def generate_content(self, query_status, workflow_id, metadata=None):
+        jdata = self.cromwell.query_metadata(workflow_id) if metadata is None else metadata
         summary = ""
         if 'start' in jdata:
             summary += "<br><b>Started:</b> {}".format(jdata['start'])
