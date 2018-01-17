@@ -155,7 +155,7 @@ class Cromwell:
             assign(result, explain_res, 'id')
             assign(result, explain_res, 'workflowRoot')
             if explain_res["status"] == "Failed":
-                stdout_res["failed_jobs"] = Cromwell.getCalls('RetryableFailure', result['calls'].values(),
+                stdout_res["failed_jobs"] = Cromwell.getCalls('Failed', result['calls'].values(),
                                                               full_logs=True)
 
             elif explain_res["status"] == "Running":
