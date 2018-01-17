@@ -277,6 +277,13 @@ class Monitor:
         return attachments
 
     def generate_content(self, query_status, workflow_id, metadata=None):
+        """
+        a method for generating the email content to be sent to user.
+        :param query_status: status of workflow (helps determine what content to include in email).
+        :param workflow_id: Workflow ID of the workflow to create e-mail for.
+        :param metadata: The metadata of the workflow (optional).
+        :return: a dictionary containing the email contents for the template.
+        """
         jdata = self.cromwell.query_metadata(workflow_id) if metadata is None else metadata
         summary = ""
         if 'start' in jdata:
