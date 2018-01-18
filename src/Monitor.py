@@ -15,7 +15,7 @@ from email import encoders
 
 import config
 import datetime
-from Models import Workflow,User,Base
+from Models import Workflow,Base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -99,15 +99,15 @@ class Monitor:
             db_workflows = None
 
             if self.workflow_id is None:
-                db_workflows = list(workflow_query.filter( (Workflow.status=="Running") | (Workflow.status=="Submitted") ))
+                db_workflows = list(workflow_query.filter( (Workflow.status=="Running") | (Workflow.status=="Failed") )) #TODO: Change Failed to Submitted
             else:
                 db_workflows = list(workflow_query.filter(Workflow.workflow_id==self.workflow_id).\
                                                 filter( (Workflow.status=="Running") | Workflow.status=="Submitted"))
             db_workflow_ids = list(map(lambda w:w.id, db_workflows))
 
             cromwell_workflows = self.get_user_workflows(raw=True)['results']
-            cromwell_inprogress_workflows = list(filter(lambda w:w["status"]=="Running" or w["status"]=="Submitted", \
-                                                   cromwell_workflows))
+            cromwell_inprogress_workflows = list(filter(lambda w:w["status"]=="Running" or w["status"]=="Failed", \
+                                                   cromwell_workflows)) #TODO: Change to Failed to Submitted
             cromwell_completed_workflows = filter(lambda w:w["status"]=="Failed" or w["status"]=="Aborted" or w["status"]=="Succeeded", \
                                                    cromwell_workflows)
             cromwell_completed_workflows_dict = dict((w["id"], w) for w in cromwell_completed_workflows)
@@ -117,29 +117,48 @@ class Monitor:
 
             parse_time = lambda d:datetime.datetime.strptime(d.split(".")[0], "%Y-%m-%dT%H:%M:%S")
 
-            db_new_workflows = map(lambda w:Workflow(id=w["id"], name=w["name"], \
-                                                     status=w["status"], start=parse_time(w["start"])),
-                                   cromwell_new_workflows)
+            def get_name(w):
+                return w["name"] if "name" in w else "null"
 
-            for new_w in db_new_workflows:
+            db_new_workflows = map(lambda w:Workflow(id=w["id"], name=get_name(w), \
+                                                     status=w["status"], start=parse_time(w["start"])),
+                                                     cromwell_new_workflows)
+
+            for new_w in db_new_workflows[:40]:
+                metadata = self.cromwell.query_metadata_cached(new_w.id)
+                if 'labels' in metadata and 'username' in metadata['labels']:
+                    new_w.person_id = metadata['labels']['username']
+
                 self.session.add(new_w)
             self.session.flush()
 
             #update and notify users of workflows that have finished
             matching_workflows = filter(lambda w:w.id in cromwell_completed_workflows_dict, db_workflows)
-            for m in matching_workflows:
-                current_status = cromwell_completed_workflows_dict[m.id]["status"]
+            #for m in matching_workflows:
+            for m in db_workflows:
+                current_status_data = cromwell_completed_workflows_dict[m.id]
+                current_status = current_status_data["status"]
 
-                if m.status != current_status:
+                if m.status != current_status or m.status == "Failed": #TODO: remove Failed
                     m.status = current_status
                     metadata = self.cromwell.query_metadata(m.id)
-                    email_content = self.generate_content(query_status=current_status, workflow_id=m.id, metadata=metadata)
+                    email_content = self.generate_content(query_status=current_status_data, workflow_id=m.id, metadata=metadata)
                     msg = self.messenger.compose_email(email_content)
 
-                    failed_jobs = Cromwell.getCalls('Failure', metadata['calls'].values(), full_logs=True)
+                    failed_jobs = Cromwell.getCalls('Failed', metadata['calls'], full_logs=True)
+
+                    for log in failed_jobs:
+                        stdout_attachment = MIMEText(str(log["stdout"]))
+                        stdout_attachment.add_header('Content-Disposition', 'attachment', filename=log["stdout"]["label"])
+                        msg.attach(stdout_attachment)
+
+                        stderr_attachment = MIMEText(str(log["stderr"]))
+                        stderr_attachment.add_header('Content-Disposition', 'attachment', filename=log["stderr"]["label"])
+                        msg.attach(stdout_attachment)
+
 
                     #attachments = self.generate_attachments(file_dict)
-                    self.messenger.send_email(msg)
+                    self.messenger.send_email(msg, "paulcao@broadinstitute.org")
 
             self.session.flush()
             self.session.commit()
@@ -154,7 +173,7 @@ class Monitor:
         user_workflows = []
         results = None
         if self.user == "*":
-            results = self.cromwell.query_labels({}, start_time=start_time, running_jobs=True)
+            results = self.cromwell.query_labels({}, start_time=start_time, running_jobs=False)
         else:
             results = self.cromwell.query_labels({'username': self.user}, start_time=start_time)
 
@@ -235,6 +254,23 @@ class Monitor:
 
     @staticmethod
     def generate_attachment(filename, filepath):
+        """
+        Convert a file
+        :param filename: The name to assign to the attachment.
+        :param filepath: The absolute path of the file including the file itself.
+        :return: An attachment object.
+        """
+        try:
+            read_data = open(filepath, 'r')
+            attachment = MIMEText(read_data.read())
+            read_data.close()
+            attachment.add_header('Content-Disposition', 'attachment', filename=filename)
+            return attachment
+        except Exception as e:
+            logging.warn('Unable to generate attachment for {}:\n{}'.format(filename, e))
+
+    @staticmethod
+    def generate_attachment_str(contents, filename, filepath):
         """
         Convert a file
         :param filename: The name to assign to the attachment.

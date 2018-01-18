@@ -28,8 +28,9 @@ class Cromwell:
         self.url2 = 'http://' + host + ':' + str(self.port) + '/api/workflows/v2'
         self.logger = logging.getLogger('widdler.cromwell.Cromwell')
         self.logger.info('URL:{}'.format(self.url))
+        self.cached_metadata = {}
 
-    def get(self, rtype, workflow_id=None, headers=None):
+    def get(self, rtype, workflow_id=None, headers=None, v2=False):
         """
         A generic get request function.
         :param rtype: a type of request such as 'abort' or 'status'.
@@ -37,10 +38,11 @@ class Cromwell:
         :param headers: Optional headers for request.
         :return: json of request response
         """
+        url = self.url if not v2 else self.url2
         if workflow_id:
-            workflow_url = self.url + '/' + workflow_id + '/' + rtype
+            workflow_url = url + '/' + workflow_id + '/' + rtype
         else:
-            workflow_url = self.url + '/' + rtype
+            workflow_url = url + '/' + rtype
         self.logger.info("GET REQUEST:{}".format(workflow_url))
         if headers:
             r = requests.get(workflow_url, headers=headers)
@@ -254,14 +256,30 @@ class Cromwell:
         self.logger.info('Aborting workflow {}'.format(workflow_id))
         return self.post('abort', workflow_id)
 
-    def query_metadata(self, workflow_id):
+    def query_metadata_cached(self, workflow_id, expire=15):
+        """
+        Return all cached metadata for a given workflow
+        :param workflow_id: The workflow identifier
+        :param expire: The number of seconds the cache is deemed to be not fresh
+        :return: Request response json
+        """
+        if workflow_id in self.cached_metadata:
+            if self.cached_metadata[workflow_id]["timestamp"] > datetime.datetime.now() - datetime.timedelta(seconds=15):
+                return self.cached_metadata[workflow_id]
+
+        metadata = self.query_metadata(workflow_id, v2=True)
+        metadata["timestamp"] = datetime.datetime.now()
+        self.cached_metadata[workflow_id] = metadata
+        return metadata
+
+    def query_metadata(self, workflow_id, v2=False):
         """
         Return all metadata for a given workflow.
         :param workflow_id: The workflow identifier.
         :return: Request Response json.
         """
         self.logger.info('Querying metadata for workflow {}'.format(workflow_id))
-        return self.get('metadata', workflow_id, {'Accept': 'application/json', 'Accept-Encoding': 'identity'})
+        return self.get('metadata', workflow_id, {'Accept': 'application/json', 'Accept-Encoding': 'identity'}, v2=v2)
 
     def process_metadata_label(self, metadata):
         """

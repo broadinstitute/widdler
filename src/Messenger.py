@@ -39,11 +39,14 @@ class Messenger(object):
         template.close()
         return msg
 
-    def send_email(self, msg):
+    def send_email(self, msg, user=None):
         """
         Sends an e-mail to recipients using the localhosts smtp server.
         :param msg: A MIMEMultipart message object.
         :return: 
         """
         mailer = smtplib.SMTP('smtp.broadinstitute.org')
-        mailer.sendmail(self.sender, self.user_email, msg.as_string())
+        if not user:
+            mailer.sendmail(self.sender, self.user_email, msg.as_string())
+        else:
+            mailer.sendmail(self.sender, user, msg.as_string())

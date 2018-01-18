@@ -16,12 +16,7 @@ class Workflow(Base):
     status = Column(String(30), nullable=False)
     start = Column(DateTime(), nullable=False)
     end = Column(DateTime, nullable=True)
-
-class User(Base):
-    __tablename__ = 'user'
-    id = Column(String(40), primary_key=True)
-    person_id = Column(Integer, ForeignKey('workflow.id'))
-    person = relationship(Workflow)
+    person_id = Column(String(250), nullable=True)
 
 # Create an engine that stores data in the local directory's
 # sqlalchemy_example.db file.
