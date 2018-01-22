@@ -7,8 +7,10 @@ import getpass
 from requests.utils import quote
 import urllib
 
-module_logger = logging.getLogger('widdler.Cromwell')
+from ratelimit import rate_limited
 
+module_logger = logging.getLogger('widdler.Cromwell')
+ONE_MINUTE = 60
 
 class Cromwell:
     """ Module to interact with Cromwell Pipeline workflow manager. Example usage:
@@ -272,6 +274,7 @@ class Cromwell:
         self.cached_metadata[workflow_id] = metadata
         return metadata
 
+    @rate_limited(300, ONE_MINUTE)
     def query_metadata(self, workflow_id, v2=False):
         """
         Return all metadata for a given workflow.

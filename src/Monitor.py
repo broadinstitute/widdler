@@ -12,12 +12,16 @@ from src.Messenger import Messenger
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+import pytz
 
 import config
 import datetime
 from Models import Workflow,Base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from bson import json_util
+from ratelimit import rate_limited
 
 __author__ = "Amr Abouelleil"
 
@@ -59,12 +63,14 @@ class Monitor:
         self.session = self.getDBSession()
         self.workflow_id = workflow_id
 
-    def get_user_workflows(self, raw=False, start_time=None):
+    def get_user_workflows(self, raw=False, start_time=None, silent=False):
         """
         A function for creating a list of workflows owned by a particular user.
         :return: A list of workflow IDs owned by the user.
         """
-        print('Determining {}\'s workflows...'.format(self.user))
+        if not silent:
+            print('Determining {}\'s workflows...'.format(self.user))
+
         user_workflows = []
         results = None
         if self.user == "*":
@@ -91,85 +97,98 @@ class Monitor:
         DBSession.bind = engine
         return DBSession()
 
+    @staticmethod
+    def get_iso_date(dt):
+        tz = pytz.timezone("US/Eastern")
+        return tz.localize(dt).isoformat()
+
+    def convert_workflow(self, cromwell_workflow):
+        parse_time = lambda d:datetime.datetime.strptime(d.split(".")[0], "%Y-%m-%dT%H:%M:%S")
+
+        workflow_name = cromwell_workflow["name"] if "name" in cromwell_workflow else None
+        start_time = parse_time(cromwell_workflow["start"]) if "start" in cromwell_workflow else None
+
+        db_workflow = Workflow(id=cromwell_workflow["id"], name=workflow_name, status=cromwell_workflow["status"], start=start_time,
+                               notified=False)
+        self.assign_userid(db_workflow)
+        return db_workflow
+
+    def assign_userid(self, db_workflow):
+        metadata = self.cromwell.query_metadata_cached(db_workflow.id)
+        if 'labels' in metadata and 'username' in metadata['labels']:
+            db_workflow.person_id = metadata['labels']['username']
+        else:
+            if 'submittedFiles' in metadata and 'labels' in metadata['submittedFiles']:
+                submitted_labels = json.loads(metadata['submittedFiles']['labels'])
+                if 'username' in submitted_labels:
+                    db_workflow.person_id = submitted_labels['username']
+
+    @staticmethod
+    def sync_workflow(cromwell_workflow, db_workflow):
+        db_workflow.status = cromwell_workflow["status"]
+        db_workflow.notified = True
+        return db_workflow
+
+    def email_notification(self, db_workflow):
+        #if db_workflow.person_id != None or db_workflow.person_id != "" or db_workflow.person_id != "paulcao":
+        if db_workflow.person_id !="paulcao":
+            return
+
+        metadata = self.cromwell.query_metadata(db_workflow.id)
+        email_content = self.generate_content(query_status=db_workflow.status, workflow_id=db_workflow.id, metadata=metadata,
+                user=db_workflow.person_id)
+        msg = self.messenger.compose_email(email_content)
+
+        failed_jobs = Cromwell.getCalls('Failed', metadata['calls'], full_logs=True)
+        for log in failed_jobs:
+            stdout_attachment = MIMEText(str(log["stdout"]))
+            stdout_attachment.add_header('Content-Disposition', 'attachment', filename=log["stdout"]["label"])
+            msg.attach(stdout_attachment)
+
+            stderr_attachment = MIMEText(str(log["stderr"]))
+            stderr_attachment.add_header('Content-Disposition', 'attachment', filename=log["stderr"]["label"])
+            msg.attach(stdout_attachment)
+
+        metadata_attachment = MIMEText(str(json.dumps(metadata, indent=4, default=json_util.default)))
+        metadata_attachment.add_header('Content-Disposition', 'attachment', filename=db_workflow.id + ".metadata")
+        msg.attach(metadata_attachment)
+
+        self.messenger.send_email(msg, db_workflow.person_id + "@broadinstitute.org")
+
     def run(self):
         while True:
-            workflow_query = self.session.query(Workflow)
+            try:
+                db_workflows = dict( (w.id, w) for w in self.session.query(Workflow).all() )
+                one_day_ago = self.get_iso_date(datetime.datetime.now() - datetime.timedelta(days=int(15)))
+                cromwell_workflows = self.get_user_workflows(raw=True, start_time=one_day_ago, silent=True)['results']
 
-            db_workflow_ids = None
-            db_workflows = None
+                new_workflows = map(lambda w: self.convert_workflow(w),
+                                    filter(lambda w:w["id"] not in map(lambda w:w.id, db_workflows.values()), cromwell_workflows))
+                unsynced_workflows = map(lambda w: self.sync_workflow(w, db_workflows[w["id"]]),
+                                        filter(lambda w: w["id"] in db_workflows and
+                                                         w["status"] != db_workflows[w["id"]].status, cromwell_workflows))
 
-            if self.workflow_id is None:
-                db_workflows = list(workflow_query.filter( (Workflow.status=="Running") | (Workflow.status=="Failed") )) #TODO: Change Failed to Submitted
-            else:
-                db_workflows = list(workflow_query.filter(Workflow.workflow_id==self.workflow_id).\
-                                                filter( (Workflow.status=="Running") | Workflow.status=="Submitted"))
-            db_workflow_ids = list(map(lambda w:w.id, db_workflows))
+                [self.session.add(new_w) for new_w in new_workflows]
+                self.session.flush()    #update database
 
-            cromwell_workflows = self.get_user_workflows(raw=True)['results']
-            cromwell_inprogress_workflows = list(filter(lambda w:w["status"]=="Running" or w["status"]=="Failed", \
-                                                   cromwell_workflows)) #TODO: Change to Failed to Submitted
-            cromwell_completed_workflows = filter(lambda w:w["status"]=="Failed" or w["status"]=="Aborted" or w["status"]=="Succeeded", \
-                                                   cromwell_workflows)
-            cromwell_completed_workflows_dict = dict((w["id"], w) for w in cromwell_completed_workflows)
+                updated_workflows = new_workflows + unsynced_workflows
+                notifiable_workflows = map(lambda w: self.email_notification(w),
+                                           filter(lambda w: w.status == "Aborted" or w.status == "Failed" or w.status == "Succeeded",
+                                                  updated_workflows))
+                self.session.commit()
+            except Exception as e:
+                print e.__doc__
+                print e.message
+            time.sleep(self.interval)
 
-            #add new workflows from Cromwell, not yet registered in monitoring database
-            cromwell_new_workflows = filter(lambda w:w["id"] not in db_workflow_ids, cromwell_inprogress_workflows)
-
-            parse_time = lambda d:datetime.datetime.strptime(d.split(".")[0], "%Y-%m-%dT%H:%M:%S")
-
-            def get_name(w):
-                return w["name"] if "name" in w else "null"
-
-            db_new_workflows = map(lambda w:Workflow(id=w["id"], name=get_name(w), \
-                                                     status=w["status"], start=parse_time(w["start"])),
-                                                     cromwell_new_workflows)
-
-            for new_w in db_new_workflows[:40]:
-                metadata = self.cromwell.query_metadata_cached(new_w.id)
-                if 'labels' in metadata and 'username' in metadata['labels']:
-                    new_w.person_id = metadata['labels']['username']
-
-                self.session.add(new_w)
-            self.session.flush()
-
-            #update and notify users of workflows that have finished
-            matching_workflows = filter(lambda w:w.id in cromwell_completed_workflows_dict, db_workflows)
-            #for m in matching_workflows:
-            for m in db_workflows:
-                current_status_data = cromwell_completed_workflows_dict[m.id]
-                current_status = current_status_data["status"]
-
-                if m.status != current_status or m.status == "Failed": #TODO: remove Failed
-                    m.status = current_status
-                    metadata = self.cromwell.query_metadata(m.id)
-                    email_content = self.generate_content(query_status=current_status_data, workflow_id=m.id, metadata=metadata)
-                    msg = self.messenger.compose_email(email_content)
-
-                    failed_jobs = Cromwell.getCalls('Failed', metadata['calls'], full_logs=True)
-
-                    for log in failed_jobs:
-                        stdout_attachment = MIMEText(str(log["stdout"]))
-                        stdout_attachment.add_header('Content-Disposition', 'attachment', filename=log["stdout"]["label"])
-                        msg.attach(stdout_attachment)
-
-                        stderr_attachment = MIMEText(str(log["stderr"]))
-                        stderr_attachment.add_header('Content-Disposition', 'attachment', filename=log["stderr"]["label"])
-                        msg.attach(stdout_attachment)
-
-
-                    #attachments = self.generate_attachments(file_dict)
-                    self.messenger.send_email(msg, "paulcao@broadinstitute.org")
-
-            self.session.flush()
-            self.session.commit()
-
-
-    def get_user_workflows(self, raw=False, start_time=None):
+    def get_user_workflows(self, raw=False, start_time=None, silent=False):
         """
         A function for creating a list of workflows owned by a particular user.
         :return: A list of workflow IDs owned by the user.
         """
-        print('Determining {}\'s workflows...'.format(self.user))
+        if not silent:
+            print('Determining {}\'s workflows...'.format(self.user))
+
         user_workflows = []
         results = None
         if self.user == "*":
@@ -312,7 +331,7 @@ class Monitor:
             attachments.append(self.generate_attachment(name, path))
         return attachments
 
-    def generate_content(self, query_status, workflow_id, metadata=None):
+    def generate_content(self, query_status, workflow_id, metadata=None, user=None):
         """
         a method for generating the email content to be sent to user.
         :param query_status: status of workflow (helps determine what content to include in email).
@@ -333,7 +352,7 @@ class Monitor:
             hours, remainder = divmod(duration.seconds, 3600)
             minutes, seconds = divmod(remainder, 60)
             summary += '<br><b>Duration:</b> {} hours, {} minutes, {} seconds'.format(hours, minutes, seconds)
-        if 'Failed' in query_status['status']:
+        if 'Failed' in jdata['status']:
             fail_summary = "<br><b>Failures:</b> {}".format(json.dumps(jdata['failures']))
             fail_summary = fail_summary.replace(',', '<br>')
             summary += fail_summary.replace('\n', '<br>')
@@ -342,11 +361,12 @@ class Monitor:
         if 'workflowRoot' in jdata:
             summary += "<br><b>workflowRoot:</b> {}".format(jdata['workflowRoot'])
         summary += "<br><b>Timing graph:</b> http://{}:9000/api/workflows/v2/{}/timing".format(self.host,
-                                                                                               query_status['id'])
+                                                                                               jdata['id'])
+        user = self.user if user is None else user
         email_content = {
-            'user': self.user,
-            'workflow_id': query_status['id'],
-            'status': query_status['status'],
+            'user': user,
+            'workflow_id': jdata['id'],
+            'status': jdata['status'],
             'summary': summary
         }
         return email_content
