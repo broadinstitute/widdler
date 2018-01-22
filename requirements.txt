@@ -1,6 +1,6 @@
 requests
 urllib3
-dateutil
+python-dateutil
 pytz
 sqlalchemy
-rate_limited
+ratelimit
