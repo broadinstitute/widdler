@@ -20,8 +20,9 @@ from Models import Workflow,Base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from bson import json_util
 from ratelimit import rate_limited
+
+import calendar
 
 __author__ = "Amr Abouelleil"
 
@@ -129,6 +130,19 @@ class Monitor:
         db_workflow.notified = True
         return db_workflow
 
+    @staticmethod
+    def date_serializer(obj):
+        """Default JSON serializer."""
+        if isinstance(obj, datetime.datetime):
+            if obj.utcoffset() is not None:
+                obj = obj - obj.utcoffset()
+            millis = int(
+                calendar.timegm(obj.timetuple()) * 1000 +
+                obj.microsecond / 1000
+            )
+            return millis
+        raise TypeError('Not sure how to serialize %s' % (obj,))
+
     def email_notification(self, db_workflow):
         #if db_workflow.person_id != None or db_workflow.person_id != "" or db_workflow.person_id != "paulcao":
         if db_workflow.person_id !="paulcao":
@@ -149,7 +163,7 @@ class Monitor:
             stderr_attachment.add_header('Content-Disposition', 'attachment', filename=log["stderr"]["label"])
             msg.attach(stdout_attachment)
 
-        metadata_attachment = MIMEText(str(json.dumps(metadata, indent=4, default=json_util.default)))
+        metadata_attachment = MIMEText(str(json.dumps(metadata, indent=4, default=self.date_serializer)))
         metadata_attachment.add_header('Content-Disposition', 'attachment', filename=db_workflow.id + ".metadata")
         msg.attach(metadata_attachment)
 
