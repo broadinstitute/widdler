@@ -144,7 +144,7 @@ class Monitor:
         raise TypeError('Not sure how to serialize %s' % (obj,))
 
     def email_notification(self, db_workflow):
-        if db_workflow.person_id != None or db_workflow.person_id != "":
+        if db_workflow.person_id == None or db_workflow.person_id == "":
             return
 
         metadata = self.cromwell.query_metadata(db_workflow.id)
