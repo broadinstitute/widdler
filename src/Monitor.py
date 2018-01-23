@@ -144,8 +144,7 @@ class Monitor:
         raise TypeError('Not sure how to serialize %s' % (obj,))
 
     def email_notification(self, db_workflow):
-        #if db_workflow.person_id != None or db_workflow.person_id != "" or db_workflow.person_id != "paulcao":
-        if db_workflow.person_id !="paulcao":
+        if db_workflow.person_id != None or db_workflow.person_id != "":
             return
 
         metadata = self.cromwell.query_metadata(db_workflow.id)
@@ -190,7 +189,7 @@ class Monitor:
                                            filter(lambda w: w.status == "Aborted" or w.status == "Failed" or w.status == "Succeeded",
                                                   updated_workflows))
                 if len(notifiable_workflows) > 0:
-                    print("E-mail notification for: " + str(updated_workflows))
+                    logging.warn("E-mail notification for: " + str(updated_workflows))
 
                 self.session.commit()
             except Exception as e:
