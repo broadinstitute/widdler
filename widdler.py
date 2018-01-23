@@ -180,10 +180,11 @@ def call_monitor(args):
     logger.info("Monitoring requested")
 
     print("-------------Monitoring Workflow-------------")
-    m = Monitor(host=args.server, user=args.username, no_notify=args.no_notify, verbose=args.verbose,
+    user = "*" if args.daemon else args.username
+
+    m = Monitor(host=args.server, user=user, no_notify=args.no_notify, verbose=args.verbose,
                 interval=args.interval)
     if args.daemon:
-        m.user = "*"
         m.run()
     elif args.workflow_id:
         m.monitor_workflow(workflow_id=args.workflow_id)
