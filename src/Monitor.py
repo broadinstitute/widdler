@@ -155,13 +155,13 @@ class Monitor:
 
         failed_jobs = Cromwell.getCalls('Failed', metadata['calls'], full_logs=True)
         for log in failed_jobs:
-            stdout_attachment = MIMEText(str(log["stdout"]))
+            stdout_attachment = MIMEText(str(log["stdout"]['log']))
             stdout_attachment.add_header('Content-Disposition', 'attachment', filename=log["stdout"]["label"])
             msg.attach(stdout_attachment)
 
-            stderr_attachment = MIMEText(str(log["stderr"]))
+            stderr_attachment = MIMEText(str(log["stderr"]['log']))
             stderr_attachment.add_header('Content-Disposition', 'attachment', filename=log["stderr"]["label"])
-            msg.attach(stdout_attachment)
+            msg.attach(stderr_attachment)
 
         metadata_attachment = MIMEText(str(json.dumps(metadata, indent=4, default=self.date_serializer)))
         metadata_attachment.add_header('Content-Disposition', 'attachment', filename=db_workflow.id + ".metadata")
