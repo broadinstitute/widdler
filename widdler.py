@@ -33,7 +33,8 @@ logger = logging.getLogger('widdler')
 logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
 logfile = os.path.join(c.log_dir, '{}.{}.widdler.log'.format(getpass.getuser(), str(time.strftime("%m.%d.%Y"))))
-fh = logging.FileHandler(logfile)
+#fh = logging.FileHandler(logfile)
+fh = logging.FileHandler('test.log')
 fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
@@ -182,7 +183,7 @@ def call_monitor(args):
     m = Monitor(host=args.server, user=args.username, no_notify=args.no_notify, verbose=args.verbose,
                 interval=args.interval)
     if args.daemon:
-        m.username = "*"
+        m.user = "*"
         m.run()
     elif args.workflow_id:
         m.monitor_workflow(workflow_id=args.workflow_id)
