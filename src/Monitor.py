@@ -189,8 +189,9 @@ class Monitor:
                 notifiable_workflows = map(lambda w: self.email_notification(w),
                                            filter(lambda w: w.status == "Aborted" or w.status == "Failed" or w.status == "Succeeded",
                                                   updated_workflows))
+                if len(notifiable_workflows) > 0:
+                    print("E-mail notification for: " + str(updated_workflows))
 
-                print("E-mail notification for: " + str(notifiable_workflows))
                 self.session.commit()
             except Exception as e:
                 print e.__doc__
