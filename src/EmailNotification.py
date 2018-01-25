@@ -1,4 +1,3 @@
-__author__ = 'paulcao'
 import datetime
 import calendar
 from Cromwell import Cromwell
@@ -30,7 +29,7 @@ class EmailNotification(object):
 
         for log in failed_jobs:
             stdout_attachment = MIMEText(str(log["stdout"]['log']))
-            stdout_attachment.add_header('Content-Disposition', 'attachment', filename=log["stdout"]["label"])
+            stdout_attachment.add_header('Content-Disposition', 'attachment', filename=log["stdout"]["`label"])
             msg.attach(stdout_attachment)
 
             stderr_attachment = MIMEText(str(log["stderr"]['log']))
@@ -49,11 +48,9 @@ class EmailNotification(object):
                 return int(calendar.timegm(obj.timetuple()) * 1000 +obj.microsecond / 1000)
         raise TypeError('Not sure how to serialize %s' % (obj,))
 
-    def generate_content(self, query_status, workflow_id, metadata, user, host):
+    def generate_content(self, metadata, user, host):
         """
         a method for generating the email content to be sent to user.
-        :param query_status: status of workflow (helps determine what content to include in email).
-        :param workflow_id: Workflow ID of the workflow to create e-mail for.
         :param metadata: The metadata of the workflow (optional).
         :return: a dictionary containing the email contents for the template.
         """

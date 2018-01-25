@@ -17,6 +17,7 @@ from Models import Workflow,Base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from EmailNotification import EmailNotification
+from SystemTestNotification import SystemTestNotification
 
 import traceback
 import calendar
@@ -62,7 +63,7 @@ class Monitor:
         self.no_notify = no_notify
         self.verbose = verbose
         self.workflow_id = workflow_id
-        self.event_subscribers = [EmailNotification(self.cromwell)]
+        self.event_subscribers = [EmailNotification(self.cromwell), SystemTestNotification()]
 
         engine = create_engine("sqlite:///" + config.workflow_db)
         Base.metadata.bind = engine
@@ -120,9 +121,7 @@ class Monitor:
 
                 self.session.flush()
                 self.session.commit()
-            except Exception as e:
-                print e.__doc__
-                print e.message
+            except Exception:
                 traceback.print_exc()
 
             time.sleep(self.interval)
