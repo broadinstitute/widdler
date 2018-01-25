@@ -4,14 +4,11 @@ import logging
 import time
 import json
 import os
-import zipfile
 from dateutil.parser import parse
 import src.config as c
 from src.Cromwell import Cromwell
 from src.Messenger import Messenger
 from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
 import pytz
 
 import config
@@ -19,9 +16,9 @@ import datetime
 from Models import Workflow,Base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from EmailNotification import EmailNotification
 
-from ratelimit import rate_limited
-
+import traceback
 import calendar
 
 __author__ = "Amr Abouelleil"
@@ -47,6 +44,9 @@ def is_user_workflow(host, user, workflow_id):
     except KeyError:
         return None
 
+def get_iso_datestr(dt):
+    return pytz.timezone("US/Eastern").localize(dt).isoformat()
+
 
 class Monitor:
     """
@@ -61,8 +61,14 @@ class Monitor:
         self.messenger = Messenger(self.user)
         self.no_notify = no_notify
         self.verbose = verbose
-        self.session = self.getDBSession()
         self.workflow_id = workflow_id
+        self.event_subscribers = [EmailNotification(self.cromwell)]
+
+        engine = create_engine("sqlite:///" + config.workflow_db)
+        Base.metadata.bind = engine
+        DBSession = sessionmaker()
+        DBSession.bind = engine
+        self.session = DBSession()
 
     def get_user_workflows(self, raw=False, start_time=None, silent=False):
         """
@@ -91,110 +97,34 @@ class Monitor:
             print('No user workflows found with username {}.'.format(self.user))
         return user_workflows
 
-    def getDBSession(self):
-        engine = create_engine("sqlite:///" + config.workflow_db)
-        Base.metadata.bind = engine
-        DBSession = sessionmaker()
-        DBSession.bind = engine
-        return DBSession()
-
-    @staticmethod
-    def get_iso_date(dt):
-        tz = pytz.timezone("US/Eastern")
-        return tz.localize(dt).isoformat()
-
-    def convert_workflow(self, cromwell_workflow):
-        parse_time = lambda d:datetime.datetime.strptime(d.split(".")[0], "%Y-%m-%dT%H:%M:%S")
-
-        workflow_name = cromwell_workflow["name"] if "name" in cromwell_workflow else None
-        start_time = parse_time(cromwell_workflow["start"]) if "start" in cromwell_workflow else None
-
-        db_workflow = Workflow(id=cromwell_workflow["id"], name=workflow_name, status=cromwell_workflow["status"], start=start_time,
-                               notified=False)
-        self.assign_userid(db_workflow)
-        return db_workflow
-
-    def assign_userid(self, db_workflow):
-        metadata = self.cromwell.query_metadata_cached(db_workflow.id)
-        if 'labels' in metadata and 'username' in metadata['labels']:
-            db_workflow.person_id = metadata['labels']['username']
-        else:
-            if 'submittedFiles' in metadata and 'labels' in metadata['submittedFiles']:
-                submitted_labels = json.loads(metadata['submittedFiles']['labels'])
-                if 'username' in submitted_labels:
-                    db_workflow.person_id = submitted_labels['username']
-
-    @staticmethod
-    def sync_workflow(cromwell_workflow, db_workflow):
-        db_workflow.status = cromwell_workflow["status"]
-        db_workflow.notified = True
-        return db_workflow
-
-    @staticmethod
-    def date_serializer(obj):
-        """Default JSON serializer."""
-        if isinstance(obj, datetime.datetime):
-            if obj.utcoffset() is not None:
-                obj = obj - obj.utcoffset()
-            millis = int(
-                calendar.timegm(obj.timetuple()) * 1000 +
-                obj.microsecond / 1000
-            )
-            return millis
-        raise TypeError('Not sure how to serialize %s' % (obj,))
-
-    def email_notification(self, db_workflow):
-        if db_workflow.person_id == None or db_workflow.person_id == "":
-            return
-
-        metadata = self.cromwell.query_metadata(db_workflow.id)
-        email_content = self.generate_content(query_status=db_workflow.status, workflow_id=db_workflow.id, metadata=metadata,
-                user=db_workflow.person_id)
-        msg = self.messenger.compose_email(email_content)
-
-        failed_jobs = Cromwell.getCalls('Failed', metadata['calls'], full_logs=True)
-        for log in failed_jobs:
-            stdout_attachment = MIMEText(str(log["stdout"]['log']))
-            stdout_attachment.add_header('Content-Disposition', 'attachment', filename=log["stdout"]["label"])
-            msg.attach(stdout_attachment)
-
-            stderr_attachment = MIMEText(str(log["stderr"]['log']))
-            stderr_attachment.add_header('Content-Disposition', 'attachment', filename=log["stderr"]["label"])
-            msg.attach(stderr_attachment)
-
-        metadata_attachment = MIMEText(str(json.dumps(metadata, indent=4, default=self.date_serializer)))
-        metadata_attachment.add_header('Content-Disposition', 'attachment', filename=db_workflow.id + ".metadata")
-        msg.attach(metadata_attachment)
-
-        self.messenger.send_email(msg, db_workflow.person_id + "@broadinstitute.org")
+    def process_events(self, workflow):
+        for event_subscriber in self.event_subscribers:
+            metadata = workflow.cached_metadata if hasattr(workflow, 'cached_metadata') else self.cromwell.query_metadata(workflow.id)
+            event_subscriber.on_changed_workflow_status(workflow, metadata, self.host)
 
     def run(self):
         while True:
             try:
-                db_workflows = dict( (w.id, w) for w in self.session.query(Workflow).all() )
-                one_day_ago = self.get_iso_date(datetime.datetime.now() - datetime.timedelta(days=int(15)))
-                cromwell_workflows = self.get_user_workflows(raw=True, start_time=one_day_ago, silent=True)['results']
+                one_day_ago = datetime.datetime.now() - datetime.timedelta(days=int(1))
+                db_workflows = dict( (d.id, d) for d in self.session.query(Workflow).filter(Workflow.start > one_day_ago) )
+                cromwell_workflows = dict( (c["id"], c) for c in self.get_user_workflows(raw=True, start_time=get_iso_datestr(one_day_ago), silent=True)['results'] )
 
-                new_workflows = map(lambda w: self.convert_workflow(w),
-                                    filter(lambda w:w["id"] not in map(lambda w:w.id, db_workflows.values()), cromwell_workflows))
-                unsynced_workflows = map(lambda w: self.sync_workflow(w, db_workflows[w["id"]]),
-                                        filter(lambda w: w["id"] in db_workflows and
-                                                         w["status"] != db_workflows[w["id"]].status, cromwell_workflows))
+                inserted_workflows = map(lambda c: Workflow(self.cromwell, c["id"]), filter(lambda w: w["id"] not in db_workflows, cromwell_workflows.values()))
+                [self.session.add(w) for w in inserted_workflows]
 
-                [self.session.add(new_w) for new_w in new_workflows]
-                self.session.flush()    #update database
+                updated_workflows = filter(lambda d: d.id in cromwell_workflows and d.status != cromwell_workflows[d.id]["status"], db_workflows.values())
+                [w.update_status(cromwell_workflows[w.id]["status"]) for w in updated_workflows]
 
-                updated_workflows = new_workflows + unsynced_workflows
-                notifiable_workflows = map(lambda w: self.email_notification(w),
-                                           filter(lambda w: w.status == "Aborted" or w.status == "Failed" or w.status == "Succeeded",
-                                                  updated_workflows))
-                if len(notifiable_workflows) > 0:
-                    logging.warn("E-mail notification for: " + str(updated_workflows))
+                changed_workflows = inserted_workflows + updated_workflows
+                [self.process_events(w) for w in changed_workflows]
 
+                self.session.flush()
                 self.session.commit()
             except Exception as e:
                 print e.__doc__
                 print e.message
+                traceback.print_exc()
+
             time.sleep(self.interval)
 
     def get_user_workflows(self, raw=False, start_time=None, silent=False):
@@ -289,23 +219,6 @@ class Monitor:
 
     @staticmethod
     def generate_attachment(filename, filepath):
-        """
-        Convert a file
-        :param filename: The name to assign to the attachment.
-        :param filepath: The absolute path of the file including the file itself.
-        :return: An attachment object.
-        """
-        try:
-            read_data = open(filepath, 'r')
-            attachment = MIMEText(read_data.read())
-            read_data.close()
-            attachment.add_header('Content-Disposition', 'attachment', filename=filename)
-            return attachment
-        except Exception as e:
-            logging.warn('Unable to generate attachment for {}:\n{}'.format(filename, e))
-
-    @staticmethod
-    def generate_attachment_str(contents, filename, filepath):
         """
         Convert a file
         :param filename: The name to assign to the attachment.
