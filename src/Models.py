@@ -54,8 +54,8 @@ class Workflow(Base):
         #                        status=metadata["status"], start=self.parse_time(self.get_or_none("start")),
         #                        notified=False, person_id=self.get_person_id(metadata))
 
-    def update_status(self, cromwell_workflow):
-        self.status = cromwell_workflow["status"]
+    def update_status(self, status):
+        self.status = status
         self.notified = True
 
 # Create an engine that stores data in the local directory's
