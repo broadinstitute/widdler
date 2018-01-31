@@ -6,7 +6,10 @@ import requests
 
 system_test_map = {
     'VesperWorkflow':
-        'http://ale-staging1:8080//view/Vesper%20Testing/job/Vesper%20System%20Test/buildWithParameters?token=12345&handoff_dir=$handoff_directory&comparison_dir=$comparison_dir' }
+        'http://ale-staging1:8080/view/Vesper%20Testing/job/Vesper%20System%20Test/buildWithParameters?token=12345&handoff_dir=$handoff_directory&comparison_dir=$comparison_dir',
+    'smartseq':
+        'http://ale-staging1:8080/view/SMARTSeq%20Testing/job/SMARTSeq%20System%20Test/buildWithParameters?token=12345&output_dir=$output_dir&comparison_dir=$comparison_dir'
+}
 
 class SystemTestNotification(object):
 

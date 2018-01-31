@@ -15,7 +15,7 @@ class EmailNotification(object):
     def on_changed_workflow_status(self, workflow, metadata, host):
         if (workflow.status == "Aborted" or workflow.status == "Failed" or workflow.status == "Succeeded") and \
                 (workflow.person_id != "" and workflow.person_id != None):
-            email_body = self.generate_content(query_status=workflow.status, workflow_id=workflow.id, metadata=metadata,
+            email_body = self.generate_content(metadata=metadata,
                                                 user=workflow.person_id, host=host)
             msg = self.messenger.compose_email(email_body)
             EmailNotification.attach_logs(msg, metadata)
