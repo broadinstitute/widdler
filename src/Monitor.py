@@ -100,7 +100,7 @@ class Monitor:
 
     def process_events(self, workflow):
         for event_subscriber in self.event_subscribers:
-            metadata = workflow.cached_metadata if hasattr(workflow, 'cached_metadata') else self.cromwell.query_metadata(workflow.id)
+            metadata = self.cromwell.query_metadata(workflow.id) #get final metadata
             event_subscriber.on_changed_workflow_status(workflow, metadata, self.host)
 
     def run(self):
