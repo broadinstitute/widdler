@@ -190,9 +190,13 @@ def call_monitor(args):
     logger.info("Monitoring requested")
 
     print("-------------Monitoring Workflow-------------")
-    m = Monitor(host=args.server, user=args.username, no_notify=args.no_notify, verbose=args.verbose,
+    user = "*" if args.daemon else args.username
+
+    m = Monitor(host=args.server, user=user, no_notify=args.no_notify, verbose=args.verbose,
                 interval=args.interval)
-    if args.workflow_id:
+    if args.daemon:
+        m.run()
+    elif args.workflow_id:
         m.monitor_workflow(workflow_id=args.workflow_id)
     else:
         m.monitor_user_workflows()
@@ -255,9 +259,11 @@ def call_explain(args):
         if len(stdout_res) > 0:
             for log in stdout_res["failed_jobs"]:
                 print("-------------Failed Stdout-------------")
+                print ("Shard: "+ log["stdout"]["label"])
                 print (log["stdout"]["name"] + ":")
                 print (log["stdout"]["log"])
                 print ("-------------Failed Stderr-------------")
+                print ("Shard: " + log["stderr"]["label"])
                 print (log["stderr"]["name"] + ":")
                 print (log["stderr"]["log"])
 
@@ -445,6 +451,7 @@ monitor.add_argument('-n', '--no_notify', action='store_true', default=False,
 monitor.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                      help='Choose a cromwell server from {}'.format(c.servers))
 monitor.add_argument('-M', '--monitor', action='store_true', default=True, help=argparse.SUPPRESS)
+monitor.add_argument('-D', '--daemon', action='store_true', default=False, help="Specify if this is a daemon for all users.")
 monitor.set_defaults(func=call_monitor)
 
 query = sub.add_parser(name='query',

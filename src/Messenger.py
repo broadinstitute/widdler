@@ -8,9 +8,12 @@ from string import Template
 from email.mime.multipart import MIMEMultipart
 from email.utils import formatdate
 import src.config as c
+from ratelimit import rate_limited
 
 __author__ = "Amr Abouelleil"
 
+
+ONE_MINUTE = 60
 
 class Messenger(object):
     """
@@ -39,11 +42,15 @@ class Messenger(object):
         template.close()
         return msg
 
-    def send_email(self, msg):
+    @rate_limited(300, ONE_MINUTE)
+    def send_email(self, msg, user=None):
         """
         Sends an e-mail to recipients using the localhosts smtp server.
         :param msg: A MIMEMultipart message object.
         :return: 
         """
         mailer = smtplib.SMTP('smtp.broadinstitute.org')
-        mailer.sendmail(self.sender, self.user_email, msg.as_string())
+        if not user:
+            mailer.sendmail(self.sender, self.user_email, msg.as_string())
+        else:
+            mailer.sendmail(self.sender, user, msg.as_string())

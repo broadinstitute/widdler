@@ -4,19 +4,27 @@ import logging
 import time
 import json
 import os
-import zipfile
 from dateutil.parser import parse
 import src.config as c
 from src.Cromwell import Cromwell
 from src.Messenger import Messenger
 from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
+import pytz
+
+import config
+import datetime
+from Models import Workflow,Base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from EmailNotification import EmailNotification
+from SystemTestNotification import SystemTestNotification
+
+import traceback
+import calendar
 
 __author__ = "Amr Abouelleil"
 
 module_logger = logging.getLogger('widdler.Monitor')
-
 
 def is_user_workflow(host, user, workflow_id):
     """
@@ -37,13 +45,16 @@ def is_user_workflow(host, user, workflow_id):
     except KeyError:
         return None
 
+def get_iso_datestr(dt):
+    return pytz.timezone("US/Eastern").localize(dt).isoformat()
+
 
 class Monitor:
     """
     A class for monitoring a user's workflows, providing status reports at regular intervals
     as well as e-mail notification.
     """
-    def __init__(self, user, host, no_notify, verbose, interval):
+    def __init__(self, user, host, no_notify, verbose, interval, workflow_id=None):
         self.host = host
         self.user = user
         self.interval = interval
@@ -51,17 +62,82 @@ class Monitor:
         self.messenger = Messenger(self.user)
         self.no_notify = no_notify
         self.verbose = verbose
+        self.workflow_id = workflow_id
+        self.event_subscribers = [EmailNotification(self.cromwell), SystemTestNotification()]
 
-    def get_user_workflows(self, raw=False, start_time=None):
+        engine = create_engine("sqlite:///" + config.workflow_db)
+        Base.metadata.bind = engine
+        DBSession = sessionmaker()
+        DBSession.bind = engine
+        self.session = DBSession()
+
+    def get_user_workflows(self, raw=False, start_time=None, silent=False):
         """
         A function for creating a list of workflows owned by a particular user.
         :return: A list of workflow IDs owned by the user.
         """
-        print('Determining {}\'s workflows...'.format(self.user))
+        if not silent:
+            print('Determining {}\'s workflows...'.format(self.user))
+
         user_workflows = []
         results = None
         if self.user == "*":
             results = self.cromwell.query_labels({}, start_time=start_time, running_jobs=True)
+        else:
+            results = self.cromwell.query_labels({'username': self.user}, start_time=start_time)
+
+        if raw:
+            return results
+
+        try:
+            for result in results['results']:
+                if result['status'] in c.run_states:
+                    user_workflows.append(result['id'])
+        except Exception as e:
+            logging.error(str(e))
+            print('No user workflows found with username {}.'.format(self.user))
+        return user_workflows
+
+    def process_events(self, workflow):
+        for event_subscriber in self.event_subscribers:
+            metadata = self.cromwell.query_metadata(workflow.id) #get final metadata
+            event_subscriber.on_changed_workflow_status(workflow, metadata, self.host)
+
+    def run(self):
+        while True:
+            try:
+                one_day_ago = datetime.datetime.now() - datetime.timedelta(days=int(1))
+                db_workflows = dict( (d.id, d) for d in self.session.query(Workflow).filter(Workflow.start > one_day_ago) )
+                cromwell_workflows = dict( (c["id"], c) for c in self.get_user_workflows(raw=True, start_time=get_iso_datestr(one_day_ago), silent=True)['results'] )
+
+                new_workflows = map(lambda c: Workflow(self.cromwell, c["id"]), filter(lambda w: w["id"] not in db_workflows, cromwell_workflows.values()))
+                [self.session.add(w) for w in new_workflows]
+
+                changed_workflows = filter(lambda d: d.id in cromwell_workflows and d.status != cromwell_workflows[d.id]["status"], db_workflows.values())
+                [w.update_status(cromwell_workflows[w.id]["status"]) for w in changed_workflows]
+
+                workflows_to_notify = new_workflows + changed_workflows
+                [self.process_events(w) for w in workflows_to_notify]
+
+                self.session.flush()
+                self.session.commit()
+            except Exception:
+                traceback.print_exc()
+
+            time.sleep(self.interval)
+
+    def get_user_workflows(self, raw=False, start_time=None, silent=False):
+        """
+        A function for creating a list of workflows owned by a particular user.
+        :return: A list of workflow IDs owned by the user.
+        """
+        if not silent:
+            print('Determining {}\'s workflows...'.format(self.user))
+
+        user_workflows = []
+        results = None
+        if self.user == "*":
+            results = self.cromwell.query_labels({}, start_time=start_time, running_jobs=False)
         else:
             results = self.cromwell.query_labels({'username': self.user}, start_time=start_time)
 
@@ -183,14 +259,15 @@ class Monitor:
             attachments.append(self.generate_attachment(name, path))
         return attachments
 
-    def generate_content(self, query_status, workflow_id):
+    def generate_content(self, query_status, workflow_id, metadata=None, user=None):
         """
         a method for generating the email content to be sent to user.
         :param query_status: status of workflow (helps determine what content to include in email).
         :param workflow_id: Workflow ID of the workflow to create e-mail for.
+        :param metadata: The metadata of the workflow (optional).
         :return: a dictionary containing the email contents for the template.
         """
-        jdata = self.cromwell.query_metadata(workflow_id)
+        jdata = self.cromwell.query_metadata(workflow_id) if metadata is None else metadata
         summary = ""
         if 'start' in jdata:
             summary += "<br><b>Started:</b> {}".format(jdata['start'])
@@ -203,7 +280,7 @@ class Monitor:
             hours, remainder = divmod(duration.seconds, 3600)
             minutes, seconds = divmod(remainder, 60)
             summary += '<br><b>Duration:</b> {} hours, {} minutes, {} seconds'.format(hours, minutes, seconds)
-        if 'Failed' in query_status['status']:
+        if 'Failed' in jdata['status']:
             fail_summary = "<br><b>Failures:</b> {}".format(json.dumps(jdata['failures']))
             fail_summary = fail_summary.replace(',', '<br>')
             summary += fail_summary.replace('\n', '<br>')
@@ -212,11 +289,12 @@ class Monitor:
         if 'workflowRoot' in jdata:
             summary += "<br><b>workflowRoot:</b> {}".format(jdata['workflowRoot'])
         summary += "<br><b>Timing graph:</b> http://{}:9000/api/workflows/v2/{}/timing".format(self.host,
-                                                                                               query_status['id'])
+                                                                                               jdata['id'])
+        user = self.user if user is None else user
         email_content = {
-            'user': self.user,
-            'workflow_id': query_status['id'],
-            'status': query_status['status'],
+            'user': user,
+            'workflow_id': jdata['id'],
+            'status': jdata['status'],
             'summary': summary
         }
         return email_content
