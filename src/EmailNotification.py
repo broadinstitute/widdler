@@ -29,7 +29,7 @@ class EmailNotification(object):
 
         for log in failed_jobs:
             stdout_attachment = MIMEText(str(log["stdout"]['log']))
-            stdout_attachment.add_header('Content-Disposition', 'attachment', filename=log["stdout"]["`label"])
+            stdout_attachment.add_header('Content-Disposition', 'attachment', filename=log["stdout"]["label"])
             msg.attach(stdout_attachment)
 
             stderr_attachment = MIMEText(str(log["stderr"]['log']))

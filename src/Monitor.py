@@ -110,14 +110,14 @@ class Monitor:
                 db_workflows = dict( (d.id, d) for d in self.session.query(Workflow).filter(Workflow.start > one_day_ago) )
                 cromwell_workflows = dict( (c["id"], c) for c in self.get_user_workflows(raw=True, start_time=get_iso_datestr(one_day_ago), silent=True)['results'] )
 
-                inserted_workflows = map(lambda c: Workflow(self.cromwell, c["id"]), filter(lambda w: w["id"] not in db_workflows, cromwell_workflows.values()))
-                [self.session.add(w) for w in inserted_workflows]
+                new_workflows = map(lambda c: Workflow(self.cromwell, c["id"]), filter(lambda w: w["id"] not in db_workflows, cromwell_workflows.values()))
+                [self.session.add(w) for w in new_workflows]
 
-                updated_workflows = filter(lambda d: d.id in cromwell_workflows and d.status != cromwell_workflows[d.id]["status"], db_workflows.values())
-                [w.update_status(cromwell_workflows[w.id]["status"]) for w in updated_workflows]
+                changed_workflows = filter(lambda d: d.id in cromwell_workflows and d.status != cromwell_workflows[d.id]["status"], db_workflows.values())
+                [w.update_status(cromwell_workflows[w.id]["status"]) for w in changed_workflows]
 
-                changed_workflows = inserted_workflows + updated_workflows
-                [self.process_events(w) for w in changed_workflows]
+                workflows_to_notify = new_workflows + changed_workflows
+                [self.process_events(w) for w in workflows_to_notify]
 
                 self.session.flush()
                 self.session.commit()
