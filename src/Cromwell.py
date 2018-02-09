@@ -6,11 +6,11 @@ import datetime
 import getpass
 from requests.utils import quote
 import urllib
-
 from ratelimit import rate_limited
 
 module_logger = logging.getLogger('widdler.Cromwell')
 ONE_MINUTE = 60
+
 
 class Cromwell:
     """ Module to interact with Cromwell Pipeline workflow manager. Example usage:

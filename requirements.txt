@@ -4,3 +4,4 @@ python-dateutil
 pytz
 sqlalchemy
 ratelimit
+google-api-python-client
