@@ -3,8 +3,10 @@ task helloWorld {
     String out
     Int ? sleep
  command {
-    sleep $sleep
-    echo Hello, ${name} > ${out}
+    sleep ${sleep}
+    echo "Writing to file..."
+    date >> ${out}
+    echo Hello, ${name} >> ${out}
     } output {
     File outfile = "${out}"
  } runtime {
