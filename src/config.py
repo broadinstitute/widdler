@@ -1,12 +1,21 @@
 import os
 import sys
 
-servers = ['ale', 'ale1', 'btl-cromwell', 'localhost', 'gscid-cromwell']
+# Hosts that have a broadinstitute.org domain
+bi_hosts = ['ale', 'ale1', 'btl-cromwell', 'gscid-cromwell']
+# Hosts that don't
+other_hosts = ['cloud', 'localhost']
+servers = bi_hosts + other_hosts
+
 resource_dir = os.path.abspath(os.path.dirname(__file__)).replace('src', 'resources')
 run_states = ['Running', 'Submitted', 'QueuedInCromwell']
 terminal_states = ['Failed', 'Aborted', 'Succeeded']
 workflow_db = "workflow.db"
+
+# cloud server IP address(es)
 cloud_server = "35.193.85.62"
+
+# service account used for bucket interactions
 service_account_json = "{}/service_account.json".format(resource_dir)
 
 if sys.platform == 'win32':

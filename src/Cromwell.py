@@ -7,7 +7,7 @@ import getpass
 from requests.utils import quote
 import urllib
 from ratelimit import rate_limited
-
+import config as c
 module_logger = logging.getLogger('widdler.Cromwell')
 ONE_MINUTE = 60
 
@@ -30,6 +30,15 @@ class Cromwell:
         self.url2 = 'http://' + host + ':' + str(self.port) + '/api/workflows/v2'
         self.logger = logging.getLogger('widdler.cromwell.Cromwell')
         self.logger.info('URL:{}'.format(self.url))
+        if host in c.bi_hosts:
+            v_url = "http://{}.broadinstitute.org:{}/api/engine/v1/version".format(host, str(self.port))
+        else:
+            v_url = "http://{}:{}/engine/v1/version".format(host, str(self.port))
+        self.long_version = json\
+            .loads(requests
+                   .get(v_url)
+                   .content)['cromwell']
+        self.short_version = int(self.long_version.split('-')[0])
         self.cached_metadata = {}
 
     def get(self, rtype, workflow_id=None, headers=None, v2=False):
@@ -226,12 +235,16 @@ class Cromwell:
 
         if not wdl_string:
             files = {'wdlSource': (wdl_file, open(wdl_file, 'rb'), 'application/octet-stream'),
-                 'workflowInputs': ('report.csv', j_args, 'application/json'),
-                 'customLabels': ('labels.json', json.dumps(custom_labels), 'application/json')}
+                 'workflowInputs': ('report.csv', j_args, 'application/json')}
         else:
             files = {'wdlSource': ('workflow.wdl', wdl_file, 'application/text-plain'),
-                  'workflowInputs': ('report.csv', j_args, 'application/json'),
-                  'customLabels': ('labels.json', json.dumps(custom_labels), 'application/json')}
+                  'workflowInputs': ('report.csv', j_args, 'application/json')}
+        if custom_labels:
+            if self.short_version >= 30:
+                label_key = "labels"
+            else:
+                label_key = "customLabels"
+            files[label_key] = ('labels.json', json.dumps(custom_labels), 'application/json')
         if dependencies:
             # add dependency as zip file
             files['wdlDependencies'] = (dependencies, open(dependencies, 'rb'), 'application/zip')

@@ -23,7 +23,7 @@ __author__ = "Amr Abouelleil, Paul Cao"
 __copyright__ = "Copyright 2017, The Broad Institute"
 __credits__ = ["Amr Abouelleil", "Paul Cao", "Jean Chang"]
 __license__ = "GPL"
-__version__ = "1.6.0"
+__version__ = "1.7.0"
 __maintainer__ = "Amr Abouelleil, Paul Cao"
 __email__ = "amr@broadinstitute.org"
 __status__ = "Production"
@@ -82,7 +82,10 @@ def call_run(args):
     """
     if args.validate:
         call_validate(args)
-    cromwell = Cromwell(host=args.server)
+    if args.server == "cloud":
+        cromwell = Cromwell(host=c.cloud_server, port=8000)
+    else:
+        cromwell = Cromwell(host=args.server)
 
     #prep labels and add user
     labels_dict = kv_list_to_dict(args.label) if kv_list_to_dict(args.label) != None else {}
