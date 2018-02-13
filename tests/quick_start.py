@@ -30,6 +30,7 @@ def run_quickstart():
     bucket = storage_client.create_bucket(bucket_name)
 
     print('Bucket {} created.'.format(bucket.name))
+    bucket.delete()
     # [END storage_quickstart]
 
 
