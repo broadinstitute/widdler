@@ -82,15 +82,11 @@ def call_run(args):
     """
     if args.validate:
         call_validate(args)
-    if args.server == "cloud":
-        cromwell = Cromwell(host=c.cloud_server, port=8000)
-    else:
-        cromwell = Cromwell(host=args.server)
 
     #prep labels and add user
     labels_dict = kv_list_to_dict(args.label) if kv_list_to_dict(args.label) != None else {}
     labels_dict['username'] = args.username
-
+    cromwell = Cromwell(host=args.server)
     result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies,
                                       disable_caching=args.disable_caching,
                                       extra_options=kv_list_to_dict(args.extra_options),
@@ -546,6 +542,8 @@ args = parser.parse_args()
 def main():
     # Get user's username so we can tag workflows and logs for them.
     user = getpass.getuser()
+    if args.server == "cloud":
+        args.server = c.cloud_server
     logger.info("\n-------------New Widdler Execution by {}-------------".format(user))
     logger.info("Parameters chosen: {}".format(vars(args)))
     result = args.func(args)

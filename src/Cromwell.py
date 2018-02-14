@@ -23,7 +23,9 @@ class Cromwell:
 
     def __init__(self, host='btl-cromwell', port=9000):
         if host == 'localhost':
-            self.port = 8000
+            self.port = c.local_port
+        elif host == c.cloud_server:
+            self.port = c.cloud_port
         else:
             self.port = port
         self.url = 'http://' + host + ':' + str(self.port) + '/api/workflows/v1'
