@@ -1,7 +1,7 @@
 __author__ = 'Amr Abouelleil'
 
-from Cromwell import Cromwell
-import config as c
+from src.Cromwell import Cromwell
+import src.config as c
 import unittest
 import requests
 import os
