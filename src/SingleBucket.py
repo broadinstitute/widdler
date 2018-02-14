@@ -5,28 +5,17 @@ import logging
 import sys
 import os
 
+sb_logger = logging.getLogger('widdler.Bucket.Bucket')
 
-class Bucket:
+
+class SingleBucket:
     """
     Class wrapping Google Cloud API interactions with a single Google Cloud Storage Bucket. Lots of inspiration from:
     https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/storage/cloud-client/snippets.py
     """
     def __init__(self, bucket_name):
         self.client = storage.Client()
-        self.logger = logging.getLogger('widdler.Bucket.Bucket')
         self.bucket = self._get_bucket(bucket_name)
-
-    def print_log_exit(self, msg, sys_exit=True):
-        """
-        Function for standard print/log/exit routine for fatal errors.
-        :param msg: error message to print/log.
-        :param sys_exit: Cause widdler to exit.
-        :return:
-        """
-        print(msg)
-        self.logger.critical(msg)
-        if sys_exit:
-            sys.exit(1)
 
     def _get_bucket(self, bucket_name):
         """
@@ -37,11 +26,11 @@ class Bucket:
         try:
             return self.client.get_bucket(bucket_name)
         except ge.NotFound:
-            self.print_log_exit("Sorry, bucket {} does not exist!".format(bucket_name))
+            ("Sorry, bucket {} does not exist!".format(bucket_name))
         except ge.Forbidden:
-            self.print_log_exit("You do not have permissions for the bucket {}".format(bucket_name))
+            print_log_exit("You do not have permissions for the bucket {}".format(bucket_name))
         except Exception as e:
-            self.print_log_exit(str(e))
+            print_log_exit(str(e))
 
     def delete_bucket(self):
         """
@@ -52,13 +41,15 @@ class Bucket:
         try:
             self.bucket.delete()
         except ge.NotFound:
-            self.print_log_exit("Sorry, bucket {} does not exist!".format(self.bucket.name))
+            print_log_exit("Sorry, bucket {} does not exist!".format(self.bucket.name))
         except ge.Conflict as e:
-            self.print_log_exit(str(e)
-                                .replace("The bucket", "Bucket {} is not empty. Can't delete."
-                                         .format(self.bucket.name)))
+            print_log_exit(
+                str(e).replace(
+                    "The bucket", "Bucket {} is not empty. Can't delete.".format(self.bucket.name)
+                )
+            )
         except Exception as e:
-            self.print_log_exit(str(e))
+            print_log_exit(str(e))
 
     def download_blob(self, source_blob_name, destination_file_name):
         """
@@ -71,7 +62,7 @@ class Bucket:
         try:
             blob.download_to_filename(destination_file_name)
         except Exception as e:
-            self.print_log_exit(str(e), sys_exit=False)
+            print_log_exit(msg=str(e), sys_exit=False)
 
     def download_blobs(self, destination_path):
         """
@@ -94,7 +85,7 @@ class Bucket:
         try:
             blob.upload_from_filename(source_file_name)
         except Exception as e:
-            self.print_log_exit(str(e))
+            print_log_exit(str(e))
 
     def upload_files(self, source_files):
         """
@@ -113,9 +104,9 @@ class Bucket:
         """
         blob = self.bucket.blob(blob_name)
         try:
-            blob.delete(blob)
+            blob.delete()
         except Exception as e:
-            self.print_log_exit(str(e))
+            print_log_exit(str(e))
 
     def delete_blobs(self, blob_names):
         """
@@ -126,6 +117,13 @@ class Bucket:
         for n in blob_names:
             self.delete_blob(n)
 
+    def rename_blob(self, blob_name, new_blob_name):
+        try:
+            blob = self.bucket.blob(blob_name)
+            self.bucket.rename_blob(blob, new_blob_name)
+        except Exception as e:
+            print_log_exit(str(e))
+
     def list_blobs(self):
         """
         list the blobs in the bucket.
@@ -134,36 +132,45 @@ class Bucket:
         try:
             return self.bucket.list_blobs()
         except Exception as e:
-            self.print_log_exit(e, sys_exit=False)
+            print_log_exit(msg=e, sys_exit=False)
 
 
-class CustomBucket(Bucket):
-    """
-    Creates a new bucket that has all the functionality of a Bucket once created.
-    """
-    def __init__(self, bucket_name):
-        Bucket.__init__(self, bucket_name=bucket_name)
-        self.bucket = self.make_bucket(bucket_name)
-
-    def make_bucket(self, bucket_name):
-        """
-        Create a bucket. Should be used only
-        :param bucket_name: Name of the bucket to create.
-        :return: A Google bucket object.
-        """
-        try:
-            return self.client.create_bucket(bucket_name=bucket_name)
-        except ge.Conflict as e:
-            self.print_log_exit(str(e).replace("this bucket", bucket_name))
-        except Exception as e:
-            self.print_log_exit(str(e))
-
-def list_buckets(self):
+def list_buckets():
     """
     Get a collection of buckets accessible by authenticated user.
     :return: Iterator containing all buckets the authenticated user has access to.
     """
     try:
-        return self.client.list_buckets()
+        client = storage.Client()
+        return client.list_buckets()
     except Exception as e:
-        self.print_log_exit(str(e))
+        print_log_exit(str(e))
+
+
+def make_bucket(bucket_name):
+    """
+    Create a bucket. Should be used only
+    :param bucket_name: Name of the bucket to create.
+    :return: A Google bucket object.
+    """
+    try:
+        client = storage.Client()
+        return client.create_bucket(bucket_name=bucket_name)
+    except ge.Conflict as e:
+        print_log_exit(str(e).replace("this bucket", bucket_name))
+    except Exception as e:
+        print_log_exit(str(e))
+
+
+def print_log_exit(msg, sys_exit=True, ple_logger=sb_logger):
+    """
+    Function for standard print/log/exit routine for fatal errors.
+    :param msg: error message to print/log.
+    :param sys_exit: Cause widdler to exit.
+    :param ple_logger: Logger to use when logging message.
+    :return:
+    """
+    print(msg)
+    ple_logger.critical(msg)
+    if sys_exit:
+        sys.exit(1)
