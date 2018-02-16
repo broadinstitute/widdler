@@ -1,6 +1,7 @@
 __author__ = "Amr Abouelleil"
 from google.cloud import storage
 import google.cloud.exceptions as ge
+from Validator import Validator
 import config as c
 import logging
 import sys
@@ -95,7 +96,8 @@ class SingleBucket:
         :return:
         """
         for f in source_files:
-            self.upload_file(f, os.path.basename(f))
+            # Replaces windows path folder separators with unix style.
+            self.upload_file(f, f.replace('\\', '/'))
 
     def delete_blob(self, blob_name):
         """
@@ -135,6 +137,19 @@ class SingleBucket:
         except Exception as e:
             print_log_exit(msg=e, sys_exit=False)
 
+    def upload_workflow_input_files(self, wdl_file, json_file):
+        v = Validator(wdl_file, json_file)
+        # get all the wdl arguments and figure out which ones are file inputs, store them in an array.
+        wdl_args = v.get_wdl_args()
+        file_keys = {k: v for k, v in wdl_args.iteritems() if 'File' in v}.keys()
+        json_dict = v.get_json()
+        files_to_upload = list()
+        for file_key in file_keys:
+            if file_key == 'samples_file':
+                pass
+            else:
+                files_to_upload.append(json_dict[file_key])
+        self.upload_files(files_to_upload)
 
 def list_buckets():
     """
