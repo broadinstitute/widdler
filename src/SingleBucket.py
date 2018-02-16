@@ -150,6 +150,8 @@ class SingleBucket:
             else:
                 files_to_upload.append(json_dict[file_key])
         self.upload_files(files_to_upload)
+        return files_to_upload
+
 
 def list_buckets():
     """
