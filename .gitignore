@@ -55,7 +55,7 @@ src/requests/sessions.pyc
 src/requests/status_codes.pyc
 src/requests/structures.pyc
 src/requests/utils.pyc
-
+resources/service_account.json
 *.db
 
 *.log

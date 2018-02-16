@@ -23,6 +23,11 @@ class BucketUnitTests(unittest.TestCase):
         for f in self.f_array:
             open(f, 'a').close()
 
+    def test_auth(self):
+        sa = c.service_account_json
+
+
+
     def test_make_bucket(self):
         """
         Making of bucket actually happens in setUpClass because I want to use the same bucket in my other test methods.
