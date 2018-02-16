@@ -1032,3 +1032,67 @@
 2018-02-14 07:42:26,444 - test_cromwell - INFO - Test done!
 2018-02-14 07:42:26,444 - test_cromwell - INFO - Test done!
 2018-02-14 07:42:26,444 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:03,065 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:03,596 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'991e3397-55f4-4447-abb6-9a9edfb1237c'}
+2018-02-16 08:33:08,598 - test_cromwell - INFO - Testing start_workflow...
+2018-02-16 08:33:08,598 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:08,756 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:08,756 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:08,868 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'61c93bec-e683-4eeb-a545-183bd1ae6a1a'}
+2018-02-16 08:33:08,868 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'61c93bec-e683-4eeb-a545-183bd1ae6a1a'}
+2018-02-16 08:33:13,963 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:13,963 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:14,065 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:14,065 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:14,065 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:14,177 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'2231b6fb-68ea-4f52-873c-413876826976'}
+2018-02-16 08:33:14,177 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'2231b6fb-68ea-4f52-873c-413876826976'}
+2018-02-16 08:33:14,177 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'2231b6fb-68ea-4f52-873c-413876826976'}
+2018-02-16 08:33:24,256 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:24,256 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:24,256 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:24,362 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:24,362 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:24,362 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:24,362 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:24,473 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'33669d11-7784-45f2-9b12-d86020b4ed1f'}
+2018-02-16 08:33:24,473 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'33669d11-7784-45f2-9b12-d86020b4ed1f'}
+2018-02-16 08:33:24,473 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'33669d11-7784-45f2-9b12-d86020b4ed1f'}
+2018-02-16 08:33:24,473 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'33669d11-7784-45f2-9b12-d86020b4ed1f'}
+2018-02-16 08:33:29,473 - test_cromwell - INFO - Testing query_metadata...
+2018-02-16 08:33:29,473 - test_cromwell - INFO - Testing query_metadata...
+2018-02-16 08:33:29,473 - test_cromwell - INFO - Testing query_metadata...
+2018-02-16 08:33:29,473 - test_cromwell - INFO - Testing query_metadata...
+2018-02-16 08:33:29,677 - test_cromwell - INFO - Result: {u'status': u'Submitted', u'inputs': {}, u'calls': {}, u'submission': u'2018-02-16T13:33:24.985Z', u'outputs': {}, u'submittedFiles': {u'labels': u'{}', u'inputs': u'{"hello.name":"amr","hello.out":"hello.txt","hello.sleep":1E+1,"user":"Osiris"}', u'workflowType': u'WDL', u'options': u'{\n\n}', u'workflow': u'task helloWorld {\r\n    String name\r\n    String out\r\n    Int ? sleep\r\n command {\r\n    sleep ${sleep}\r\n    echo "Writing to file..."\r\n    date >> ${out}\r\n    echo Hello, ${name} >> ${out}\r\n    } output {\r\n    File outfile = "${out}"\r\n } runtime {\r\n     docker : "gcr.io/btl-dockers/btl_gatk:1"\r\n }\r\n}\r\n\r\nworkflow hello {\r\n    String name\r\n    Int sleep\r\n    String out\r\n    call helloWorld {\r\n    input:\r\n        name = name,\r\n        out = out,\r\n        sleep = sleep\r\n    }\r\n}'}, u'id': u'33669d11-7784-45f2-9b12-d86020b4ed1f'}
+2018-02-16 08:33:29,677 - test_cromwell - INFO - Result: {u'status': u'Submitted', u'inputs': {}, u'calls': {}, u'submission': u'2018-02-16T13:33:24.985Z', u'outputs': {}, u'submittedFiles': {u'labels': u'{}', u'inputs': u'{"hello.name":"amr","hello.out":"hello.txt","hello.sleep":1E+1,"user":"Osiris"}', u'workflowType': u'WDL', u'options': u'{\n\n}', u'workflow': u'task helloWorld {\r\n    String name\r\n    String out\r\n    Int ? sleep\r\n command {\r\n    sleep ${sleep}\r\n    echo "Writing to file..."\r\n    date >> ${out}\r\n    echo Hello, ${name} >> ${out}\r\n    } output {\r\n    File outfile = "${out}"\r\n } runtime {\r\n     docker : "gcr.io/btl-dockers/btl_gatk:1"\r\n }\r\n}\r\n\r\nworkflow hello {\r\n    String name\r\n    Int sleep\r\n    String out\r\n    call helloWorld {\r\n    input:\r\n        name = name,\r\n        out = out,\r\n        sleep = sleep\r\n    }\r\n}'}, u'id': u'33669d11-7784-45f2-9b12-d86020b4ed1f'}
+2018-02-16 08:33:29,677 - test_cromwell - INFO - Result: {u'status': u'Submitted', u'inputs': {}, u'calls': {}, u'submission': u'2018-02-16T13:33:24.985Z', u'outputs': {}, u'submittedFiles': {u'labels': u'{}', u'inputs': u'{"hello.name":"amr","hello.out":"hello.txt","hello.sleep":1E+1,"user":"Osiris"}', u'workflowType': u'WDL', u'options': u'{\n\n}', u'workflow': u'task helloWorld {\r\n    String name\r\n    String out\r\n    Int ? sleep\r\n command {\r\n    sleep ${sleep}\r\n    echo "Writing to file..."\r\n    date >> ${out}\r\n    echo Hello, ${name} >> ${out}\r\n    } output {\r\n    File outfile = "${out}"\r\n } runtime {\r\n     docker : "gcr.io/btl-dockers/btl_gatk:1"\r\n }\r\n}\r\n\r\nworkflow hello {\r\n    String name\r\n    Int sleep\r\n    String out\r\n    call helloWorld {\r\n    input:\r\n        name = name,\r\n        out = out,\r\n        sleep = sleep\r\n    }\r\n}'}, u'id': u'33669d11-7784-45f2-9b12-d86020b4ed1f'}
+2018-02-16 08:33:29,677 - test_cromwell - INFO - Result: {u'status': u'Submitted', u'inputs': {}, u'calls': {}, u'submission': u'2018-02-16T13:33:24.985Z', u'outputs': {}, u'submittedFiles': {u'labels': u'{}', u'inputs': u'{"hello.name":"amr","hello.out":"hello.txt","hello.sleep":1E+1,"user":"Osiris"}', u'workflowType': u'WDL', u'options': u'{\n\n}', u'workflow': u'task helloWorld {\r\n    String name\r\n    String out\r\n    Int ? sleep\r\n command {\r\n    sleep ${sleep}\r\n    echo "Writing to file..."\r\n    date >> ${out}\r\n    echo Hello, ${name} >> ${out}\r\n    } output {\r\n    File outfile = "${out}"\r\n } runtime {\r\n     docker : "gcr.io/btl-dockers/btl_gatk:1"\r\n }\r\n}\r\n\r\nworkflow hello {\r\n    String name\r\n    Int sleep\r\n    String out\r\n    call helloWorld {\r\n    input:\r\n        name = name,\r\n        out = out,\r\n        sleep = sleep\r\n    }\r\n}'}, u'id': u'33669d11-7784-45f2-9b12-d86020b4ed1f'}
+2018-02-16 08:33:29,677 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:29,677 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:29,677 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:29,677 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:29,773 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:29,773 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:29,773 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:29,773 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:29,773 - test_cromwell - INFO - Resources: D:\Dev\Python\widdler\resources\hello_world.wdl, D:\Dev\Python\widdler\resources\hello.json
+2018-02-16 08:33:29,881 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'662012cd-c492-404b-b911-9b46a613c2ca'}
+2018-02-16 08:33:29,881 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'662012cd-c492-404b-b911-9b46a613c2ca'}
+2018-02-16 08:33:29,881 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'662012cd-c492-404b-b911-9b46a613c2ca'}
+2018-02-16 08:33:29,881 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'662012cd-c492-404b-b911-9b46a613c2ca'}
+2018-02-16 08:33:29,881 - test_cromwell - INFO - Workflow: {u'status': u'Submitted', u'id': u'662012cd-c492-404b-b911-9b46a613c2ca'}
+2018-02-16 08:33:34,882 - test_cromwell - INFO - Testing query_status...
+2018-02-16 08:33:34,882 - test_cromwell - INFO - Testing query_status...
+2018-02-16 08:33:34,882 - test_cromwell - INFO - Testing query_status...
+2018-02-16 08:33:34,882 - test_cromwell - INFO - Testing query_status...
+2018-02-16 08:33:34,882 - test_cromwell - INFO - Testing query_status...
+2018-02-16 08:33:34,986 - test_cromwell - INFO - Result: {u'status': u'Submitted', u'id': u'662012cd-c492-404b-b911-9b46a613c2ca'}
+2018-02-16 08:33:34,986 - test_cromwell - INFO - Result: {u'status': u'Submitted', u'id': u'662012cd-c492-404b-b911-9b46a613c2ca'}
+2018-02-16 08:33:34,986 - test_cromwell - INFO - Result: {u'status': u'Submitted', u'id': u'662012cd-c492-404b-b911-9b46a613c2ca'}
+2018-02-16 08:33:34,986 - test_cromwell - INFO - Result: {u'status': u'Submitted', u'id': u'662012cd-c492-404b-b911-9b46a613c2ca'}
+2018-02-16 08:33:34,986 - test_cromwell - INFO - Result: {u'status': u'Submitted', u'id': u'662012cd-c492-404b-b911-9b46a613c2ca'}
+2018-02-16 08:33:34,987 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:34,987 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:34,987 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:34,987 - test_cromwell - INFO - Test done!
+2018-02-16 08:33:34,987 - test_cromwell - INFO - Test done!

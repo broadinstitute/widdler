@@ -1,6 +1,7 @@
 __author__ = "Amr Abouelleil"
 from google.cloud import storage
 import google.cloud.exceptions as ge
+import config as c
 import logging
 import sys
 import os
@@ -14,7 +15,7 @@ class SingleBucket:
     https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/storage/cloud-client/snippets.py
     """
     def __init__(self, bucket_name):
-        self.client = storage.Client()
+        self.client = storage.Client.from_service_account_json(c.service_account_json)
         self.bucket = self._get_bucket(bucket_name)
 
     def _get_bucket(self, bucket_name):
