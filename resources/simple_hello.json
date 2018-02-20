@@ -1,0 +1,6 @@
+{
+  "hello.name": "amr",
+  "hello.out": "hello.txt",
+  "hello.sleep": 1,
+  "hello.infile": "/cil/shed/resources/widdler/hello_test/hello_input.txt"
+}
