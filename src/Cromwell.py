@@ -6,6 +6,7 @@ import datetime
 import getpass
 from requests.utils import quote
 import urllib
+import os
 from ratelimit import rate_limited
 import config as c
 module_logger = logging.getLogger('widdler.Cromwell')
@@ -22,9 +23,10 @@ class Cromwell:
     """
 
     def __init__(self, host='btl-cromwell', port=9000):
-        if host == 'localhost':
+        self.host = host
+        if self.host == 'localhost':
             self.port = c.local_port
-        elif host == c.cloud_server:
+        elif self.host == c.cloud_server:
             self.port = c.cloud_port
         else:
             self.port = port
@@ -231,9 +233,19 @@ class Cromwell:
                 args = json.load(fh)
             fh.close()
             args['user'] = getpass.getuser()
-            j_args = json.dumps(args)
+            #j_args = json.dumps(args)
         else:
-            j_args = json_file
+            args = json.loads(json_file)
+            #j_args = json_file
+        if c.cloud_server in self.host:
+            for k, v in args.iteritems():
+                try:
+                    if os.path.exists(v):
+                        args[k] = 'gs:{}'.format(v)
+                except TypeError as e:
+                    self.logger.warn('Can\'t evaluate {} as path: {}'.format(v, str(e)))
+        #j_args needs to be a string at this point
+        j_args = json.dumps(args)
 
         if not wdl_string:
             files = {'wdlSource': (wdl_file, open(wdl_file, 'rb'), 'application/octet-stream'),

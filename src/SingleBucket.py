@@ -138,6 +138,13 @@ class SingleBucket:
             print_log_exit(msg=e, sys_exit=False)
 
     def upload_workflow_input_files(self, wdl_file, json_file):
+        """
+        Given workflow inputs, parse them to determine which inputs are files or files containing file paths, and
+        upload those files to the bucket specified by the SingleBucket instance.
+        :param wdl_file: File containing workflow description. Used to determine which workflow inputs are files.
+        :param json_file: JSON inputs to wdl. Contains actual paths to files.
+        :return: A list of files that were uploaded.
+        """
         v = Validator(wdl_file, json_file)
         # get all the wdl arguments and figure out which ones are file inputs, store them in an array.
         wdl_args = v.get_wdl_args()
@@ -145,12 +152,28 @@ class SingleBucket:
         json_dict = v.get_json()
         files_to_upload = list()
         for file_key in file_keys:
-            if file_key == 'samples_file':
-                pass
+            if 'fofn' in file_key:
+                files_to_upload.extend(get_files_from_fofn(json_dict[file_key]))
             else:
                 files_to_upload.append(json_dict[file_key])
         self.upload_files(files_to_upload)
         return files_to_upload
+
+
+def get_files_from_fofn(fofn):
+    """
+    A function for extracting files from a file containing paths to files.
+    :param fofn: a file of file names that is white-space delimited.
+    :return: A list of file paths extracted from the input fofn.
+    """
+    fh = open(fofn, 'r')
+    files_to_upload = list()
+    for fofn_row in fh:
+        fofn_row_fields = fofn_row.split()
+        for field in fofn_row_fields:
+            if os.path.isfile(field):
+                files_to_upload.append(field)
+    return files_to_upload
 
 
 def list_buckets():

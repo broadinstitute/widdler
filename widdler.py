@@ -10,6 +10,7 @@ import src.config as c
 from src.Cromwell import Cromwell
 from src.Monitor import Monitor
 from src.Validator import Validator
+from src.SingleBucket import SingleBucket
 import logging
 import getpass
 import json
@@ -383,6 +384,17 @@ def call_email(args):
     args.interval = 0
     call_monitor(args)
 
+
+def call_upload(args):
+    """
+    :param args:
+    :return:
+    """
+    b = SingleBucket(args.bucket)
+    uploaded_files = b.upload_workflow_input_files(args.wdl, args.json)
+    print('The following files have been uploaded to {}:\n{}'.format(args.bucket, '\n'.join(uploaded_files)))
+
+
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
     usage='widdler.py <positional argument> [<args>]',
@@ -412,12 +424,12 @@ explain.add_argument('-M', '--monitor', action='store_false', default=False, hel
 explain.set_defaults(func=call_explain)
 
 log = sub.add_parser(name='log',
-                         description='Print the commands used in a workflow.',
-                         usage='widdler.py log <workflowid>',
-                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                     description='Print the commands used in a workflow.',
+                     usage='widdler.py log <workflowid>',
+                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 log.add_argument('workflow_id', action='store', help='workflow id of workflow to print commands for.')
 log.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
-                     help='Choose a cromwell server from {}'.format(c.servers))
+                 help='Choose a cromwell server from {}'.format(c.servers))
 log.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 log.set_defaults(func=call_log)
 
@@ -535,6 +547,16 @@ email.add_argument('-u', '--username', action='store', default=getpass.getuser()
 email.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 email.set_defaults(func=call_email)
 
+upload = sub.add_parser(name='upload',
+                        description='Upload files required for workflow execution to Cloud storage.',
+                        usage='widdler.py upload <wdl> <json>',
+                        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+upload.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL associated with the json file.')
+upload.add_argument('json', action='store', type=is_valid, help='Path the json inputs file to validate.')
+upload.add_argument('-b', '--bucket', action='store', required=True,
+                    help='Name of destination bucket enclosed in quotes.')
+upload.set_defaults(func=call_upload)
+
 
 args = parser.parse_args()
 
@@ -542,16 +564,23 @@ args = parser.parse_args()
 def main():
     # Get user's username so we can tag workflows and logs for them.
     user = getpass.getuser()
-    if args.server == "cloud":
-        args.server = c.cloud_server
+    try:
+        if args.server == "cloud":
+            args.server = c.cloud_server
+    except AttributeError:
+        pass
     logger.info("\n-------------New Widdler Execution by {}-------------".format(user))
     logger.info("Parameters chosen: {}".format(vars(args)))
     result = args.func(args)
     logger.info("Result: {}".format(result))
     # If we aren't using persistent monitoring, we'll give the user a basically formated json dump to stdout.
-    if not args.monitor:
-        print(json.dumps(result, indent=4))
+    try:
+        if not args.monitor:
+            print(json.dumps(result, indent=4))
+    except AttributeError:
+        pass
     logger.info("\n-------------End Widdler Execution by {}-------------".format(user))
+
 
 if __name__ == "__main__":
     sys.exit(main())
