@@ -7,6 +7,7 @@ import getpass
 from requests.utils import quote
 import urllib
 import os
+import re
 from ratelimit import rate_limited
 import config as c
 module_logger = logging.getLogger('widdler.Cromwell')
@@ -241,7 +242,8 @@ class Cromwell:
             for k, v in args.iteritems():
                 try:
                     if os.path.exists(v):
-                        args[k] = 'gs:{}'.format(v)
+                        args[k] = re.sub(r'\\+', '/', 'gs://{}/{}'.format(c.default_bucket, v))
+
                 except TypeError as e:
                     self.logger.warn('Can\'t evaluate {} as path: {}'.format(v, str(e)))
         #j_args needs to be a string at this point

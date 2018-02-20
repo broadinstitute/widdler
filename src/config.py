@@ -21,7 +21,7 @@ cloud_port = 8000
 
 # service account used for bucket interactions
 service_account_json = "{}/service_account.json".format(resource_dir)
-
+default_bucket = 'broad-cil-devel-bucket'
 if sys.platform == 'win32':
     log_dir = os.path.abspath(os.path.dirname(__file__)).replace('src', 'logs')
 else:
