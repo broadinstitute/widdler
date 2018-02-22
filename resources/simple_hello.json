@@ -2,5 +2,5 @@
   "hello.name": "amr",
   "hello.out": "hello.txt",
   "hello.sleep": 1,
-  "hello.infile": "D:\\Dev\\Python\\widdler\\resources\\hello_input.txt"
+  "hello.infile": "C:\\Dev\\Python\\widdler\\resources\\hello_input.txt"
 }
