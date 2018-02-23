@@ -6,7 +6,7 @@ task helloWorld {
     command {
     sleep ${sleep}
     echo "Writing to file..."
-    date >> ${infile}
+    date >> ${outfile}
     echo Hello, ${name} >> ${outfile}
     } output {
     File output_file = "${outfile}"
