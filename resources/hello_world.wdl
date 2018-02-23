@@ -1,19 +1,30 @@
 task helloWorld {
     File infile
     String name
+    String outfile = basename(infile)
     Int sleep
     command {
     sleep ${sleep}
     echo "Writing to file..."
     date >> ${infile}
-    echo Hello, ${name} >> ${infile}
+    echo Hello, ${name} >> ${outfile}
     } output {
-    File outfile = "${infile}"
+    File output_file = "${outfile}"
     } runtime {
      docker : "gcr.io/btl-dockers/btl_gatk:1"
  }
 }
 
+task print_contents {
+    File input_file
+    command {
+        cat ${input_file} > print_contents.txt
+    } output {
+    File outfile = "print_contents.txt"
+    } runtime {
+     docker : "gcr.io/btl-dockers/btl_gatk:1"
+ }
+}
 
 workflow hello {
     File infile
@@ -28,4 +39,5 @@ workflow hello {
             sleep = sleep
         }
     }
+    call print_contents {input: input_file = fofn}
 }

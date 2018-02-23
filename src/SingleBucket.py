@@ -153,7 +153,14 @@ class SingleBucket:
         files_to_upload = list()
         for file_key in file_keys:
             if 'fofn' in file_key:
+                # get files listed in the fofn and add them to list of files to upload
                 files_to_upload.extend(get_files_from_fofn(json_dict[file_key]))
+                """
+                Next don't want to upload the original fofn because it won't have the 'gs://' prefix for the files in.
+                Therefore need to create a new fofn that has updated paths, and we add that to files_to_upload.
+                """
+                new_fofn = update_fofn(json_dict[file_key])
+                files_to_upload.append(new_fofn)
             else:
                 files_to_upload.append(json_dict[file_key])
         self.upload_files(files_to_upload)
@@ -173,7 +180,31 @@ def get_files_from_fofn(fofn):
         for field in fofn_row_fields:
             if os.path.isfile(field):
                 files_to_upload.append(field)
+    fh.close()
     return files_to_upload
+
+
+def make_gs_url(local_path):
+    import re
+    return re.sub(r'\\+', '/', 'gs://{}/{}'.format(c.default_bucket, local_path))
+
+
+def update_fofn(fofn):
+    new_fofn = "{}.cloud".format(fofn)
+    old_fh = open(fofn, 'r')
+    new_fh = open(new_fofn, 'w')
+    for fofn_row in old_fh:
+        fofn_row_fields = fofn_row.split()
+        fofn_row_fields.append('\n')
+        new_row = list()
+        for field in fofn_row_fields:
+            if os.path.isfile(field):
+                import re
+                new_row.append(make_gs_url(field))
+            else:
+                new_row.append(field)
+        new_fh.write('\t'.join(new_row))
+    return new_fofn
 
 
 def list_buckets():

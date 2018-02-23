@@ -242,7 +242,10 @@ class Cromwell:
             for k, v in args.iteritems():
                 try:
                     if os.path.exists(v):
-                        args[k] = re.sub(r'\\+', '/', 'gs://{}/{}'.format(c.default_bucket, v))
+                        from src.SingleBucket import make_gs_url
+                        args[k] = make_gs_url(v)
+                    if 'fofn' in v:
+                        args[k] = '{}.cloud'.format(args[k])
 
                 except TypeError as e:
                     self.logger.warn('Can\'t evaluate {} as path: {}'.format(v, str(e)))
