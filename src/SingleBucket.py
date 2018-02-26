@@ -28,7 +28,8 @@ class SingleBucket:
         try:
             return self.client.get_bucket(bucket_name)
         except ge.NotFound:
-            ("Sorry, bucket {} does not exist!".format(bucket_name))
+            print_log_exit("Sorry, bucket {} does not exist!".format(bucket_name))
+
         except ge.Forbidden:
             print_log_exit("You do not have permissions for the bucket {}".format(bucket_name))
         except Exception as e:

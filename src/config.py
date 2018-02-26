@@ -21,7 +21,7 @@ cloud_port = 8000
 
 # service account used for bucket interactions
 service_account_json = "{}/service_account.json".format(resource_dir)
-default_bucket = 'broad-cil-devel-bucket'
+default_bucket = "broad-cil-devel-bucket"
 
 # directory for generated temporary files (ex: for making fofns)
 
