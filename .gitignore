@@ -106,4 +106,5 @@ src/requests/packages/chardet/sjisprober.pyc
 src/requests/packages/chardet/universaldetector.pyc
 src/requests/packages/chardet/utf8prober.pyc
 resources/data/womtool-30.2.jar
+resources/
 src/SingleBucket.pyc
