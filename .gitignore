@@ -102,3 +102,5 @@ src/requests/packages/chardet/sbcsgroupprober.pyc
 src/requests/packages/chardet/sjisprober.pyc
 src/requests/packages/chardet/universaldetector.pyc
 src/requests/packages/chardet/utf8prober.pyc
+resources/
+logs/
