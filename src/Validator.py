@@ -17,7 +17,7 @@ class Validator:
     def __init__(self, wdl, json):
         self.wdl = wdl
         self.json = json
-        self.wdl_tool = os.path.join(c.resource_dir, 'wdltool-0.10.jar')
+        self.wdl_tool = os.path.join(c.resource_dir, 'womtool-30.2.jar')
         self.logger = logging.getLogger('widdler.validator.Validator')
 
     def get_json(self):
