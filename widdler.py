@@ -189,6 +189,7 @@ def call_monitor(args):
     logger.info("Monitoring requested")
 
     print("-------------Monitoring Workflow-------------")
+
     user = "*" if args.daemon else args.username
 
     m = Monitor(host=args.server, user=user, no_notify=args.no_notify, verbose=args.verbose,
@@ -450,7 +451,8 @@ monitor.add_argument('-n', '--no_notify', action='store_true', default=False,
 monitor.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                      help='Choose a cromwell server from {}'.format(c.servers))
 monitor.add_argument('-M', '--monitor', action='store_true', default=True, help=argparse.SUPPRESS)
-monitor.add_argument('-D', '--daemon', action='store_true', default=False, help="Specify if this is a daemon for all users.")
+monitor.add_argument('-D', '--daemon', action='store_true', default=False,
+                     help="Specify if this is a daemon for all users.")
 monitor.set_defaults(func=call_monitor)
 
 query = sub.add_parser(name='query',
@@ -533,6 +535,8 @@ email.add_argument('-S', '--server', action='store', required=True, type=str, ch
                    help='Choose a cromwell server from {}'.format(c.servers))
 email.add_argument('-u', '--username', action='store', default=getpass.getuser(), help='username of user to e-mail to')
 email.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
+email.add_argument('-D', '--daemon', action='store_true', default=False,
+                   help=argparse.SUPPRESS)
 email.set_defaults(func=call_email)
 
 
@@ -552,6 +556,7 @@ def main():
     if not args.monitor:
         print(json.dumps(result, indent=4))
     logger.info("\n-------------End Widdler Execution by {}-------------".format(user))
+
 
 if __name__ == "__main__":
     sys.exit(main())
