@@ -1,0 +1,5 @@
+{
+  "hello.fofn": "gs://broad-cil-devel-bucket/input_data/hello_remote.fofn",
+  "hello.name": "amr",
+  "hello.sleep": 1
+}

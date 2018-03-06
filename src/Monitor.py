@@ -18,6 +18,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from EmailNotification import EmailNotification
 from SystemTestNotification import SystemTestNotification
+from Download import Download
 
 import traceback
 import calendar
@@ -63,7 +64,7 @@ class Monitor:
         self.no_notify = no_notify
         self.verbose = verbose
         self.workflow_id = workflow_id
-        self.event_subscribers = [EmailNotification(self.cromwell), SystemTestNotification()]
+        self.event_subscribers = [EmailNotification(self.cromwell), SystemTestNotification(), Download()]
 
         engine = create_engine("sqlite:///" + config.workflow_db)
         Base.metadata.bind = engine
