@@ -20,7 +20,10 @@ cloud_server = "35.193.85.62"
 cloud_port = 8000
 
 # service account used for bucket interactions
-service_account_json = "{}/service_account.json".format(resource_dir)
+if sys.platform == "win32":
+    service_account_json = "{}/service_account.json".format(resource_dir)
+else:
+    service_account_json = "/cil/shed/resources/widdler/service_account.json"
 default_bucket = "broad-cil-devel-bucket"
 
 # directory for generated temporary files (ex: for making fofns)
