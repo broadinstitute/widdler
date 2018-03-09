@@ -6,6 +6,7 @@ import config as c
 import logging
 import sys
 import os
+import traceback
 
 sb_logger = logging.getLogger('widdler.Bucket.Bucket')
 
@@ -65,6 +66,7 @@ class SingleBucket:
         try:
             blob.download_to_filename(destination_file_name)
         except Exception as e:
+            print(traceback.format_exc())
             print_log_exit(msg=str(e), sys_exit=False)
 
     def download_blobs(self, destination_path):

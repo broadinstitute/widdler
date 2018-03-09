@@ -22,14 +22,9 @@ class Download(object):
                 onprem_path = metadata["inputs"][onprem_dict_key]
 
                 for key,local_fn in handoff_file_dict.iteritems():
-                    remote_path = metadata["outputs"][workflow_name + "." + key]
+                    remote_path = metadata["outputs"][key]
 
                     if isinstance(remote_path, list):
-                        #local_path_prefix = ".".join(local_path.split(".")[:-1])
-                        #local_path_extension = local_path.split(".")[-1]
-                        #local_path = local_path_prefix + "-" + str(idx) + "." + local_path_extension
-
-
                         for idx, remote_sub_path in enumerate(remote_path):
                             curr_local_fn = local_fn if local_fn != "" else remote_sub_path.split("/")[-1]
                             local_path = onprem_path + "/" + curr_local_fn
@@ -40,5 +35,5 @@ class Download(object):
                         local_fn = local_fn if local_fn != "" else remote_path.split("/")[-1]
                         local_path = onprem_path + "/" + local_fn
                         remote_path = "/".join(remote_path.split("/")[3:])
-
+                        
                         self.bucket.download_blob(remote_path, local_path)
