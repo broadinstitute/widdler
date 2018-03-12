@@ -243,7 +243,7 @@ class Cromwell:
                 try:
                     if os.path.exists(v):
                         from src.SingleBucket import make_gs_url
-                        args[k] = make_gs_url(v)
+                        args[k] = make_gs_url(v) if c.gspathable(k) else v
                     if 'fofn' in v:
                         args[k] = '{}.cloud'.format(args[k])
 

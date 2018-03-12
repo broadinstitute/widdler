@@ -36,4 +36,12 @@ if sys.platform == 'win32':
 else:
     log_dir = "/cil/shed/apps/internal/widdler/logs/"
 
+exclude_gspath_array = ["onprem_download_path"]
+
+def gspathable(k):
+    for field in exclude_gspath_array:
+        if k in field:
+            return False
+
+    return True
 
