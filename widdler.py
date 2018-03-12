@@ -190,13 +190,16 @@ def call_monitor(args):
     logger.info("Monitoring requested")
 
     print("-------------Monitoring Workflow-------------")
-    user = "*" if args.daemon else args.username
-
+    # user = "*" if args.daemon else args.username
+    if hasattr(args, 'daemon'):
+        user = "*"
+    else:
+        user = args.username
     m = Monitor(host=args.server, user=user, no_notify=args.no_notify, verbose=args.verbose,
                 interval=args.interval)
-    if args.daemon:
+    if hasattr(args, 'daemon'):
         m.run()
-    elif args.workflow_id:
+    elif hasattr(args, 'workflow_id'):
         m.monitor_workflow(workflow_id=args.workflow_id)
     else:
         m.monitor_user_workflows()
@@ -462,7 +465,8 @@ monitor.add_argument('-n', '--no_notify', action='store_true', default=False,
 monitor.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                      help='Choose a cromwell server from {}'.format(c.servers))
 monitor.add_argument('-M', '--monitor', action='store_true', default=True, help=argparse.SUPPRESS)
-monitor.add_argument('-D', '--daemon', action='store_true', default=False, help="Specify if this is a daemon for all users.")
+monitor.add_argument('-D', '--daemon', action='store_true', default=False,
+                     help="Specify if this is a daemon for all users.")
 monitor.set_defaults(func=call_monitor)
 
 query = sub.add_parser(name='query',
