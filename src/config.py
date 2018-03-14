@@ -36,9 +36,16 @@ if sys.platform == 'win32':
 else:
     log_dir = "/cil/shed/apps/internal/widdler/logs/"
 
+# Exclude these json keys from being converted to GS URLs.
 exclude_gspath_array = ["onprem_download_path"]
 
+
 def gspathable(k):
+    """
+    Evaluate if a key is allowed to be converted to a GS path.
+    :param k: The key to evaluate.
+    :return: True if allowed, false if not.
+    """
     for field in exclude_gspath_array:
         if k in field:
             return False
