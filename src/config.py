@@ -48,7 +48,7 @@ def gspathable(k):
     :return: True if allowed, false if not.
     """
     for field in exclude_gspath_array:
-        if k in field:
+        if field in k:
             return False
 
     return True
