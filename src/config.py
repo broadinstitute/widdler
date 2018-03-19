@@ -1,5 +1,6 @@
 import os
 import sys
+from itertools import chain, imap
 
 # Hosts that have a broadinstitute.org domain
 bi_hosts = ['ale', 'ale1', 'btl-cromwell', 'gscid-cromwell']
@@ -52,3 +53,7 @@ def gspathable(k):
 
     return True
 
+def flatmap(f, items):
+    return chain.from_iterable(imap(f, items))
+
+temp_test_dir = "/broad/hptmp"

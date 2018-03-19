@@ -5,6 +5,15 @@ import json
 
 import re
 from src.SingleBucket import SingleBucket, make_bucket, list_buckets
+from config import flatmap, temp_test_dir
+import uuid
+import os
+import urllib2
+
+system_test_map = {
+ 'gatk_indexref': 'http://ale-staging1:8080/job/gatk_system_test/buildWithParameters?token=12345&comparison_dir='
+}
+
 
 class SystemTestDownload(object):
 
@@ -13,17 +22,40 @@ class SystemTestDownload(object):
 
     @staticmethod
     def is_systemtest_workflow(metadata):
-        workflow_name = metadata["workflowName"]
-        pattern = re.compile(workflow_name + ".[^.]+.system_test")
+        if "labels" in metadata:
+            labels = metadata["labels"]
+            return "system-test" in labels
+        return False
 
-        matches = filter(lambda str: pattern.match(str), metadata)
-        return len(matches) > 0
+    @staticmethod
+    def truncate_gs_prefix(path):
+        return "/".join(path.split("/")[3:])
+
+    def download_file(self, remote_path, local_dir):
+        filename = remote_path.split("/")[-1]
+        local_path = local_dir + "/" + filename
+        truncated_remote_path = SystemTestDownload.truncate_gs_prefix(remote_path)
+
+        self.bucket.download_blob(truncated_remote_path, local_path)
 
     def on_changed_workflow_status(self, workflow, metadata, host):
-        if (workflow.status == "Succeeded"):
-            workflow_name = metadata["workflowName"]
+        if SystemTestDownload.is_systemtest_workflow(metadata):
+            system_test_url = system_test_map[metadata["workflowName"]]
 
-            if SystemTestDownload.is_systemtest_workflow(metadata):
-                for filename, filepath in metadata["ouputs"].iteritems():
-                    #TO-DO: Download the files
-                    pass
+            if workflow.status == "Succeeded" and SystemTestDownload.is_systemtest_workflow(metadata):
+                temporary_dir = temp_test_dir + "/" +str(uuid.uuid4())
+                os.makedirs(temporary_dir)
+
+                outputs = list(flatmap(lambda o: o if isinstance(o, list) else [o], metadata["outputs"].values()))
+                [self.download_file(remote, temporary_dir) for remote in outputs]
+
+                system_test_url = system_test_url + temporary_dir
+
+                urllib2.urlopen(system_test_url).read()
+                logging.warn("Triggerring system test for succeeded workflow: " + str(workflow))
+
+            elif workflow.status == "Failed":
+                system_test_url = system_test_url + "FailedRun"
+
+                urllib2.urlopen(system_test_url).read()
+                logging.warn("Triggerring system test for failed workflow: " + str(workflow))
