@@ -3,11 +3,23 @@ import urllib2
 import logging
 import json
 from src.SingleBucket import SingleBucket, make_bucket, list_buckets
+from config import flatmap
 
 class Download(object):
 
     def __init__(self):
         self.bucket = SingleBucket("broad-cil-devel-bucket")
+
+    @staticmethod
+    def truncate_gs_prefix(path):
+        return "/".join(path.split("/")[3:])
+
+    def download_file(self, remote_path, local_dir):
+        filename = remote_path.split("/")[-1]
+        local_path = local_dir + "/" + filename
+        truncated_remote_path = Download.truncate_gs_prefix(remote_path)
+
+        self.bucket.download_blob(truncated_remote_path, local_path)
 
     def on_changed_workflow_status(self, workflow, metadata, host):
         if (workflow.status == "Succeeded"):
@@ -16,8 +28,13 @@ class Download(object):
             handoff_dict_key = workflow_name + "." + "handoff_files"
             onprem_dict_key = workflow_name + "." + "onprem_download_path"
 
-            if onprem_dict_key in metadata["inputs"] and \
+            if handoff_dict_key in metadata["inputs"] and metadata["inputs"][handoff_dict_key] == None:
+                onprem_path = metadata["inputs"][onprem_dict_key]
+                outputs = list(flatmap(lambda o: o if isinstance(o, list) else [o], metadata["outputs"].values()))
+                [self.download_file(remote, onprem_path) for remote in outputs]
+            elif onprem_dict_key in metadata["inputs"] and \
                             handoff_dict_key in metadata["inputs"]:
+
                 handoff_file_dict = metadata["inputs"][handoff_dict_key]
                 onprem_path = metadata["inputs"][onprem_dict_key]
 

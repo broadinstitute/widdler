@@ -11,7 +11,7 @@ import os
 import urllib2
 
 system_test_map = {
- 'gatk_indexref': 'http://ale-staging1:8080/job/gatk_system_test/buildWithParameters?token=12345&comparison_dir='
+ 'gatk_indexref': 'http://ale-staging1:8080/job/gatk_indexref_test/buildWithParameters?token=12345&comparison_dir='
 }
 
 
@@ -51,7 +51,8 @@ class SystemTestDownload(object):
 
                 system_test_url = system_test_url + temporary_dir
 
-                urllib2.urlopen(system_test_url).read()
+                print(system_test_url)
+		urllib2.urlopen(system_test_url).read()
                 logging.warn("Triggerring system test for succeeded workflow: " + str(workflow))
 
             elif workflow.status == "Failed":
