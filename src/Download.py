@@ -15,6 +15,9 @@ class Download(object):
         return "/".join(path.split("/")[3:])
 
     def download_file(self, remote_path, local_dir):
+        if local_dir == None:
+            return
+
         filename = remote_path.split("/")[-1]
         local_path = local_dir + "/" + filename
         truncated_remote_path = Download.truncate_gs_prefix(remote_path)
