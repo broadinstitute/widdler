@@ -32,10 +32,12 @@ task print_contents {
     }
 }
 
+
 workflow hello {
     File fofn
     String name
     Int sleep
+    Array[File] file_array
 
     String onprem_download_path = "/cil/shed/resources/jenkins_tests/"
 
@@ -56,4 +58,11 @@ workflow hello {
     call print_contents {
         input: input_file = fofn
     }
+
+    scatter(f in file_array) {
+        call print_contents as pc2 {
+            input: input_file = f
+        }
+    }
+
 }

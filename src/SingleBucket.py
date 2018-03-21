@@ -100,7 +100,11 @@ class SingleBucket:
         """
         for f in source_files:
             # Replaces windows path folder separators with unix style.
-            self.upload_file(f, f.replace('\\', '/'))
+            if isinstance(f, list):
+                for f2 in f:
+                    self.upload_file(f2, f2.replace('\\', '/'))
+            else:
+                self.upload_file(f, f.replace('\\', '/'))
 
     def delete_blob(self, blob_name):
         """
@@ -165,7 +169,11 @@ class SingleBucket:
                 new_fofn = update_fofn(json_dict[file_key])
                 files_to_upload.append(new_fofn)
             else:
-                files_to_upload.append(json_dict[file_key])
+                if isinstance(json_dict[file_key], list):
+                    for f in json_dict[file_key]:
+                        files_to_upload.append(f)
+                else:
+                    files_to_upload.append(json_dict[file_key])
         self.upload_files(files_to_upload)
         return files_to_upload
 

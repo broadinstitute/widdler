@@ -3,5 +3,10 @@
   "hello.out": "hello.txt",
   "hello.sleep": 1,
   "hello.infile": "D:\\Dev\\Python\\widdler\\resources\\hello_input.txt",
-  "hello.fofn": "D:\\Dev\\Python\\widdler\\resources\\hello.fofn"
+  "hello.fofn": "D:\\Dev\\Python\\widdler\\resources\\hello.fofn",
+  "hello.file_array": [
+    "D:\\Dev\\Python\\widdler\\resources\\hello_amr.txt",
+    "D:\\Dev\\Python\\widdler\\resources\\hello_paul.txt",
+    "D:\\Dev\\Python\\widdler\\resources\\hello_gordon.txt"
+  ]
 }
