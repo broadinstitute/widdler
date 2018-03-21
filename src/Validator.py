@@ -30,9 +30,10 @@ class Validator:
         fh.close()
         return json_data
 
-    def get_wdl_args(self):
+    def get_wdl_args(self, optional=True):
         """
         Uses wdl-tool to get the expected arguments from the WDL file.
+        :param optional: Include optional arguments if true.
         :return: Returns a dictionary of wdl arguments as keys and expected type as as value.
         """
         try:
@@ -42,7 +43,12 @@ class Validator:
         cmd = ['java', '-jar', self.wdl_tool, 'inputs', self.wdl]
         run = subprocess.check_output(cmd).decode("utf-8")
         try:
-            return json.loads(run)
+            if optional:
+                return json.loads(run)
+            else:
+                d = json.loads(run)
+                ds = json.dumps({k: v for k, v in d.iteritems() if "optional" not in v})
+                return json.loads(ds)
         except json.JSONDecodeError:
             print("Something went wrong with getting args. Note that if using validation, unzipped WDL dependencies "
                   "must be in same directory as main WDL.\n "

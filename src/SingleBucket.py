@@ -157,23 +157,26 @@ class SingleBucket:
         wdl_args = v.get_wdl_args()
         file_keys = {k: v for k, v in wdl_args.iteritems() if 'File' in v}.keys()
         json_dict = v.get_json()
+
         files_to_upload = list()
         for file_key in file_keys:
-            if 'fofn' in file_key:
-                # get files listed in the fofn and add them to list of files to upload
-                files_to_upload.extend(get_files_from_fofn(json_dict[file_key]))
-                """
-                Next don't want to upload the original fofn because it won't have the 'gs://' prefix for the files in.
-                Therefore need to create a new fofn that has updated paths, and we add that to files_to_upload.
-                """
-                new_fofn = update_fofn(json_dict[file_key])
-                files_to_upload.append(new_fofn)
-            else:
-                if isinstance(json_dict[file_key], list):
-                    for f in json_dict[file_key]:
-                        files_to_upload.append(f)
+            # need to make sure that keys in wdl args but not json dict aren't processed as file keys.
+            if file_key in json_dict.keys():
+                if 'fofn' in file_key:
+                    # get files listed in the fofn and add them to list of files to upload
+                    files_to_upload.extend(get_files_from_fofn(json_dict[file_key]))
+                    """
+                    Next don't want to upload the original fofn because it won't have the 'gs://' prefix for the files in.
+                    Therefore need to create a new fofn that has updated paths, and we add that to files_to_upload.
+                    """
+                    new_fofn = update_fofn(json_dict[file_key])
+                    files_to_upload.append(new_fofn)
                 else:
-                    files_to_upload.append(json_dict[file_key])
+                    if isinstance(json_dict[file_key], list):
+                        for f in json_dict[file_key]:
+                            files_to_upload.append(f)
+                    else:
+                        files_to_upload.append(json_dict[file_key])
         self.upload_files(files_to_upload)
         return files_to_upload
 

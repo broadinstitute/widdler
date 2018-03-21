@@ -20,9 +20,10 @@ task helloWorld {
 
 task print_contents {
     File input_file
-
+    File ? optional_file
     command {
         cat ${input_file} > print_contents.txt
+        more ${optional_file}
     }
     output {
         File outfile = "print_contents.txt"
@@ -38,6 +39,7 @@ workflow hello {
     String name
     Int sleep
     Array[File] file_array
+    File ? optional_file
 
     String onprem_download_path = "/cil/shed/resources/jenkins_tests/"
 
@@ -56,7 +58,7 @@ workflow hello {
     }
 
     call print_contents {
-        input: input_file = fofn
+        input: input_file = fofn, optional_file = optional_file
     }
 
     scatter(f in file_array) {

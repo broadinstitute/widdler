@@ -8,5 +8,6 @@
     "D:\\Dev\\Python\\widdler\\resources\\hello_amr.txt",
     "D:\\Dev\\Python\\widdler\\resources\\hello_paul.txt",
     "D:\\Dev\\Python\\widdler\\resources\\hello_gordon.txt"
-  ]
+  ],
+  "hello.optional_file" : "D:\\Dev\\Python\\widdler\\resources\\labels.json"
 }
