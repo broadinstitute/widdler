@@ -8,7 +8,7 @@ import sys
 import os
 import traceback
 
-sb_logger = logging.getLogger('widdler.Bucket.Bucket')
+sb_logger = logging.getLogger('widdler.SingleBucket.SingleBucket')
 
 
 class SingleBucket:
@@ -161,7 +161,8 @@ class SingleBucket:
         files_to_upload = list()
         for file_key in file_keys:
             # need to make sure that keys in wdl args but not json dict aren't processed as file keys.
-            if file_key in json_dict.keys():
+            # also, need to skip gs urls since they are already uploaded.
+            if file_key in json_dict.keys() and "gs://" not in json_dict[file_key]:
                 if 'fofn' in file_key:
                     # get files listed in the fofn and add them to list of files to upload
                     files_to_upload.extend(get_files_from_fofn(json_dict[file_key]))
@@ -174,7 +175,8 @@ class SingleBucket:
                 else:
                     if isinstance(json_dict[file_key], list):
                         for f in json_dict[file_key]:
-                            files_to_upload.append(f)
+                            if "gs://" not in f:
+                                files_to_upload.append(f)
                     else:
                         files_to_upload.append(json_dict[file_key])
         self.upload_files(files_to_upload)

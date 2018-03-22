@@ -2,7 +2,8 @@ task helloWorld {
     File infile
     String name
     String outfile = basename(infile)
-    Int sleep
+    Int ? sleep
+    Array[File] gs_url
 
     command {
         sleep ${sleep}

@@ -2,8 +2,9 @@ task helloWorld {
     File infile
     String name
     String out = "hello_out.txt"
-    Int sleep
+    Int ? sleep
  command {
+    python -c "if ${sleep} == 1: print (${sleep})"
     sleep ${sleep}
     echo "Writing to file..."
     date >> ${infile}
