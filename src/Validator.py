@@ -70,8 +70,13 @@ class Validator:
             if self.validate_param(param, wdict):
                 # param is valid
                 if 'File' in wdict[param]:
-                    if not self.validate_file(val):
-                        errors.append('{}: {} is not a valid file path.'.format(param, val))
+                    if isinstance(val, list):
+                        for f in val:
+                            if not self.validate_file(val):
+                                errors.append('{}: {} is not a valid file path.'.format(param, f))
+                    else:
+                        if not self.validate_file(val):
+                            errors.append('{}: {} is not a valid file path.'.format(param, val))
                 elif 'Array' in wdict[param]:
                     if not self.validate_array(val):
                         errors.append('{}: {} is not a valid array/list.'.format(param, val))
