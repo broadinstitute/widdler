@@ -103,7 +103,11 @@ class Monitor:
     def process_events(self, workflow):
         for event_subscriber in self.event_subscribers:
             metadata = self.cromwell.query_metadata(workflow.id) #get final metadata
-            event_subscriber.on_changed_workflow_status(workflow, metadata, self.host)
+            try:
+                event_subscriber.on_changed_workflow_status(workflow, metadata, self.host)
+            except Exception as e:
+                logging.error(str(e))
+                print("Event processing error occurred above.")
 
     def run(self):
         while True:

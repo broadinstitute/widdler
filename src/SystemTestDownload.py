@@ -59,7 +59,7 @@ class SystemTestDownload(object):
                 system_test_url = system_test_url + temporary_dir
 
                 print(system_test_url)
-		urllib2.urlopen(system_test_url).read()
+                urllib2.urlopen(system_test_url).read()
                 logging.warn("Triggerring system test for succeeded workflow: " + str(workflow))
 
             elif workflow.status == "Failed":
