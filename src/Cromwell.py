@@ -241,7 +241,16 @@ class Cromwell:
         if c.cloud_server in self.host:
             for k, v in args.iteritems():
                 try:
-                    if os.path.exists(v):
+                    from src.SingleBucket import make_gs_url
+                    if isinstance(v, list):
+                        new_elements = list()
+                        for element in v:
+                            if c.gspathable(element):
+                                new_elements.append(make_gs_url(element))
+                            else:
+                                new_elements.append(element)
+                        args[k] = new_elements
+                    elif os.path.exists(v):
                         from src.SingleBucket import make_gs_url
                         args[k] = make_gs_url(v) if c.gspathable(k) else v
                     if 'fofn' in v:
