@@ -245,7 +245,7 @@ class Cromwell:
                     if isinstance(v, list):
                         new_elements = list()
                         for element in v:
-                            if c.gspathable(element):
+                            if c.gspathable(element) and "gs://" not in element:
                                 new_elements.append(make_gs_url(element))
                             else:
                                 new_elements.append(element)
