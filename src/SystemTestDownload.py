@@ -19,7 +19,9 @@ system_test_map = {
  'gatk_joint_genotype': 'http://ale-staging1:8080/job/gatk_joint_genotype_test/buildWithParameters?token=12345&comparison_dir=',
  'gatk_snpeff': 'http://ale-staging1:8080/job/gatk_snpeff_test/buildWithParameters?token=12345&comparison_dir=',
  'gatk_tcir': 'http://ale-staging1:8080/job/gatk_tcir_test/buildWithParameters?token=12345&comparison_dir=',
- 'gatk_vqsr': 'http://ale-staging1:8080/job/gatk_vqsr_test/buildWithParameters?token=12345&comparison_dir='
+ 'gatk_vqsr': 'http://ale-staging1:8080/job/gatk_vqsr_test/buildWithParameters?token=12345&comparison_dir=',
+ 'gatk_process_cohorts': 'http://ale-staging1:8080/job/gatk_process_cohorts_test/buildWithParameters?token=12345&comparison_dir=',
+ 'gatk_process_sample': 'http://ale-staging1:8080/job/gatk_process_sample_test/buildWithParameters?token=12345&comparison_dir='
 }
 
 class SystemTestDownload(object):
