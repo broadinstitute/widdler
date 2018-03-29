@@ -14,7 +14,7 @@ system_test_map = {
  'gatk_indexref': 'http://ale-staging1:8080/job/gatk_indexref_test/buildWithParameters?token=12345&comparison_dir=',
  'gatk_alignbam': 'http://ale-staging1:8080/job/gatk_alignbam_test/buildWithParameters?token=12345&comparison_dir=',
  'gatk_bqsr': 'http://ale-staging1:8080/job/gatk_bqsr_test/buildWithParameters?token=12345&comparison_dir=',
- 'gatk_filtration': 'http://ale-staging1:8080/job/gatk_filtration_test/buildWithParameters?token=12345&comparison_dir=',
+ 'gatk_variant_filtration': 'http://ale-staging1:8080/job/gatk_filtration_test/buildWithParameters?token=12345&comparison_dir=',
  'gatk_haplotypecaller': 'http://ale-staging1:8080/job/gatk_haplotypecaller_test/buildWithParameters?token=12345&comparison_dir=',
  'gatk_joint_genotype': 'http://ale-staging1:8080/job/gatk_joint_genotype_test/buildWithParameters?token=12345&comparison_dir=',
  'gatk_snpeff': 'http://ale-staging1:8080/job/gatk_snpeff_test/buildWithParameters?token=12345&comparison_dir=',
