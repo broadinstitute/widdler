@@ -393,8 +393,21 @@ def call_upload(args):
     :param args:
     :return:
     """
+    created_files = list()
+    if args.dependencies:
+        path = os.path.dirname(args.dependencies)
+        zip_ref = zipfile.ZipFile(args.dependencies, 'r')
+        zip_files = zip_ref.namelist()
+        for fn in zip_files:
+            f = os.path.join(path, fn)
+            if not os.path.exists(f):
+                zip_ref.extract(fn, path)
+                created_files.append(f)
+        zip_ref.close()
     b = SingleBucket(args.bucket)
     uploaded_files = b.upload_workflow_input_files(args.wdl, args.json)
+    for f in created_files:
+        os.unlink(f)
     print('The following files have been uploaded to {}:\n{}'.format(args.bucket, '\n'.join(uploaded_files)))
 
 
@@ -559,6 +572,8 @@ upload.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL 
 upload.add_argument('json', action='store', type=is_valid, help='Path the json inputs file to validate.')
 upload.add_argument('-b', '--bucket', action='store', required=True,
                     help='Name of destination bucket enclosed in quotes.')
+upload.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
+                 help='A zip file containing one or more WDL files that the main WDL imports.')
 upload.set_defaults(func=call_upload)
 
 
