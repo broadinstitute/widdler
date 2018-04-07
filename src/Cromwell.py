@@ -250,6 +250,10 @@ class Cromwell:
                             else:
                                 new_elements.append(element)
                         args[k] = new_elements
+                    elif isinstance(v, dict):
+                        for potential_file_key, potential_file in v.iteritems():
+                            if os.path.exists(potential_file):
+                                v[potential_file_key] = make_gs_url(potential_file) if c.gspathable(k) else potential_file
                     elif os.path.exists(v):
                         from src.SingleBucket import make_gs_url
                         args[k] = make_gs_url(v) if c.gspathable(k) else v

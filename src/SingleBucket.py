@@ -177,8 +177,15 @@ class SingleBucket:
                         for f in json_dict[file_key]:
                             if "gs://" not in f:
                                 files_to_upload.append(f)
+                    elif isinstance(json_dict[file_key], dict):
+                        file_dict = json_dict[file_key]
+
+                        for k,v in file_dict.iteritems(): #assume all Map with File are Map[?,File]
+                            if "gs://" not in v:
+                                files_to_upload.append(v)
                     else:
                         files_to_upload.append(json_dict[file_key])
+
         self.upload_files(files_to_upload)
         return files_to_upload
 
