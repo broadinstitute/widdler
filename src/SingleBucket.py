@@ -41,8 +41,8 @@ class SingleBucket:
         except ge.NotFound:
             print_log_exit("Sorry, bucket {} does not exist!".format(bucket_name))
 
-        except ge.Forbidden:
-            print_log_exit("You do not have permissions for the bucket {}".format(bucket_name))
+        except ge.Forbidden as e:
+            print_log_exit("You do not have permissions for the bucket {}:\n{}".format(bucket_name, str(e)))
         except Exception as e:
             print_log_exit(str(e))
 

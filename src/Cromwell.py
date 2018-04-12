@@ -8,6 +8,7 @@ from requests.utils import quote
 import urllib
 import os
 import re
+from SingleBucket import print_log_exit
 from ratelimit import rate_limited
 import config as c
 module_logger = logging.getLogger('widdler.Cromwell')
@@ -292,6 +293,8 @@ class Cromwell:
                 print("{}:{}".format(k, v))
 
         r = requests.post(self.url, files=files) if not v2 else requests.post(self.url2, files=files)
+        if r.status_code not in [200, 201]:
+            print_log_exit("Request Failed: {}".format(r.content))
         return json.loads(r.text)
 
     def stop_workflow(self, workflow_id):
