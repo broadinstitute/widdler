@@ -526,6 +526,8 @@ run.add_argument('-n', '--no_notify', action='store_true', default=False,
                  help='When selected, disable widdler e-mail notification of workflow completion.')
 run.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
                  help='A zip file containing one or more WDL files that the main WDL imports.')
+run.add_argument('-b', '--bucket', action='store', default=c.default_bucket,
+                 help='Name of bucket where files were uploaded. Default is {}'.format(c.default_bucket))
 run.add_argument('-D', '--disable_caching', action='store_true', default=False, help="Don't used cached data.")
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                  help='Choose a cromwell server from {}'.format(c.servers))
@@ -570,10 +572,10 @@ upload = sub.add_parser(name='upload',
                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 upload.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL associated with the json file.')
 upload.add_argument('json', action='store', type=is_valid, help='Path the json inputs file to validate.')
-upload.add_argument('-b', '--bucket', action='store', required=True,
-                    help='Name of destination bucket enclosed in quotes.')
+upload.add_argument('-b', '--bucket', action='store', default=c.default_bucket,
+                    help='Name of destination bucket for upload. Default is {}'.format(c.default_bucket))
 upload.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
-                 help='A zip file containing one or more WDL files that the main WDL imports.')
+                    help='A zip file containing one or more WDL files that the main WDL imports.')
 upload.set_defaults(func=call_upload)
 
 
@@ -586,6 +588,8 @@ def main():
     try:
         if args.server == "cloud":
             args.server = c.cloud_server
+        if args.server == "gscid-cloud":
+            args.server = c.gscid_cloud_server
     except AttributeError:
         pass
     logger.info("\n-------------New Widdler Execution by {}-------------".format(user))

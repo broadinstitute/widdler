@@ -17,7 +17,17 @@ class SingleBucket:
     https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/storage/cloud-client/snippets.py
     """
     def __init__(self, bucket_name):
-        self.client = storage.Client.from_service_account_json(c.service_account_json)
+        try:
+            if bucket_name == c.dev_bucket:
+                auth_json = c.service_account_json
+            elif bucket_name == c.gscid_bucket:
+                auth_json = c.gcid_service_account_json
+            else:
+                raise Exception("Unsupported bucket name: {}".format(bucket_name))
+            self.client = storage.Client.from_service_account_json(auth_json)
+        except Exception as e:
+            print_log_exit("Could not authenticate for {}: \n{}".format(bucket_name, str(e)))
+
         self.bucket = self._get_bucket(bucket_name)
 
     def _get_bucket(self, bucket_name):
@@ -85,10 +95,17 @@ class SingleBucket:
         :param destination_blob_name: name to give file in bucket.
         :return:
         """
+
         blob = self.bucket.blob(destination_blob_name)
 
         try:
-            blob.upload_from_filename(source_file_name)
+            # TODO: Once Google fixes the upload size bug, remove system call and uncomment blob command.
+            # Follow google ticket here: https://bit.ly/2IMTPKn
+            # blob.upload_from_filename(source_file_name)
+            import subprocess
+            cmd = "{} cp {} gs://{}/{}/{}".format(c.gsutil_path, source_file_name, self.bucket.name, c.inputs_root,
+                                                                 destination_blob_name)
+            subprocess.call(cmd)
         except Exception as e:
             print_log_exit(str(e))
 
@@ -187,6 +204,7 @@ class SingleBucket:
                         files_to_upload.append(json_dict[file_key])
 
         self.upload_files(files_to_upload)
+
         return files_to_upload
 
 
@@ -209,7 +227,7 @@ def get_files_from_fofn(fofn):
 
 def make_gs_url(local_path):
     import re
-    return re.sub(r'\\+', '/', 'gs://{}/{}'.format(c.default_bucket, local_path))
+    return re.sub(r'\\+', '/', 'gs://{}/{}/{}'.format(c.default_bucket, c.inputs_root, local_path))
 
 
 def update_fofn(fofn):

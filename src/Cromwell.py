@@ -27,7 +27,7 @@ class Cromwell:
         self.host = host
         if self.host == 'localhost':
             self.port = c.local_port
-        elif self.host == c.cloud_server:
+        elif self.host == c.cloud_server or self.host == c.gscid_cloud_server:
             self.port = c.cloud_port
         else:
             self.port = port
@@ -238,7 +238,7 @@ class Cromwell:
         else:
             args = json.loads(json_file)
             #j_args = json_file
-        if c.cloud_server in self.host:
+        if c.cloud_server in self.host or c.gscid_cloud_server in self.host:
             for k, v in args.iteritems():
                 try:
                     from src.SingleBucket import make_gs_url

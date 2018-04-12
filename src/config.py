@@ -5,7 +5,7 @@ from itertools import chain, imap
 # Hosts that have a broadinstitute.org domain
 bi_hosts = ['ale', 'ale1', 'btl-cromwell', 'gscid-cromwell']
 # Hosts that don't
-other_hosts = ['cloud', 'localhost']
+other_hosts = ['cloud', 'localhost', 'gscid-cloud']
 servers = bi_hosts + other_hosts
 
 resource_dir = os.path.abspath(os.path.dirname(__file__)).replace('src', 'resources')
@@ -16,16 +16,26 @@ workflow_db = "workflow.db"
 # localhost port
 local_port = 8000
 
-# cloud server IP address(es)
+# cloud servers IP address(es)
 cloud_server = "35.193.85.62"
+gscid_cloud_server = "35.184.36.201"
 cloud_port = 8000
 
+# bucket names
+gscid_bucket = "4b66fc8a-tmp"
+dev_bucket = "broad-cil-devel-bucket"
+default_bucket = gscid_bucket
+inputs_root = "broad-file-inputs"
 # service account used for bucket interactions
 if sys.platform == "win32":
     service_account_json = "{}/service_account.json".format(resource_dir)
+    gcid_service_account_json = "{}/gcid_service_account.json".format(resource_dir)
+    gsutil_path = "C:\\Users\\amr\\AppData\\Local\\Google\\Cloud SDK\\google-cloud-sdk\\bin\\gsutil.cmd"
 else:
     service_account_json = "/cil/shed/resources/widdler/service_account.json"
-default_bucket = "broad-cil-devel-bucket"
+    gcid_service_account_json = "/cil/shed/resources/widdler/gcid_service_account.json"
+    gsutil_path = "/broad/software/free/Linux/redhat_6_x86_64/pkgs/google-cloud-sdk/bin/gsutil"
+
 
 # directory for generated temporary files (ex: for making fofns)
 
