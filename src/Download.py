@@ -25,6 +25,7 @@ class Download(object):
         self.bucket.download_blob(truncated_remote_path, local_path)
 
     def on_changed_workflow_status(self, workflow, metadata, host):
+
         if (workflow.status == "Succeeded"):
             workflow_name = metadata["workflowName"]
 
@@ -56,25 +57,28 @@ class Download(object):
                         
                         self.bucket.download_blob(remote_path, local_path)
 
-class GATKDownload(Download):
+class GATKDownload(object):
     def __init__(self):
         self.bucket = SingleBucket("broad-cil-devel-bucket")
 
     def on_changed_workflow_status(self, workflow, metadata, host):
-        super(GATKDownload, self).on_changed_workflow_status(workflow, metadata, host)
-
         workflow_name = metadata["workflowName"]
-        onprem_dict_key = workflow_name + "." + "onprem_download_path"
-        onprem_path = metadata["inputs"][onprem_dict_key]
 
-        cloud_vcf_fh = open(onprem_path + "/vcfs.out", "w")
-        local_vcf_fh = open(onprem_path + "/local_vcfs.out", "w")
+        if workflow_name == "gatk_process_samples":
+            onprem_dict_key = workflow_name + "." + "onprem_download_path"
+            onprem_path = metadata["inputs"][onprem_dict_key]
 
-        for file in metadata["out_gvcf"]:
-            cloud_vcf_fh.write(file + "\n")
-            local_vcf_fh.write(Download.truncate_gs_prefix(file) + "\n")
+            if onprem_path != None:
+                cloud_vcf_fh = open(onprem_path + "/vcfs.out", "w")
+                local_vcf_fh = open(onprem_path + "/local_vcfs.out", "w")
+                files = metadata["outputs"]["gatk_process_samples.out_gvcf"]
 
-        cloud_vcf_fh.close()
-        local_vcf_fh.close()
+                for file in files:
+                    cloud_vcf_fh.write(file + "\n")
+                    local_path = onprem_path + "/" + file.split("/")[-1]
+                    local_vcf_fh.write(local_path + "\n")
+
+                cloud_vcf_fh.close()
+                local_vcf_fh.close()
 
 
