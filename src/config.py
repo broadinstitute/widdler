@@ -34,7 +34,8 @@ if sys.platform == "win32":
 else:
     service_account_json = "/cil/shed/resources/widdler/service_account.json"
     gcid_service_account_json = "/cil/shed/resources/widdler/gcid_service_account.json"
-    gsutil_path = "/broad/software/free/Linux/redhat_6_x86_64/pkgs/google-cloud-sdk/bin/gsutil"
+    gsutil_path = "gsutil"
+    #gsutil_path = "/broad/software/free/Linux/redhat_6_x86_64/pkgs/google-cloud-sdk/bin/gsutil"
 
 
 # directory for generated temporary files (ex: for making fofns)
