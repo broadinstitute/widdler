@@ -259,7 +259,7 @@ class Cromwell:
                         from src.SingleBucket import make_gs_url
                         args[k] = make_gs_url(v, bucket) if c.gspathable(k) else v
                     if 'fofn' in v:
-                        args[k] = '{}.cloud'.format(args[k])
+                        pass #commenting this out; as fofn doesn't add .cloud in upload;args[k] = '{}.cloud'.format(args[k])
 
                 except TypeError as e:
                     self.logger.warn('Can\'t evaluate {} as path: {}'.format(v, str(e)))

@@ -35,9 +35,7 @@ class Download(object):
                 onprem_path = metadata["inputs"][onprem_dict_key]
                 outputs = list(flatmap(lambda o: o if isinstance(o, list) else [o], metadata["outputs"].values()))
                 [self.download_file(remote, onprem_path) for remote in outputs]
-            elif onprem_dict_key in metadata["inputs"] and \
-                            handoff_dict_key in metadata["inputs"]:
-
+            elif onprem_dict_key in metadata["inputs"] and handoff_dict_key in metadata["inputs"]:
                 handoff_file_dict = metadata["inputs"][handoff_dict_key]
                 onprem_path = metadata["inputs"][onprem_dict_key]
 
@@ -57,3 +55,26 @@ class Download(object):
                         remote_path = "/".join(remote_path.split("/")[3:])
                         
                         self.bucket.download_blob(remote_path, local_path)
+
+class GATKDownload(Download):
+    def __init__(self):
+        self.bucket = SingleBucket("broad-cil-devel-bucket")
+
+    def on_changed_workflow_status(self, workflow, metadata, host):
+        super(GATKDownload, self).on_changed_workflow_status(workflow, metadata, host)
+
+        workflow_name = metadata["workflowName"]
+        onprem_dict_key = workflow_name + "." + "onprem_download_path"
+        onprem_path = metadata["inputs"][onprem_dict_key]
+
+        cloud_vcf_fh = open(onprem_path + "/vcfs.out", "w")
+        local_vcf_fh = open(onprem_path + "/local_vcfs.out", "w")
+
+        for file in metadata["out_gvcf"]:
+            cloud_vcf_fh.write(file + "\n")
+            local_vcf_fh.write(Download.truncate_gs_prefix(file) + "\n")
+
+        cloud_vcf_fh.close()
+        local_vcf_fh.close()
+
+
