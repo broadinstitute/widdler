@@ -90,7 +90,7 @@ def call_run(args):
     cromwell = Cromwell(host=args.server)
     result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies,
                                       disable_caching=args.disable_caching,
-                                      extra_options=kv_list_to_dict(args.extra_options),
+                                      extra_options=kv_list_to_dict(args.extra_options), bucket=args.bucket,
                                       custom_labels=labels_dict)
 
     print("-------------Cromwell Links-------------")

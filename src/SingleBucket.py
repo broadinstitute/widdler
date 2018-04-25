@@ -225,9 +225,9 @@ def get_files_from_fofn(fofn):
     return files_to_upload
 
 
-def make_gs_url(local_path):
+def make_gs_url(local_path, dest_bucket):
     import re
-    return re.sub(r'\\+', '/', 'gs://{}/{}/{}'.format(c.default_bucket, c.inputs_root, local_path))
+    return re.sub(r'\\+', '/', 'gs://{}/{}/{}'.format(dest_bucket, c.inputs_root, local_path))
 
 
 def update_fofn(fofn):

@@ -218,7 +218,7 @@ class Cromwell:
         return json.loads(r.text)
 
     def jstart_workflow(self, wdl_file, json_file, dependencies=None, wdl_string=False, disable_caching=False,
-                        extra_options=None, custom_labels={}, v2=False):
+                        extra_options=None, custom_labels={}, v2=False, bucket=None):
         """
         Start a workflow using json file for argument inputs.
         :param wdl_file: Workflow description file or WDL string (specify wdl_string if so).
@@ -247,17 +247,17 @@ class Cromwell:
                         new_elements = list()
                         for element in v:
                             if c.gspathable(element) and "gs://" not in element and os.path.exists(element):
-                                new_elements.append(make_gs_url(element))
+                                new_elements.append(make_gs_url(element, bucket))
                             else:
                                 new_elements.append(element)
                         args[k] = new_elements
                     elif isinstance(v, dict):
                         for potential_file_key, potential_file in v.iteritems():
                             if os.path.exists(potential_file):
-                                v[potential_file_key] = make_gs_url(potential_file) if c.gspathable(k) else potential_file
+                                v[potential_file_key] = make_gs_url(potential_file, bucket) if c.gspathable(k) else potential_file
                     elif os.path.exists(v):
                         from src.SingleBucket import make_gs_url
-                        args[k] = make_gs_url(v) if c.gspathable(k) else v
+                        args[k] = make_gs_url(v, bucket) if c.gspathable(k) else v
                     if 'fofn' in v:
                         args[k] = '{}.cloud'.format(args[k])
 
