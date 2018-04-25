@@ -108,6 +108,7 @@ class SingleBucket:
             subprocess.call(cmd)
         except Exception as e:
             print_log_exit(str(e))
+            traceback.print_exc()
 
     def upload_files(self, source_files):
         """
