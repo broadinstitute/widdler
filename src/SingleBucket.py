@@ -103,7 +103,7 @@ class SingleBucket:
             # Follow google ticket here: https://bit.ly/2IMTPKn
             # blob.upload_from_filename(source_file_name)
             import subprocess
-            cmd = "use -q Google-Cloud-SDK & {} cp {} gs://{}/{}/{}".format(c.gsutil_path, source_file_name, self.bucket.name, c.inputs_root,
+            cmd = "use -q Google-Cloud-SDK ; {} cp {} gs://{}/{}/{}".format(c.gsutil_path, source_file_name, self.bucket.name, c.inputs_root,
                                                                  destination_blob_name)
             print(cmd)
             subprocess.call(cmd)
