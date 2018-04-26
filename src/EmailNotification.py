@@ -6,6 +6,8 @@ from dateutil.parser import parse
 import json
 from email.mime.text import MIMEText
 import logging
+import config as c
+
 
 class EmailNotification(object):
 
@@ -75,7 +77,7 @@ class EmailNotification(object):
             summary = "<b>Workflow Name:</b> {}{}".format(jdata['workflowName'], summary)
         if 'workflowRoot' in jdata:
             summary += "<br><b>workflowRoot:</b> {}".format(jdata['workflowRoot'])
-        summary += "<br><b>Timing graph:</b> http://{}:9000/api/workflows/v2/{}/timing".format(host, jdata['id'])
+        summary += "<br><b>Timing graph:</b> http://{}:{}/api/workflows/v2/{}/timing".format(host, c.port, jdata['id'])
         email_content = {
             'user': user,
             'workflow_id': jdata['id'],
