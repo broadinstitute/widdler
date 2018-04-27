@@ -96,7 +96,7 @@ class SingleBucket:
         :return:
         """
 
-        blob = self.bucket.blob(destination_blob_name)
+        blob = self.bucket.blob("broad-file-inputs/" + destination_blob_name)
 
         try:
             # TODO: Once Google fixes the upload size bug, remove system call and uncomment blob command.

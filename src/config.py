@@ -6,6 +6,8 @@ from itertools import chain, imap
 bi_hosts = ['ale', 'ale1', 'btl-cromwell', 'gscid-cromwell']
 # Hosts that don't
 other_hosts = ['cloud', 'localhost', 'gscid-cloud']
+# cloud only hosts
+cloud_hosts = ['cloud', 'gscid-cloud']
 servers = bi_hosts + other_hosts
 
 resource_dir = os.path.abspath(os.path.dirname(__file__)).replace('src', 'resources')
