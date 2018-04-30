@@ -76,7 +76,7 @@ class EmailNotification(object):
         if 'workflowName' in jdata:
             summary = "<b>Workflow Name:</b> {}{}".format(jdata['workflowName'], summary)
         if 'workflowRoot' in jdata:
-            if host in c.cloud_hosts:
+            if host == c.gscid_cloud_server or host == c.cloud_server:
                 import re
                 root_array = re.split(r"[/]+", jdata['workflowRoot'])
                 gcp_url = "https://console.cloud.google.com/storage/browser/{}/{}/{}".format(root_array[1],

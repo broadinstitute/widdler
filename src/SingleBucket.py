@@ -105,7 +105,6 @@ class SingleBucket:
             import subprocess
             cmd = "{} cp {} gs://{}/{}/{}".format(c.gsutil_path, source_file_name, self.bucket.name, c.inputs_root,
                                                                  destination_blob_name)
-            print(cmd)
             subprocess.call(cmd, shell=True)
         except Exception as e:
             traceback.print_exc()
