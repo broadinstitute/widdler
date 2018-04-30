@@ -188,7 +188,7 @@ class SingleBucket:
                     Next don't want to upload the original fofn because it won't have the 'gs://' prefix for the files in.
                     Therefore need to create a new fofn that has updated paths, and we add that to files_to_upload.
                     """
-                    new_fofn = update_fofn(json_dict[file_key])
+                    new_fofn = update_fofn(json_dict[file_key], self.bucket.name)
                     files_to_upload.append(new_fofn)
                 else:
                     if isinstance(json_dict[file_key], list):
@@ -231,7 +231,7 @@ def make_gs_url(local_path, dest_bucket):
     return re.sub(r'\\+', '/', 'gs://{}/{}/{}'.format(dest_bucket, c.inputs_root, local_path))
 
 
-def update_fofn(fofn):
+def update_fofn(fofn, bucket):
     new_fofn = "{}.cloud".format(fofn)
     old_fh = open(fofn, 'r')
     new_fh = open(new_fofn, 'w')
@@ -242,7 +242,7 @@ def update_fofn(fofn):
         for field in fofn_row_fields:
             if os.path.isfile(field):
                 import re
-                new_row.append(make_gs_url(field))
+                new_row.append(make_gs_url(field, bucket))
             else:
                 new_row.append(field)
         new_fh.write('\t'.join(new_row))
