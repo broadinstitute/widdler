@@ -96,7 +96,10 @@ class SingleBucket:
         :return:
         """
 
-        blob = self.bucket.blob("broad-file-inputs/" + destination_blob_name)
+        path = "broad-file-inputs" + destination_blob_name if destination_blob_name.startswith("/") else \
+                "broad-file-inputs/" + destination_blob_name
+        blob = self.bucket.blob(path)
+        #blob = self.bucket.blob("broad-file-inputs/" + destination_blob_name)
 
         try:
             # TODO: Once Google fixes the upload size bug, remove system call and uncomment blob command.
