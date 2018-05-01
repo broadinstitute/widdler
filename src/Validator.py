@@ -41,7 +41,7 @@ class Validator:
         except OSError:
             print('Warning: Could not navigate to WDL directory.')
         cmd = ['java', '-jar', self.wdl_tool, 'inputs', self.wdl]
-        run = subprocess.check_output(cmd).decode("utf-8")
+        run = subprocess.check_output(cmd, shell=True).decode("utf-8")
         try:
             if optional:
                 return json.loads(run)
