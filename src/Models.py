@@ -24,8 +24,8 @@ class Workflow(Base):
     @staticmethod
     def parse_time(dt_str):
         if dt_str.endswith("Z"):
-            dt_str = dt_str[-1]
-            
+            dt_str = dt_str[:-1]
+
         return datetime.datetime.strptime(dt_str.split(".")[0], "%Y-%m-%dT%H:%M:%S") if dt_str else None
 
     @staticmethod

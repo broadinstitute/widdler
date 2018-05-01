@@ -107,8 +107,9 @@ class Monitor:
             try:
                 event_subscriber.on_changed_workflow_status(workflow, metadata, self.host)
             except Exception as e:
-                logging.error(str(e))
-                print("Event processing error occurred above.")
+                #logging.error(str(e))
+                traceback.print_exc()
+                #print("Event processing error occurred above.")
 
     def run(self):
         while True:
