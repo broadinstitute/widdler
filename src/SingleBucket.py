@@ -102,14 +102,14 @@ class SingleBucket:
         try:
             # TODO: Once Google fixes the upload size bug, remove system call and uncomment blob command.
             # Follow google ticket here: https://bit.ly/2IMTPKn
-            # blob.upload_from_filename(source_file_name)
+            blob.upload_from_filename(source_file_name)
             import subprocess
             if destination_blob_name.startswith("/"):
                 destination_blob_name = destination_blob_name[1:]
 
-            cmd = "{} cp {} gs://{}/{}/{}".format(c.gsutil_path, source_file_name, self.bucket.name, c.inputs_root,
-                                                                 destination_blob_name)
-            subprocess.call(cmd, shell=True)
+            # cmd = "{} cp {} gs://{}/{}/{}".format(c.gsutil_path, source_file_name, self.bucket.name, c.inputs_root,
+            #                                                      destination_blob_name)
+            # subprocess.call(cmd, shell=True)
         except Exception as e:
             traceback.print_exc()
             print_log_exit(str(e))
