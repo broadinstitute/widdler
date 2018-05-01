@@ -64,7 +64,7 @@ class GATKDownload(object):
     def on_changed_workflow_status(self, workflow, metadata, host):
         workflow_name = metadata["workflowName"]
 
-        if workflow_name == "gatk_process_samples":
+        if workflow_name == "gatk_process_samples" and workflow.status == "Succeeded":
             onprem_dict_key = workflow_name + "." + "onprem_download_path"
             onprem_path = metadata["inputs"][onprem_dict_key]
 
