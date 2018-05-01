@@ -74,6 +74,7 @@ class SingleBucket:
         """
         blob = self.bucket.blob(source_blob_name)
         try:
+            print("Downloading " + str(source_blob_name) +" to " + str(destination_file_name) + "...")
             blob.download_to_filename(destination_file_name)
         except Exception as e:
             print(traceback.format_exc())
