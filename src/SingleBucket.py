@@ -232,6 +232,8 @@ def get_files_from_fofn(fofn):
 
 def make_gs_url(local_path, dest_bucket):
     import re
+    if local_path.startswith("/"):
+        local_path = local_path[1:]
     return re.sub(r'\\+', '/', 'gs://{}/{}/{}'.format(dest_bucket, c.inputs_root, local_path))
 
 
