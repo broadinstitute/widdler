@@ -74,6 +74,7 @@ class SingleBucket:
         """
         blob = self.bucket.blob(source_blob_name)
         try:
+            print("Downloading " + str(source_blob_name) +" to " + str(destination_file_name) + "...")
             blob.download_to_filename(destination_file_name)
         except Exception as e:
             print(traceback.format_exc())
@@ -103,6 +104,9 @@ class SingleBucket:
             # Follow google ticket here: https://bit.ly/2IMTPKn
             # blob.upload_from_filename(source_file_name)
             import subprocess
+            if destination_blob_name.startswith("/"):
+                destination_blob_name = destination_blob_name[1:]
+
             cmd = "{} cp {} gs://{}/{}/{}".format(c.gsutil_path, source_file_name, self.bucket.name, c.inputs_root,
                                                   destination_blob_name)
             if sys.platform == 'win32':
@@ -231,6 +235,8 @@ def get_files_from_fofn(fofn):
 
 def make_gs_url(local_path, dest_bucket):
     import re
+    if local_path.startswith("/"):
+        local_path = local_path[1:]
     return re.sub(r'\\+', '/', 'gs://{}/{}/{}'.format(dest_bucket, c.inputs_root, local_path))
 
 

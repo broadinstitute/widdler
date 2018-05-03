@@ -4,11 +4,15 @@ import logging
 import json
 from src.SingleBucket import SingleBucket, make_bucket, list_buckets
 from config import flatmap
+import config as c
 
 class Download(object):
 
-    def __init__(self):
-        self.bucket = SingleBucket("broad-cil-devel-bucket")
+    def __init__(self, host=None):
+        if host == c.gscid_cloud_server:
+            self.bucket = SingleBucket(c.gscid_bucket)
+        elif host == c.cloud_server:
+            self.bucket = SingleBucket(c.dev_bucket)
 
     @staticmethod
     def truncate_gs_prefix(path):
@@ -28,43 +32,38 @@ class Download(object):
 
         if (workflow.status == "Succeeded"):
             workflow_name = metadata["workflowName"]
-
-            handoff_dict_key = workflow_name + "." + "handoff_files"
             onprem_dict_key = workflow_name + "." + "onprem_download_path"
 
-            if handoff_dict_key in metadata["inputs"] and metadata["inputs"][handoff_dict_key] == None:
-                onprem_path = metadata["inputs"][onprem_dict_key]
-                outputs = list(flatmap(lambda o: o if isinstance(o, list) else [o], metadata["outputs"].values()))
-                [self.download_file(remote, onprem_path) for remote in outputs]
-            elif onprem_dict_key in metadata["inputs"] and handoff_dict_key in metadata["inputs"]:
-                handoff_file_dict = metadata["inputs"][handoff_dict_key]
-                onprem_path = metadata["inputs"][onprem_dict_key]
+            if onprem_dict_key not in metadata["inputs"]:
+                return
 
-                for key,local_fn in handoff_file_dict.iteritems():
-                    remote_path = metadata["outputs"][key]
+            onprem_path = metadata["inputs"][onprem_dict_key]
 
-                    if isinstance(remote_path, list):
-                        for idx, remote_sub_path in enumerate(remote_path):
-                            curr_local_fn = local_fn if local_fn != "" else remote_sub_path.split("/")[-1]
-                            local_path = onprem_path + "/" + curr_local_fn
-                            remote_sub_path = "/".join(remote_sub_path.split("/")[3:])
-
-                            self.bucket.download_blob(remote_sub_path, local_path)
+            if onprem_dict_key in metadata["inputs"]:
+                for key, item in metadata["outputs"].iteritems():
+                    if isinstance(item, list):
+                        for subpath in item:
+                            base_fn = subpath.split("/")[-1]
+                            local_path = onprem_path + "/" + base_fn
+                            subpath = "/".join(subpath.split("/")[3:])
+                            self.bucket.download_blob(subpath, local_path)
                     else:
-                        local_fn = local_fn if local_fn != "" else remote_path.split("/")[-1]
-                        local_path = onprem_path + "/" + local_fn
-                        remote_path = "/".join(remote_path.split("/")[3:])
-                        
+                        base_fn = item.split("/")[-1]
+                        local_path = onprem_path + "/" + base_fn
+                        remote_path = "/".join(item.split("/")[3:])
                         self.bucket.download_blob(remote_path, local_path)
 
 class GATKDownload(object):
     def __init__(self):
-        self.bucket = SingleBucket("broad-cil-devel-bucket")
+        pass
 
     def on_changed_workflow_status(self, workflow, metadata, host):
+        if "workflowName" not in metadata.keys():
+            return
+
         workflow_name = metadata["workflowName"]
 
-        if workflow_name == "gatk_process_samples":
+        if workflow_name == "gatk_process_samples" and workflow.status == "Succeeded":
             onprem_dict_key = workflow_name + "." + "onprem_download_path"
             onprem_path = metadata["inputs"][onprem_dict_key]
 
