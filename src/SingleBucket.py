@@ -104,8 +104,11 @@ class SingleBucket:
             # blob.upload_from_filename(source_file_name)
             import subprocess
             cmd = "{} cp {} gs://{}/{}/{}".format(c.gsutil_path, source_file_name, self.bucket.name, c.inputs_root,
-                                                                 destination_blob_name)
-            subprocess.call(cmd, shell=True)
+                                                  destination_blob_name)
+            if sys.platform == 'win32':
+                subprocess.call(cmd)
+            else:
+                subprocess.call(cmd, shell=True)
         except Exception as e:
             traceback.print_exc()
             print_log_exit(str(e))
@@ -233,19 +236,23 @@ def make_gs_url(local_path, dest_bucket):
 
 def update_fofn(fofn, bucket):
     new_fofn = "{}.cloud".format(fofn)
-    old_fh = open(fofn, 'r')
-    new_fh = open(new_fofn, 'w')
+    old_fh = open(fofn, 'rb')
+    new_fh = open(new_fofn, 'wb')
     for fofn_row in old_fh:
-        fofn_row_fields = fofn_row.split()
-        fofn_row_fields.append('\n')
+        cleaned_row = fofn_row.rstrip('\n')
+        fofn_row_fields = cleaned_row.split()
         new_row = list()
         for field in fofn_row_fields:
             if os.path.isfile(field):
                 import re
                 new_row.append(make_gs_url(field, bucket))
             else:
-                new_row.append(field)
-        new_fh.write('\t'.join(new_row))
+                new_row.append(field.rstrip())
+        if len(new_row) > 1:
+            new_fh.write('\t'.join(new_row))
+        else:
+            new_fh.write(new_row[0])
+        new_fh.write('\n')
     return new_fofn
 
 
