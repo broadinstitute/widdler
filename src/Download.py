@@ -9,9 +9,9 @@ import config as c
 class Download(object):
 
     def __init__(self, host=None):
-        if host == 'gscid-cloud':
+        if host == c.gscid_cloud_server:
             self.bucket = SingleBucket(c.gscid_bucket)
-        elif host == 'cloud':
+        elif host == c.cloud_server:
             self.bucket = SingleBucket(c.dev_bucket)
 
     @staticmethod
