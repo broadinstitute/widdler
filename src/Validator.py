@@ -15,8 +15,8 @@ class Validator:
     Module to validate JSON inputs.
     """
     def __init__(self, wdl, json):
-        self.wdl = wdl
-        self.json = json
+        self.wdl = os.path.abspath(wdl)
+        self.json = os.path.abspath(json)
         self.wdl_tool = os.path.join(c.resource_dir, 'womtool-30.2.jar')
         self.logger = logging.getLogger('widdler.validator.Validator')
 
