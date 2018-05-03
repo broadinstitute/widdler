@@ -4,11 +4,15 @@ import logging
 import json
 from src.SingleBucket import SingleBucket, make_bucket, list_buckets
 from config import flatmap
+import config as c
 
 class Download(object):
 
-    def __init__(self):
-        self.bucket = SingleBucket("broad-cil-devel-bucket")
+    def __init__(self, host=None):
+        if host == 'gscid-cloud':
+            self.bucket = SingleBucket(c.gscid_bucket)
+        elif host == 'cloud':
+            self.bucket = SingleBucket(c.dev_bucket)
 
     @staticmethod
     def truncate_gs_prefix(path):
