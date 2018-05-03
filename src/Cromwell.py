@@ -40,10 +40,14 @@ class Cromwell:
             v_url = "http://{}.broadinstitute.org:{}/api/engine/v1/version".format(host, str(self.port))
         else:
             v_url = "http://{}:{}/engine/v1/version".format(host, str(self.port))
-        self.long_version = json\
-            .loads(requests
-                   .get(v_url)
-                   .content)['cromwell']
+        try:
+            self.long_version = json\
+                .loads(requests
+                       .get(v_url)
+                       .content)['cromwell']
+        except requests.ConnectionError as e:
+            msg = "Unable to connect to self.host:\n{}".format(str(e))
+            print_log_exit(msg)
         self.short_version = int(self.long_version.split('-')[0])
         self.cached_metadata = {}
 
