@@ -55,7 +55,7 @@ class Download(object):
 
 class GATKDownload(object):
     def __init__(self):
-        self.bucket = SingleBucket("broad-cil-devel-bucket")
+        pass
 
     def on_changed_workflow_status(self, workflow, metadata, host):
         if "workflowName" not in metadata.keys():
