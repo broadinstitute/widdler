@@ -106,13 +106,12 @@ class SingleBucket:
             import subprocess
             if destination_blob_name.startswith("/"):
                 destination_blob_name = destination_blob_name[1:]
-
-            cmd = "{} cp {} gs://{}/{}/{}".format(c.gsutil_path, source_file_name, self.bucket.name, c.inputs_root,
+            run_cmd = "{} cp {} gs://{}/{}/{}".format(c.gsutil_path, source_file_name, self.bucket.name, c.inputs_root,
                                                   destination_blob_name)
             if sys.platform == 'win32':
-                subprocess.call(cmd)
+                subprocess.call(run_cmd)
             else:
-                subprocess.call(cmd, shell=True)
+                subprocess.call(run_cmd, shell=True)
         except Exception as e:
             traceback.print_exc()
             print_log_exit(str(e))
