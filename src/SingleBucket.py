@@ -31,6 +31,17 @@ class SingleBucket:
 
         self.bucket = self._get_bucket(bucket_name)
 
+        #TODO: Authentication just until google size bug fix is in
+        add_key_cmd = "gcloud auth activate-service-account --key-file {}".format(self.auth_json)
+        jkey = open(self.auth_json, 'rb')
+        key_data = json.load(jkey)
+        jkey.close()
+        activate_cmd = "gcloud config set account {}".format(key_data['client_email'])
+        print add_key_cmd
+        os.system(add_key_cmd)
+        print activate_cmd
+        os.system(activate_cmd)
+
     def _get_bucket(self, bucket_name):
         """
         Get a pre-existing bucket.
@@ -106,18 +117,10 @@ class SingleBucket:
             # blob.upload_from_filename(source_file_name)
             if destination_blob_name.startswith("/"):
                 destination_blob_name = destination_blob_name[1:]
-            add_key_cmd = "gcloud auth activate-service-account --key-file {}".format(self.auth_json)
-            jkey = open(self.auth_json, 'rb')
-            key_data = json.load(jkey)
-            jkey.close()
-            activate_cmd = "gcloud config set account {}".format(key_data['client_email'])
+
             run_cmd = "{} cp {} gs://{}/{}/{}".format("gsutil", source_file_name, self.bucket.name, c.inputs_root,
                                                       destination_blob_name)
             # Using os.sys here over subprocess because subprocess requires absolute path to cmds
-            print add_key_cmd
-            os.system(add_key_cmd)
-            print activate_cmd
-            os.system(activate_cmd)
             print run_cmd
             os.system(run_cmd)
             # Everything from add_key_command to here is a hack that will be zorched when google releases size bug fix.
