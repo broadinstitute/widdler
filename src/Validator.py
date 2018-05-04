@@ -15,8 +15,8 @@ class Validator:
     Module to validate JSON inputs.
     """
     def __init__(self, wdl, json):
-        self.wdl = wdl
-        self.json = json
+        self.wdl = os.path.abspath(wdl)
+        self.json = os.path.abspath(json)
         self.wdl_tool = os.path.join(c.resource_dir, 'womtool-30.2.jar')
         self.logger = logging.getLogger('widdler.validator.Validator')
 
@@ -41,9 +41,12 @@ class Validator:
         except OSError:
             print('Warning: Could not navigate to WDL directory.')
         cmd = ['java', '-jar', self.wdl_tool, 'inputs', self.wdl]
-        cmd = " ".join(cmd)
-        run = subprocess.check_output(cmd).decode("utf-8")
-        # run = os.system(cmd)
+        try:
+            run = subprocess.check_output(cmd).decode("utf-8")
+        except subprocess.CalledProcessError:
+            print("Unable to execute womtool command. Make sure any subworkflow wdl files are present and try again.")
+            sys.exit(1)
+
         try:
             if optional:
                 return json.loads(run)

@@ -66,7 +66,8 @@ class Monitor:
         self.no_notify = no_notify
         self.verbose = verbose
         self.workflow_id = workflow_id
-        self.event_subscribers = [EmailNotification(self.cromwell), SystemTestDownload(), Download(), GATKDownload()]
+        self.event_subscribers = [EmailNotification(self.cromwell),
+                                    SystemTestDownload(), Download(self.cromwell.host), GATKDownload()]
 
         engine = create_engine("sqlite:///" + config.workflow_db)
         Base.metadata.bind = engine

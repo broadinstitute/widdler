@@ -102,14 +102,16 @@ class SingleBucket:
         try:
             # TODO: Once Google fixes the upload size bug, remove system call and uncomment blob command.
             # Follow google ticket here: https://bit.ly/2IMTPKn
-            blob.upload_from_filename(source_file_name)
+            # blob.upload_from_filename(source_file_name)
             import subprocess
             if destination_blob_name.startswith("/"):
                 destination_blob_name = destination_blob_name[1:]
-
-            # cmd = "{} cp {} gs://{}/{}/{}".format(c.gsutil_path, source_file_name, self.bucket.name, c.inputs_root,
-            #                                                      destination_blob_name)
-            # subprocess.call(cmd, shell=True)
+            run_cmd = "{} cp {} gs://{}/{}/{}".format(c.gsutil_path, source_file_name, self.bucket.name, c.inputs_root,
+                                                  destination_blob_name)
+            if sys.platform == 'win32':
+                subprocess.call(run_cmd)
+            else:
+                subprocess.call(run_cmd, shell=True)
         except Exception as e:
             traceback.print_exc()
             print_log_exit(str(e))
@@ -232,24 +234,30 @@ def get_files_from_fofn(fofn):
 
 def make_gs_url(local_path, dest_bucket):
     import re
+    if local_path.startswith("/"):
+        local_path = local_path[1:]
     return re.sub(r'\\+', '/', 'gs://{}/{}/{}'.format(dest_bucket, c.inputs_root, local_path))
 
 
 def update_fofn(fofn, bucket):
     new_fofn = "{}.cloud".format(fofn)
-    old_fh = open(fofn, 'r')
-    new_fh = open(new_fofn, 'w')
+    old_fh = open(fofn, 'rb')
+    new_fh = open(new_fofn, 'wb')
     for fofn_row in old_fh:
-        fofn_row_fields = fofn_row.split()
-        fofn_row_fields.append('\n')
+        cleaned_row = fofn_row.rstrip('\n')
+        fofn_row_fields = cleaned_row.split()
         new_row = list()
         for field in fofn_row_fields:
             if os.path.isfile(field):
                 import re
                 new_row.append(make_gs_url(field, bucket))
             else:
-                new_row.append(field)
-        new_fh.write('\t'.join(new_row))
+                new_row.append(field.rstrip())
+        if len(new_row) > 1:
+            new_fh.write('\t'.join(new_row))
+        else:
+            new_fh.write(new_row[0])
+        new_fh.write('\n')
     return new_fofn
 
 

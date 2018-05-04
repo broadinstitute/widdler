@@ -40,10 +40,14 @@ class Cromwell:
             v_url = "http://{}.broadinstitute.org:{}/api/engine/v1/version".format(host, str(self.port))
         else:
             v_url = "http://{}:{}/engine/v1/version".format(host, str(self.port))
-        self.long_version = json\
-            .loads(requests
-                   .get(v_url)
-                   .content)['cromwell']
+        try:
+            self.long_version = json\
+                .loads(requests
+                       .get(v_url)
+                       .content)['cromwell']
+        except requests.ConnectionError as e:
+            msg = "Unable to connect to self.host:\n{}".format(str(e))
+            print_log_exit(msg)
         self.short_version = int(self.long_version.split('-')[0])
         self.cached_metadata = {}
 
@@ -258,7 +262,7 @@ class Cromwell:
                     elif os.path.exists(v):
                         from src.SingleBucket import make_gs_url
                         args[k] = make_gs_url(v, bucket) if c.gspathable(k) else v
-                    if 'fofn' in v:
+                    if 'fofn' in v and 'gs://' not in v:
                         args[k] = '{}.cloud'.format(args[k])
                         #pass commenting this out; as fofn doesn't add .cloud in upload;args[k] = '{}.cloud'.format(args[k])
 
