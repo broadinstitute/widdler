@@ -79,9 +79,12 @@ class EmailNotification(object):
             if host == c.gscid_cloud_server or host == c.cloud_server:
                 import re
                 root_array = re.split(r"[/]+", jdata['workflowRoot'])
-                gcp_url = "https://console.cloud.google.com/storage/browser/{}/{}/{}".format(root_array[1],
-                                                                                             jdata['workflowName'],
-                                                                                             jdata['id'])
+                exec_dir = ""
+                if host == c.gscid_cloud_server:
+                    exec_dir = "/cromwell-executions/"
+                gcp_url = "https://console.cloud.google.com/storage/browser/{}{}/{}/{}".format(root_array[1], exec_dir,
+                                                                                               jdata['workflowName'],
+                                                                                               jdata['id'])
                 href_root = "<a href=\"{}\"> {} </a>".format(gcp_url, jdata['workflowRoot'])
                 summary += "<br><b>workflowRoot:</b> {}".format(href_root)
             else:
