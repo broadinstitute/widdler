@@ -81,7 +81,7 @@ class EmailNotification(object):
                 root_array = re.split(r"[/]+", jdata['workflowRoot'])
                 exec_dir = ""
                 if host == c.gscid_cloud_server:
-                    exec_dir = "/cromwell-executions/"
+                    exec_dir = "/cromwell-executions"
                 gcp_url = "https://console.cloud.google.com/storage/browser/{}{}/{}/{}".format(root_array[1], exec_dir,
                                                                                                jdata['workflowName'],
                                                                                                jdata['id'])
