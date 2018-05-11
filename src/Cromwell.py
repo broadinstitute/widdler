@@ -262,7 +262,7 @@ class Cromwell:
                     elif os.path.exists(v):
                         from src.SingleBucket import make_gs_url
                         args[k] = make_gs_url(v, bucket) if c.gspathable(k) else v
-                    if 'fofn' in v and 'gs://' not in v:
+                    if 'fofn' in k and 'gs://' not in v:
                         args[k] = '{}.cloud'.format(args[k])
                         #pass commenting this out; as fofn doesn't add .cloud in upload;args[k] = '{}.cloud'.format(args[k])
 
