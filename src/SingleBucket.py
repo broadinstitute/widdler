@@ -7,7 +7,6 @@ import logging
 import sys
 import os
 import traceback
-import json
 
 sb_logger = logging.getLogger('widdler.SingleBucket.SingleBucket')
 
@@ -19,28 +18,11 @@ class SingleBucket:
     """
     def __init__(self, bucket_name):
         try:
-            if bucket_name == c.dev_bucket:
-                self.auth_json = os.path.abspath(c.service_account_json)
-            elif bucket_name == c.gscid_bucket:
-                self.auth_json = os.path.abspath(c.gcid_service_account_json)
-            else:
-                raise Exception("Unsupported bucket name: {}".format(bucket_name))
-            self.client = storage.Client.from_service_account_json(self.auth_json)
-        except Exception as e:
-            print_log_exit("Could not authenticate for {}: \n{}".format(bucket_name, str(e)))
-
+            self.client = storage.Client()
+        except EnvironmentError as e:
+            msg = "{}\nHave you activated your Google Cloud Platform credentials in this environment?".format(str(e))
+            print_log_exit(msg)
         self.bucket = self._get_bucket(bucket_name)
-
-        #TODO: Authentication just until google size bug fix is in
-        add_key_cmd = "gcloud auth activate-service-account --key-file {}".format(self.auth_json)
-        jkey = open(self.auth_json, 'rb')
-        key_data = json.load(jkey)
-        jkey.close()
-        activate_cmd = "gcloud config set account {}".format(key_data['client_email'])
-        print add_key_cmd
-        os.system(add_key_cmd)
-        print activate_cmd
-        os.system(activate_cmd)
 
     def _get_bucket(self, bucket_name):
         """
@@ -112,18 +94,7 @@ class SingleBucket:
         blob = self.bucket.blob("broad-file-inputs/" + destination_blob_name)
 
         try:
-            # TODO: Once Google fixes the upload size bug, remove system calla and uncomment blob command.
-            # Follow google ticket here: https://bit.ly/2IMTPKn
-            # blob.upload_from_filename(source_file_name)
-            if destination_blob_name.startswith("/"):
-                destination_blob_name = destination_blob_name[1:]
-
-            run_cmd = "{} cp {} gs://{}/{}/{}".format("gsutil", source_file_name, self.bucket.name, c.inputs_root,
-                                                      destination_blob_name)
-            # Using os.sys here over subprocess because subprocess requires absolute path to cmds
-            print run_cmd
-            os.system(run_cmd)
-            # Everything from add_key_command to here is a hack that will be zorched when google releases size bug fix.
+            blob.upload_from_filename(source_file_name)
         except Exception as e:
             traceback.print_exc()
             print_log_exit(str(e))
