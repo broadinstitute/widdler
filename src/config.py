@@ -13,7 +13,9 @@ servers = bi_hosts + other_hosts
 resource_dir = os.path.abspath(os.path.dirname(__file__)).replace('src', 'resources')
 run_states = ['Running', 'Submitted', 'QueuedInCromwell']
 terminal_states = ['Failed', 'Aborted', 'Succeeded']
-workflow_db = "workflow.db"
+
+dirname = os.path.split(os.path.abspath(__file__))[0]
+workflow_db = dirname + "/../../workflow.db"
 
 # localhost port
 local_port = 8000
