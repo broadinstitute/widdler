@@ -30,17 +30,6 @@ gscid_bucket = "4b66fc8a-tmp"
 dev_bucket = "broad-cil-devel-bucket"
 default_bucket = gscid_bucket
 inputs_root = "broad-file-inputs"
-# service account used for bucket interactions
-if sys.platform == "win32":
-    service_account_json = "{}/service_account.json".format(resource_dir)
-    gcid_service_account_json = "{}/gcid_service_account.json".format(resource_dir)
-    gsutil_path = "C:\\Users\\amr\\AppData\\Local\\Google\\Cloud SDK\\google-cloud-sdk\\bin\\gsutil.cmd"
-else:
-    service_account_json = "/cil/shed/resources/widdler/service_account.json"
-    gcid_service_account_json = "/cil/shed/resources/widdler/gcid_service_account.json"
-    gsutil_path = "gsutil"
-    #gsutil_path = "/broad/software/free/Linux/redhat_6_x86_64/pkgs/google-cloud-sdk/bin/gsutil"
-
 
 # directory for generated temporary files (ex: for making fofns)
 
