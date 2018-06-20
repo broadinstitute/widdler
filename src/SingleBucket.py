@@ -1,7 +1,7 @@
 __author__ = "Amr Abouelleil"
 from google.cloud import storage
 import google.cloud.exceptions as ge
-from Validator import Validator
+from src.Validator import Validator
 import config as c
 import logging
 import sys

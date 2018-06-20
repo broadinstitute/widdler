@@ -6,8 +6,16 @@ import os
 import subprocess
 import csv
 import sys
-
+from src.SingleBucket import SingleBucket
 module_logger = logging.getLogger('widdler.Validator')
+
+
+def _bucket_from_url(gs_url):
+    return gs_url.split('/')[2]
+
+
+def _blob_from_url(gs_url):
+    return "/".join(gs_url.split('/')[3:])
 
 
 class Validator:
@@ -173,7 +181,20 @@ class Validator:
         :param f:
         :return: Boolean
         """
-        return os.path.exists(f.rstrip())
+        if f[:3] == "gs:":
+            pass
+        else:
+            return os.path.exists(f.rstrip())
+
+    @staticmethod
+    def validate_gs_url(gs_url):
+        bucket_name = _bucket_from_url(gs_url)
+        target_blob = _blob_from_url(gs_url)
+        bucket = SingleBucket(bucket_name)
+        blob_names = []
+        for blob in bucket.list_blobs():
+            blob_names.append(blob.name)
+        return target_blob in blob_names
 
     @staticmethod
     def validate_boolean(i):

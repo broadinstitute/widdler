@@ -10,5 +10,5 @@
     "C:\\Dev\\Python\\widdler\\resources\\hello_gordon.txt"
   ],
   "hello.optional_file" : "C:\\Dev\\Python\\widdler\\resources\\labels.json",
-  "hello.gs_url": ["gs://broad-cil-devel-bucket/input_data/7g8_gb4.combined.final.vcf.gz.tb"]
+  "hello.gs_url": ["gs://broad-cil-devel-bucket/input_data/7g8_gb4.combined.final.vcf.gz.tbi"]
 }
