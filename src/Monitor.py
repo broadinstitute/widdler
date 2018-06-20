@@ -29,6 +29,7 @@ __author__ = "Amr Abouelleil"
 
 module_logger = logging.getLogger('widdler.Monitor')
 
+
 def is_user_workflow(host, user, workflow_id):
     """
     A top-level function that returns a workflow if it matches the user workflow. This can't be an instance method
@@ -48,6 +49,7 @@ def is_user_workflow(host, user, workflow_id):
     except KeyError:
         return None
 
+
 def get_iso_datestr(dt):
     return pytz.timezone("US/Eastern").localize(dt).isoformat()
 
@@ -66,14 +68,15 @@ class Monitor:
         self.no_notify = no_notify
         self.verbose = verbose
         self.workflow_id = workflow_id
-        self.event_subscribers = [EmailNotification(self.cromwell),
-                                    SystemTestDownload(), Download(self.cromwell.host), GATKDownload()]
+        if user == "*":
+            self.event_subscribers = [EmailNotification(self.cromwell),
+                                        SystemTestDownload(), Download(self.cromwell.host), GATKDownload()]
 
-        engine = create_engine("sqlite:///" + config.workflow_db)
-        Base.metadata.bind = engine
-        DBSession = sessionmaker()
-        DBSession.bind = engine
-        self.session = DBSession()
+            engine = create_engine("sqlite:///" + config.workflow_db)
+            Base.metadata.bind = engine
+            DBSession = sessionmaker()
+            DBSession.bind = engine
+            self.session = DBSession()
 
     def get_user_workflows(self, raw=False, start_time=None, silent=False):
         """
