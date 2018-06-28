@@ -6,7 +6,9 @@ import os
 import subprocess
 import csv
 import sys
-from src.SingleBucket import SingleBucket
+# TODO: Figure out why this import statement isn't working
+# from SingleBucket import SingleBucket
+
 module_logger = logging.getLogger('widdler.Validator')
 
 
