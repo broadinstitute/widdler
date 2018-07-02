@@ -3,6 +3,7 @@ import os
 import logging
 from src.SingleBucket import SingleBucket, make_bucket, list_buckets
 import src.config as c
+import google.cloud.exceptions as ge
 
 # Logger setup
 sb_logger = logging.getLogger('widdler.tests.test_bucket')
@@ -53,18 +54,15 @@ class BucketUnitTests(unittest.TestCase):
         """
         self.single_bucket.upload_files(self.f_array)
         blobs = self.single_bucket.list_blobs()
-        for b in blobs:
-            self.assertIn(b.name, self.f_array)
         renamed = list()
-        for f in self.f_array:
-            new_name = f.replace('.txt', '.csv')
-            self.single_bucket.rename_blob(f, new_name)
-            renamed.append(new_name)
+        for b in blobs:
+            self.assertIn(b.name.split('/')[-1], self.f_array)
         self.single_bucket.download_blobs(os.getcwd())
         cwd_contents = os.listdir(os.getcwd())
         for r in renamed:
             self.assertIn(r, cwd_contents)
-        self.single_bucket.delete_blobs(renamed)
+        blob_names = [b.name for b in self.single_bucket.list_blobs()]
+        self.single_bucket.delete_blobs(blob_names)
         self.assertEqual(len(list(self.single_bucket.list_blobs())), 0)
 
     def test_list_buckets(self):
@@ -85,8 +83,8 @@ class BucketUnitTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
+        blob_names = [b.name for b in self.single_bucket.list_blobs()]
+        self.single_bucket.delete_blobs(blob_names)
         self.single_bucket.bucket.delete()
-        for f in self.f_array:
-            os.remove(f)
-            os.remove(f.replace('.txt', '.csv'))
+
 
