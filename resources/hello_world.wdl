@@ -3,9 +3,9 @@ task helloWorld {
  command {
     echo Hello, ${name}
     }
-#    runtime {
-#    backend: "Local"
-#    }
+    runtime {
+		docker : "gcr.io/btl-dockers/btl_gatk:1"
+    }
 }
 
 workflow hello {

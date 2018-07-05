@@ -4,6 +4,7 @@ import logging
 import src.config as c
 import os
 from src.Validator import Validator
+from SingleBucket import SingleBucket
 
 
 class ValidatorUnitTests(unittest.TestCase):
@@ -25,6 +26,14 @@ class ValidatorUnitTests(unittest.TestCase):
         self.logger.info('Starting Validator tests...')
         self.wdl_args = self.validator.get_wdl_args()
         self.json_args = self.validator.get_json()
+
+    def test_validate_gs_url(self):
+        sb = SingleBucket("broad-cil-devel-bucket")
+        foo = open("validation_test.txt", "r")
+        foo.write("test")
+        foo.close()
+        sb.upload_file("validation_test.txt", "validation_test.txt")
+        self.validator.validate_gs_url("gs://broad-cil-devel-bucket/validation_test.txt")
 
     def test_get_wdl_args(self):
         self.assertIsInstance(self.wdl_args, dict)
