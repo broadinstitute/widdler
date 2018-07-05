@@ -3,7 +3,6 @@ import os
 import logging
 from src.SingleBucket import SingleBucket, make_bucket, list_buckets
 import src.config as c
-import google.cloud.exceptions as ge
 
 # Logger setup
 sb_logger = logging.getLogger('widdler.tests.test_bucket')
@@ -78,7 +77,6 @@ class BucketUnitTests(unittest.TestCase):
         delete_me = list()
         for b in self.single_bucket.list_blobs():
             delete_me.append(b.name)
-        self.single_bucket.delete_blobs(delete_me)
         self.single_bucket.delete_blobs(delete_me)
 
     @classmethod
