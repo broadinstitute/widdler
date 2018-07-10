@@ -2,7 +2,6 @@ __author__ = 'Amr Abouelleil'
 import unittest
 import os
 import time
-import logging
 from src.Cromwell import Cromwell
 import src.config as c
 import datetime
@@ -14,76 +13,110 @@ class CromwellUnitTests(unittest.TestCase):
     def setUpClass(self):
         resources = c.resource_dir
         self.cromwell = Cromwell(host='btl-cromwell')
-        self.json = os.path.join(resources, 'hello_world.json')
+        self.json = os.path.join(resources, 'hello.json')
         self.wdl = os.path.join(resources, 'hello_world.wdl')
-        self.wf = self.cromwell.jstart_workflow(self.wdl, self.json)
-        self.workflow_id = self.wf['id']
         self.labels = {'username': 'amr', 'foo': 'bar'}
-        time.sleep(2)
+
+    def _initiate_workflow(self):
+        wf = self.cromwell.jstart_workflow(self.wdl, self.json)
+        time.sleep(5)
+        return wf
 
     def test_start_workflow(self):
-        self.assertTrue('id' in self.wf and 'status' in self.wf)
-        self.assertEqual(self.wf['status'], 'Submitted')
-        self.assertEqual(len(self.workflow_id), 36)
+        wf = self._initiate_workflow()
+        wfid = wf['id']
+        self.assertTrue('id' in wf and 'status' in wf)
+        self.assertEqual(wf['status'], 'Submitted')
+        self.assertEqual(len(wfid), 36)
+        self.cromwell.stop_workflow(wfid)
 
     def test_query_status(self):
-        result = self.cromwell.query_status(self.workflow_id)
+        wf = self._initiate_workflow()
+        wfid = wf['id']
+        result = self.cromwell.query_status(wfid)
         self.assertTrue('id' in result and 'status' in result)
+        self.cromwell.stop_workflow(wfid)
 
     def test_query_metadata(self):
-        result = self.cromwell.query_metadata(self.workflow_id)
+        wf = self._initiate_workflow()
+        wfid = wf['id']
+        result = self.cromwell.query_metadata(wfid)
         self.assertTrue('id' in result and 'submission' in result)
+        self.cromwell.stop_workflow(wfid)
 
     def test_query_logs(self):
-        result = self.cromwell.query_logs(self.workflow_id)
+        wf = self._initiate_workflow()
+        wfid = wf['id']
+        result = self.cromwell.query_logs(wfid)
         self.assertTrue('id' in result)
+        self.cromwell.stop_workflow(wfid)
 
     def test_build_long_url(self):
+        wf = self._initiate_workflow()
+        wfid = wf['id']
         url_dict = {
-            'name': 'gatk',
-            'id': [self.workflow_id],
+            'name': 'test_build_long_url',
+            'id': wfid,
             'start': datetime.datetime.now() - datetime.timedelta(days=1),
             'end': datetime.datetime.now()
         }
         query_url = self.cromwell.build_query_url('http://btl-cromwell:9000/api/workflows/v1/query?', url_dict)
         r = requests.get(query_url)
         self.assertEquals(r.status_code, 200)
+        self.cromwell.stop_workflow(wfid)
 
     def test_query(self):
+        wf = self._initiate_workflow()
+        wfid = wf['id']
         url_dict = {
             'name': 'gatk',
-            'id': [self.workflow_id],
+            'id': [wfid],
             'start': datetime.datetime.now() - datetime.timedelta(days=1),
             'end': datetime.datetime.now()
         }
         result = self.cromwell.query(url_dict)
         self.assertTrue(isinstance(result['results'], list), True)
+        self.cromwell.stop_workflow(wfid)
 
     def test_label_workflow(self):
-        r = self.cromwell.label_workflow(self.workflow_id, self.labels)
+        wf = self._initiate_workflow()
+        wfid = wf['id']
+        r = self.cromwell.label_workflow(wfid, self.labels)
         self.assertEquals(r.status_code, 200)
+        self.cromwell.stop_workflow(wfid)
 
     def test_query_labels(self):
-        # This sleep is needed to make sure test_label_workflow runs before the query does.
-        time.sleep(5)
+        wf = self._initiate_workflow()
+        wfid = wf['id']
         labels = {'username': 'amr', 'foo': 'bar'}
+        self.cromwell.label_workflow(wfid, self.labels)
+        # This sleep is needed to make sure the label workflow completes before we query for it.
+        time.sleep(5)
         r = self.cromwell.query_labels(labels)
         # Here, the most recent workflow that matches the query will be the last item so we can use that to check
         # this assertion.
-        self.assertTrue(self.workflow_id in r['results'][-1]['id'])
+        self.assertTrue(wfid in r['results'][-1]['id'])
+        self.cromwell.stop_workflow(wfid)
 
     def test_query_backend(self):
         self.assertTrue('defaultBackend' in self.cromwell.query_backend())
 
     def test_explain(self):
+        wf = self._initiate_workflow()
+        wfid = wf['id']
         time.sleep(10)
-        result = self.cromwell.explain_workflow(self.workflow_id)
+        result = self.cromwell.explain_workflow(wfid)
         self.assertIsInstance(result, tuple)
+        self.cromwell.stop_workflow(wfid)
 
     def test_stop_workflow(self):
-        result = self.cromwell.stop_workflow(self.workflow_id)
-        self.logger.info('Result: {}'.format(result))
+        wf = self._initiate_workflow()
+        wfid = wf['id']
+        result = self.cromwell.stop_workflow(wfid)
+        print(result)
+        self.cromwell.stop_workflow(wfid)
+
 
     @classmethod
     def tearDownClass(self):
-        self.cromwell.stop_workflow(self.workflow_id)
+        print("Done!")
