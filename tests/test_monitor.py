@@ -19,12 +19,10 @@ class MyTestCase(unittest.TestCase):
         wf = self.cromwell.jstart_workflow(self.wdl, self.json)
         time.sleep(2)
         workflow_id = wf['id']
-        m.monitor_workflow(workflow_id)
-
+        self.assertEqual(0, m.monitor_workflow(workflow_id))
 
     @classmethod
     def tearDown(self):
         print("Done!")
 
-if __name__ == '__main__':
-    unittest.main()
+
