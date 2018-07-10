@@ -55,7 +55,10 @@ src/requests/sessions.pyc
 src/requests/status_codes.pyc
 src/requests/structures.pyc
 src/requests/utils.pyc
-
+resources/service_account.json
+resources/hello.json
+resources/hello.fofn
+resources/simple_hello.json
 *.db
 
 *.log
@@ -102,5 +105,9 @@ src/requests/packages/chardet/sbcsgroupprober.pyc
 src/requests/packages/chardet/sjisprober.pyc
 src/requests/packages/chardet/universaldetector.pyc
 src/requests/packages/chardet/utf8prober.pyc
+resources/data/womtool-30.2.jar
+resources/
+src/SingleBucket.pyc
+
 resources/
 logs/

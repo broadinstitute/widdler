@@ -6,6 +6,7 @@ import os
 import subprocess
 import csv
 import sys
+# import SingleBucket
 
 module_logger = logging.getLogger('widdler.Validator')
 
@@ -188,9 +189,10 @@ class Validator:
 
     @staticmethod
     def validate_gs_url(gs_url):
+        import SingleBucket
         bucket_name = _bucket_from_url(gs_url)
         target_blob = _blob_from_url(gs_url)
-        bucket = SingleBucket(bucket_name)
+        bucket = SingleBucket.SingleBucket(bucket_name)
         blob_names = []
         for blob in bucket.list_blobs():
             blob_names.append(blob.name)

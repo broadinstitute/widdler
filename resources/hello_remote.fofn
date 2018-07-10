@@ -1,0 +1,3 @@
+amr	gs://broad-cil-devel-bucket/input_data/hello_amr.txt
+paul	gs://broad-cil-devel-bucket/input_data/hello_paul.txt
+gordon	gs://broad-cil-devel-bucket/input_data/hello_gordon.txt

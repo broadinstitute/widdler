@@ -6,6 +6,9 @@ import datetime
 import getpass
 from requests.utils import quote
 import urllib
+import os
+import re
+from SingleBucket import print_log_exit
 from ratelimit import rate_limited
 import config as c
 module_logger = logging.getLogger('widdler.Cromwell')
@@ -22,9 +25,10 @@ class Cromwell:
     """
 
     def __init__(self, host='btl-cromwell', port=9000):
-        if host == 'localhost':
+        self.host = host
+        if self.host == 'localhost':
             self.port = c.local_port
-        elif host == c.cloud_server:
+        elif self.host == c.cloud_server or self.host == c.gscid_cloud_server:
             self.port = c.cloud_port
         else:
             self.port = port
@@ -36,10 +40,14 @@ class Cromwell:
             v_url = "http://{}.broadinstitute.org:{}/api/engine/v1/version".format(host, str(self.port))
         else:
             v_url = "http://{}:{}/engine/v1/version".format(host, str(self.port))
-        self.long_version = json\
-            .loads(requests
-                   .get(v_url)
-                   .content)['cromwell']
+        try:
+            self.long_version = json\
+                .loads(requests
+                       .get(v_url)
+                       .content)['cromwell']
+        except requests.ConnectionError as e:
+            msg = "Unable to connect to self.host:\n{}".format(str(e))
+            print_log_exit(msg)
         self.short_version = int(self.long_version.split('-')[0])
         self.cached_metadata = {}
 
@@ -214,7 +222,7 @@ class Cromwell:
         return json.loads(r.text)
 
     def jstart_workflow(self, wdl_file, json_file, dependencies=None, wdl_string=False, disable_caching=False,
-                        extra_options=None, custom_labels={}, v2=False):
+                        extra_options=None, custom_labels={}, v2=False, bucket=None):
         """
         Start a workflow using json file for argument inputs.
         :param wdl_file: Workflow description file or WDL string (specify wdl_string if so).
@@ -231,9 +239,37 @@ class Cromwell:
                 args = json.load(fh)
             fh.close()
             args['user'] = getpass.getuser()
-            j_args = json.dumps(args)
+            #j_args = json.dumps(args)
         else:
-            j_args = json_file
+            args = json.loads(json_file)
+            #j_args = json_file
+        if c.cloud_server in self.host or c.gscid_cloud_server in self.host:
+            for k, v in args.iteritems():
+                try:
+                    from src.SingleBucket import make_gs_url
+                    if isinstance(v, list):
+                        new_elements = list()
+                        for element in v:
+                            if c.gspathable(element) and "gs://" not in element and os.path.exists(element):
+                                new_elements.append(make_gs_url(element, bucket))
+                            else:
+                                new_elements.append(element)
+                        args[k] = new_elements
+                    elif isinstance(v, dict):
+                        for potential_file_key, potential_file in v.iteritems():
+                            if os.path.exists(potential_file):
+                                v[potential_file_key] = make_gs_url(potential_file, bucket) if c.gspathable(k) else potential_file
+                    elif os.path.exists(v):
+                        from src.SingleBucket import make_gs_url
+                        args[k] = make_gs_url(v, bucket) if c.gspathable(k) else v
+                    if 'fofn' in k and 'gs://' not in v:
+                        args[k] = '{}.cloud'.format(args[k])
+                        #pass commenting this out; as fofn doesn't add .cloud in upload;args[k] = '{}.cloud'.format(args[k])
+
+                except TypeError as e:
+                    self.logger.warn('Can\'t evaluate {} as path: {}'.format(v, str(e)))
+        #j_args needs to be a string at this point
+        j_args = json.dumps(args)
 
         if not wdl_string:
             files = {'wdlSource': (wdl_file, open(wdl_file, 'rb'), 'application/octet-stream'),
@@ -262,6 +298,8 @@ class Cromwell:
                 print("{}:{}".format(k, v))
 
         r = requests.post(self.url, files=files) if not v2 else requests.post(self.url2, files=files)
+        if r.status_code not in [200, 201]:
+            print_log_exit("Request Failed: {}".format(r.content))
         return json.loads(r.text)
 
     def stop_workflow(self, workflow_id):

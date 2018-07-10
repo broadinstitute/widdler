@@ -10,6 +10,7 @@ import src.config as c
 from src.Cromwell import Cromwell
 from src.Monitor import Monitor
 from src.Validator import Validator
+from src.SingleBucket import SingleBucket
 import logging
 import getpass
 import json
@@ -89,7 +90,7 @@ def call_run(args):
     cromwell = Cromwell(host=args.server)
     result = cromwell.jstart_workflow(wdl_file=args.wdl, json_file=args.json, dependencies=args.dependencies,
                                       disable_caching=args.disable_caching,
-                                      extra_options=kv_list_to_dict(args.extra_options),
+                                      extra_options=kv_list_to_dict(args.extra_options), bucket=args.bucket,
                                       custom_labels=labels_dict)
 
     print("-------------Cromwell Links-------------")
@@ -189,14 +190,16 @@ def call_monitor(args):
     logger.info("Monitoring requested")
 
     print("-------------Monitoring Workflow-------------")
-
-    user = "*" if args.daemon else args.username
-
+    # user = "*" if args.daemon else args.username
+    if hasattr(args, 'daemon'):
+        user = "*"
+    else:
+        user = args.username
     m = Monitor(host=args.server, user=user, no_notify=args.no_notify, verbose=args.verbose,
                 interval=args.interval)
-    if args.daemon:
+    if hasattr(args, 'daemon'):
         m.run()
-    elif args.workflow_id:
+    elif hasattr(args, 'workflow_id'):
         m.monitor_workflow(workflow_id=args.workflow_id)
     else:
         m.monitor_user_workflows()
@@ -384,6 +387,30 @@ def call_email(args):
     args.interval = 0
     call_monitor(args)
 
+
+def call_upload(args):
+    """
+    :param args:
+    :return:
+    """
+    created_files = list()
+    if args.dependencies:
+        path = os.path.dirname(args.dependencies)
+        zip_ref = zipfile.ZipFile(args.dependencies, 'r')
+        zip_files = zip_ref.namelist()
+        for fn in zip_files:
+            f = os.path.join(path, fn)
+            if not os.path.exists(f):
+                zip_ref.extract(fn, path)
+                created_files.append(f)
+        zip_ref.close()
+    b = SingleBucket(args.bucket)
+    uploaded_files = b.upload_workflow_input_files(args.wdl, args.json)
+    for f in created_files:
+        os.unlink(f)
+    print('The following files have been uploaded to {}:\n{}'.format(args.bucket, '\n'.join(uploaded_files)))
+
+
 parser = argparse.ArgumentParser(
     description='Description: A tool for executing and monitoring WDLs to Cromwell instances.',
     usage='widdler.py <positional argument> [<args>]',
@@ -413,12 +440,12 @@ explain.add_argument('-M', '--monitor', action='store_false', default=False, hel
 explain.set_defaults(func=call_explain)
 
 log = sub.add_parser(name='log',
-                         description='Print the commands used in a workflow.',
-                         usage='widdler.py log <workflowid>',
-                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                     description='Print the commands used in a workflow.',
+                     usage='widdler.py log <workflowid>',
+                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 log.add_argument('workflow_id', action='store', help='workflow id of workflow to print commands for.')
 log.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
-                     help='Choose a cromwell server from {}'.format(c.servers))
+                 help='Choose a cromwell server from {}'.format(c.servers))
 log.add_argument('-M', '--monitor', action='store_false', default=False, help=argparse.SUPPRESS)
 log.set_defaults(func=call_log)
 
@@ -499,6 +526,8 @@ run.add_argument('-n', '--no_notify', action='store_true', default=False,
                  help='When selected, disable widdler e-mail notification of workflow completion.')
 run.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
                  help='A zip file containing one or more WDL files that the main WDL imports.')
+run.add_argument('-b', '--bucket', action='store', default=c.default_bucket,
+                 help='Name of bucket where files were uploaded. Default is {}'.format(c.default_bucket))
 run.add_argument('-D', '--disable_caching', action='store_true', default=False, help="Don't used cached data.")
 run.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
                  help='Choose a cromwell server from {}'.format(c.servers))
@@ -539,6 +568,18 @@ email.add_argument('-D', '--daemon', action='store_true', default=False,
                    help=argparse.SUPPRESS)
 email.set_defaults(func=call_email)
 
+upload = sub.add_parser(name='upload',
+                        description='Upload files required for workflow execution to Cloud storage.',
+                        usage='widdler.py upload <wdl> <json>',
+                        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+upload.add_argument('wdl', action='store', type=is_valid, help='Path to the WDL associated with the json file.')
+upload.add_argument('json', action='store', type=is_valid, help='Path the json inputs file to validate.')
+upload.add_argument('-b', '--bucket', action='store', default=c.default_bucket,
+                    help='Name of destination bucket for upload. Default is {}'.format(c.default_bucket))
+upload.add_argument('-d', '--dependencies', action='store', default=None, type=is_valid_zip,
+                    help='A zip file containing one or more WDL files that the main WDL imports.')
+upload.set_defaults(func=call_upload)
+
 
 args = parser.parse_args()
 
@@ -546,17 +587,24 @@ args = parser.parse_args()
 def main():
     # Get user's username so we can tag workflows and logs for them.
     user = getpass.getuser()
-    if args.server == "cloud":
-        args.server = c.cloud_server
+    try:
+        if args.server == "cloud":
+            args.server = c.cloud_server
+        if args.server == "gscid-cloud":
+            args.server = c.gscid_cloud_server
+    except AttributeError:
+        pass
     logger.info("\n-------------New Widdler Execution by {}-------------".format(user))
     logger.info("Parameters chosen: {}".format(vars(args)))
     result = args.func(args)
     logger.info("Result: {}".format(result))
     # If we aren't using persistent monitoring, we'll give the user a basically formated json dump to stdout.
-    if not args.monitor:
-        print(json.dumps(result, indent=4))
+    try:
+        if not args.monitor:
+            print(json.dumps(result, indent=4))
+    except AttributeError:
+        pass
     logger.info("\n-------------End Widdler Execution by {}-------------".format(user))
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -15,6 +15,7 @@ __author__ = "Amr Abouelleil"
 
 ONE_MINUTE = 60
 
+
 class Messenger(object):
     """
     A class for generating and sending messages with workflow results to users.

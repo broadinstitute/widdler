@@ -6,6 +6,8 @@ from dateutil.parser import parse
 import json
 from email.mime.text import MIMEText
 import logging
+import config as c
+
 
 class EmailNotification(object):
 
@@ -74,13 +76,29 @@ class EmailNotification(object):
         if 'workflowName' in jdata:
             summary = "<b>Workflow Name:</b> {}{}".format(jdata['workflowName'], summary)
         if 'workflowRoot' in jdata:
-            summary += "<br><b>workflowRoot:</b> {}".format(jdata['workflowRoot'])
-        summary += "<br><b>Timing graph:</b> http://{}:9000/api/workflows/v2/{}/timing".format(host, jdata['id'])
+            if host == c.gscid_cloud_server or host == c.cloud_server:
+                import re
+                root_array = re.split(r"[/]+", jdata['workflowRoot'])
+                exec_dir = ""
+                if host == c.gscid_cloud_server:
+                    exec_dir = "/cromwell-executions"
+                gcp_url = "https://console.cloud.google.com/storage/browser/{}{}/{}/{}".format(root_array[1], exec_dir,
+                                                                                               jdata['workflowName'],
+                                                                                               jdata['id'])
+                href_root = "<a href=\"{}\"> {} </a>".format(gcp_url, jdata['workflowRoot'])
+                summary += "<br><b>workflowRoot:</b> {}".format(href_root)
+            else:
+                summary += "<br><b>workflowRoot:</b> {}".format(jdata['workflowRoot'])
+        if host in c.cloud_hosts:
+            port = c.cloud_port
+        else:
+            port = c.local_port
+
+        summary += "<br><b>Timing graph:</b> http://{}:{}/api/workflows/v2/{}/timing".format(host, port, jdata['id'])
         email_content = {
             'user': user,
             'workflow_id': jdata['id'],
             'status': jdata['status'],
             'summary': summary
         }
-
         return email_content

@@ -437,6 +437,16 @@ convenient identification.
    -------------End Widdler Execution by amr-------------
    ```
 
-## Known Issues
+### Authenticating With Google Cloud Storage 
 
-* Widdler will sometimes print 'null' to stdout. This does not impact proper operation of widdler.
+Widdler now supports executing workflows on Cromwell servers running on Google Cloud VMs, with data being processed
+and stored in cloud storage buckets. To use a cloud server, the user must first authenticate manually with GCP as
+follows (this assumes you've already created a Google Cloud Platform account):
+
+1. Log in to Stout or an UGES interactive host.
+2. Type 'use Google-Cloud-SDK'.
+3. Type 'gcloud auth login <GCP account>'. 
+4. Copy and paste the URL printed on screen into a browser and follow the steps presented.
+5. Paste the verification code provided into the shell window at the 'Enter Verification Code' prompt.
+6. You are credentials are now activated.
+7. Contact the GCP Bucket owner to ensure you have access to the buckets that Widdler will use to process your workflow.

@@ -1,0 +1,23 @@
+sudo -u gaag -i
+reuse Python-2.7
+
+cd /cil/shed/apps/internal/widdler_dev/
+
+virtualenv dev
+
+source dev/bin/activate
+
+pip install -r 5e40f8b600e93cd45cb98f496bfb90130071974f/requirements.txt
+
+
+
+vim widdler.sh (example follows):
+
+
+source /broad/software/scripts/useuse
+
+use -q Python-2.7
+
+source /cil/shed/apps/internal/widdler_dev/dev/bin/activate
+
+python /cil/shed/apps/internal/widdler_dev/widdler.py $@

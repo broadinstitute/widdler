@@ -18,6 +18,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from EmailNotification import EmailNotification
 from SystemTestNotification import SystemTestNotification
+from Download import Download
+from Download import GATKDownload
+from SystemTestDownload import SystemTestDownload
 
 import traceback
 import calendar
@@ -25,6 +28,7 @@ import calendar
 __author__ = "Amr Abouelleil"
 
 module_logger = logging.getLogger('widdler.Monitor')
+
 
 def is_user_workflow(host, user, workflow_id):
     """
@@ -45,6 +49,7 @@ def is_user_workflow(host, user, workflow_id):
     except KeyError:
         return None
 
+
 def get_iso_datestr(dt):
     return pytz.timezone("US/Eastern").localize(dt).isoformat()
 
@@ -63,13 +68,15 @@ class Monitor:
         self.no_notify = no_notify
         self.verbose = verbose
         self.workflow_id = workflow_id
-        self.event_subscribers = [EmailNotification(self.cromwell), SystemTestNotification()]
+        if user == "*":
+            self.event_subscribers = [EmailNotification(self.cromwell),
+                                        SystemTestDownload(), Download(self.cromwell.host), GATKDownload()]
 
-        engine = create_engine("sqlite:///" + config.workflow_db)
-        Base.metadata.bind = engine
-        DBSession = sessionmaker()
-        DBSession.bind = engine
-        self.session = DBSession()
+            engine = create_engine("sqlite:///" + config.workflow_db)
+            Base.metadata.bind = engine
+            DBSession = sessionmaker()
+            DBSession.bind = engine
+            self.session = DBSession()
 
     def get_user_workflows(self, raw=False, start_time=None, silent=False):
         """
@@ -101,7 +108,12 @@ class Monitor:
     def process_events(self, workflow):
         for event_subscriber in self.event_subscribers:
             metadata = self.cromwell.query_metadata(workflow.id) #get final metadata
-            event_subscriber.on_changed_workflow_status(workflow, metadata, self.host)
+            try:
+                event_subscriber.on_changed_workflow_status(workflow, metadata, self.host)
+            except Exception as e:
+                #logging.error(str(e))
+                traceback.print_exc()
+                #print("Event processing error occurred above.")
 
     def run(self):
         while True:
