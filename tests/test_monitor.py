@@ -5,20 +5,12 @@ import logging
 from src.Cromwell import Cromwell
 from src.Monitor import Monitor
 import src.config as c
-import datetime
-import requests
 
 
 class MyTestCase(unittest.TestCase):
     @classmethod
     def setUp(self):
         resources = c.resource_dir
-        self.logger = logging.getLogger('test_cromwell')
-        hdlr = logging.FileHandler(os.path.join(c.log_dir, 'test_cromwell.log'))
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        hdlr.setFormatter(formatter)
-        self.logger.addHandler(hdlr)
-        self.logger.setLevel(logging.INFO)
         self.cromwell = Cromwell(host='btl-cromwell')
         self.json = os.path.join(resources, 'hello_world_on_prem.json')
         self.wdl = os.path.join(resources, 'hello_world_on_prem.wdl')

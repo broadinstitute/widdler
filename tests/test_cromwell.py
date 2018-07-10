@@ -16,35 +16,26 @@ class CromwellUnitTests(unittest.TestCase):
         self.cromwell = Cromwell(host='btl-cromwell')
         self.json = os.path.join(resources, 'hello_world.json')
         self.wdl = os.path.join(resources, 'hello_world.wdl')
-        self.logger.info('Resources: {}, {}'.format(self.wdl, self.json))
         self.wf = self.cromwell.jstart_workflow(self.wdl, self.json)
-        self.logger.info('Workflow: {}'.format(self.wf))
         self.workflow_id = self.wf['id']
         self.labels = {'username': 'amr', 'foo': 'bar'}
         time.sleep(2)
 
     def test_start_workflow(self):
-        self.logger.info('Testing start_workflow...')
         self.assertTrue('id' in self.wf and 'status' in self.wf)
         self.assertEqual(self.wf['status'], 'Submitted')
         self.assertEqual(len(self.workflow_id), 36)
 
     def test_query_status(self):
-        self.logger.info('Testing query_status...')
         result = self.cromwell.query_status(self.workflow_id)
-        self.logger.info('Result: {}'.format(result))
         self.assertTrue('id' in result and 'status' in result)
 
     def test_query_metadata(self):
-        self.logger.info('Testing query_metadata...')
         result = self.cromwell.query_metadata(self.workflow_id)
-        self.logger.info('Result: {}'.format(result))
         self.assertTrue('id' in result and 'submission' in result)
 
     def test_query_logs(self):
-        self.logger.info('Testing query_logs...')
         result = self.cromwell.query_logs(self.workflow_id)
-        self.logger.info('Result: {}'.format(result))
         self.assertTrue('id' in result)
 
     def test_build_long_url(self):
@@ -90,11 +81,9 @@ class CromwellUnitTests(unittest.TestCase):
         self.assertIsInstance(result, tuple)
 
     def test_stop_workflow(self):
-        self.logger.info('Testing stop_workflow...')
         result = self.cromwell.stop_workflow(self.workflow_id)
         self.logger.info('Result: {}'.format(result))
 
     @classmethod
     def tearDownClass(self):
         self.cromwell.stop_workflow(self.workflow_id)
-        self.logger.info("Test done!")
