@@ -10,14 +10,22 @@ import sys
 module_logger = logging.getLogger('widdler.Validator')
 
 
+def _bucket_from_url(gs_url):
+    return gs_url.split('/')[2]
+
+
+def _blob_from_url(gs_url):
+    return "/".join(gs_url.split('/')[3:])
+
+
 class Validator:
     """
     Module to validate JSON inputs.
     """
     def __init__(self, wdl, json):
-        self.wdl = wdl
-        self.json = json
-        self.wdl_tool = os.path.join(c.resource_dir, 'wdltool-0.10.jar')
+        self.wdl = os.path.abspath(wdl)
+        self.json = os.path.abspath(json)
+        self.wdl_tool = os.path.join(c.resource_dir, 'womtool-30.2.jar')
         self.logger = logging.getLogger('widdler.validator.Validator')
 
     def get_json(self):
@@ -30,9 +38,10 @@ class Validator:
         fh.close()
         return json_data
 
-    def get_wdl_args(self):
+    def get_wdl_args(self, optional=True):
         """
         Uses wdl-tool to get the expected arguments from the WDL file.
+        :param optional: Include optional arguments if true.
         :return: Returns a dictionary of wdl arguments as keys and expected type as as value.
         """
         try:
@@ -40,9 +49,19 @@ class Validator:
         except OSError:
             print('Warning: Could not navigate to WDL directory.')
         cmd = ['java', '-jar', self.wdl_tool, 'inputs', self.wdl]
-        run = subprocess.check_output(cmd).decode("utf-8")
         try:
-            return json.loads(run)
+            run = subprocess.check_output(cmd).decode("utf-8")
+        except subprocess.CalledProcessError:
+            print("Unable to execute womtool command. Make sure any subworkflow wdl files are present and try again.")
+            sys.exit(1)
+
+        try:
+            if optional:
+                return json.loads(run)
+            else:
+                d = json.loads(run)
+                ds = json.dumps({k: v for k, v in d.iteritems() if "optional" not in v})
+                return json.loads(ds)
         except json.JSONDecodeError:
             print("Something went wrong with getting args. Note that if using validation, unzipped WDL dependencies "
                   "must be in same directory as main WDL.\n "
@@ -64,8 +83,13 @@ class Validator:
             if self.validate_param(param, wdict):
                 # param is valid
                 if 'File' in wdict[param]:
-                    if not self.validate_file(val):
-                        errors.append('{}: {} is not a valid file path.'.format(param, val))
+                    if isinstance(val, list):
+                        for f in val:
+                            if not self.validate_file(val):
+                                errors.append('{}: {} is not a valid file path.'.format(param, f))
+                    else:
+                        if not self.validate_file(val):
+                            errors.append('{}: {} is not a valid file path.'.format(param, val))
                 elif 'Array' in wdict[param]:
                     if not self.validate_array(val):
                         errors.append('{}: {} is not a valid array/list.'.format(param, val))
@@ -157,7 +181,20 @@ class Validator:
         :param f:
         :return: Boolean
         """
-        return os.path.exists(f.rstrip())
+        if f[:3] == "gs:":
+            pass
+        else:
+            return os.path.exists(f.rstrip())
+
+    @staticmethod
+    def validate_gs_url(gs_url):
+        bucket_name = _bucket_from_url(gs_url)
+        target_blob = _blob_from_url(gs_url)
+        bucket = SingleBucket(bucket_name)
+        blob_names = []
+        for blob in bucket.list_blobs():
+            blob_names.append(blob.name)
+        return target_blob in blob_names
 
     @staticmethod
     def validate_boolean(i):
