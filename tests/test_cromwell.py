@@ -13,15 +13,9 @@ class CromwellUnitTests(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         resources = c.resource_dir
-        self.logger = logging.getLogger('test_cromwell')
-        hdlr = logging.FileHandler(os.path.join(c.log_dir, 'test_cromwell.log'))
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        hdlr.setFormatter(formatter)
-        self.logger.addHandler(hdlr)
-        self.logger.setLevel(logging.INFO)
         self.cromwell = Cromwell(host='btl-cromwell')
-        self.json = os.path.join(resources, 'test.json')
-        self.wdl = os.path.join(resources, 'test.wdl')
+        self.json = os.path.join(resources, 'hello_world.json')
+        self.wdl = os.path.join(resources, 'hello_world.wdl')
         self.logger.info('Resources: {}, {}'.format(self.wdl, self.json))
         self.wf = self.cromwell.jstart_workflow(self.wdl, self.json)
         self.logger.info('Workflow: {}'.format(self.wf))

@@ -20,18 +20,16 @@ class MyTestCase(unittest.TestCase):
         self.logger.addHandler(hdlr)
         self.logger.setLevel(logging.INFO)
         self.cromwell = Cromwell(host='btl-cromwell')
-        self.json = os.path.join(resources, 'test.json')
-        self.wdl = os.path.join(resources, 'test.wdl')
+        self.json = os.path.join(resources, 'hello_world_on_prem.json')
+        self.wdl = os.path.join(resources, 'hello_world_on_prem.wdl')
         self.m = Monitor(user='amr', host='btl-cromwell', no_notify=False, verbose=True, interval=5)
         self.wf = self.cromwell.jstart_workflow(self.wdl, self.json)
         self.workflow_id = self.wf['id']
         time.sleep(2)
 
     def test_monitor_workflow(self):
-        self.assertEquals(0, self.m.monitor_workflow(self.workflow_id))
+        self.m.monitor_workflow(self.workflow_id)
 
-    # def test_get_user_workflows(self):
-    #     self.m.get_user_workflows()
 
     @classmethod
     def tearDown(self):
