@@ -7,6 +7,7 @@ import argparse
 import sys
 import os
 import src.config as c
+from src.SingleBucket import print_log_exit
 from src.Cromwell import Cromwell
 from src.Monitor import Monitor
 from src.Validator import Validator
@@ -190,20 +191,20 @@ def call_monitor(args):
     logger.info("Monitoring requested")
 
     print("-------------Monitoring Workflow-------------")
-    # user = "*" if args.daemon else args.username
-    if hasattr(args, 'daemon'):
-        user = "*"
-    else:
-        user = args.username
-    m = Monitor(host=args.server, user=user, no_notify=args.no_notify, verbose=args.verbose,
-                interval=args.interval)
-    if hasattr(args, 'daemon'):
-        m.run()
-    elif hasattr(args, 'workflow_id'):
-        m.monitor_workflow(workflow_id=args.workflow_id)
-    else:
-        m.monitor_user_workflows()
-
+    try:
+        if args.daemon:
+            m = Monitor(host=args.server, user="*", no_notify=args.no_notify, verbose=args.verbose,
+                        interval=args.interval)
+            m.run()
+        else:
+            m = Monitor(host=args.server, user=args.username, no_notify=args.no_notify, verbose=args.verbose,
+                        interval=args.interval)
+            if args.workflow_id:
+                m.monitor_workflow(args.workflow_id)
+            else:
+                m.monitor_user_workflows()
+    except Exception as e:
+        print_log_exit(msg=str(e), sys_exit=False, ple_logger=logger)
 
 def call_restart(args):
     """
@@ -533,6 +534,7 @@ run.add_argument('-S', '--server', action='store', required=True, type=str, choi
                  help='Choose a cromwell server from {}'.format(c.servers))
 run.add_argument('-u', '--username', action='store', default=getpass.getuser(), help=argparse.SUPPRESS)
 run.add_argument('-w', '--workflow_id', help=argparse.SUPPRESS)
+run.add_argument('-x', '--daemon', action='store_true', default=False, help=argparse.SUPPRESS)
 run.set_defaults(func=call_run)
 
 validate = sub.add_parser(name='validate',

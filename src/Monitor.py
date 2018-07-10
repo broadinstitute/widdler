@@ -10,7 +10,7 @@ from src.Cromwell import Cromwell
 from src.Messenger import Messenger
 from email.mime.text import MIMEText
 import pytz
-
+import threading
 import config
 import datetime
 from Models import Workflow,Base
@@ -176,7 +176,8 @@ class Monitor:
             print("User {} has no running workflows.".format(self.user))
         else:
             for workflow in workflows:
-                self.monitor_workflow(workflow)
+                t = threading.Thread(target=self.monitor_workflow, args=[workflow])
+                t.start()
 
     def monitor_workflow(self, workflow_id):
         """
