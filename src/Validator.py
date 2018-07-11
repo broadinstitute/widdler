@@ -86,7 +86,7 @@ class Validator:
                 if 'File' in wdict[param]:
                     if isinstance(val, list):
                         for f in val:
-                            if not self.validate_file(val):
+                            if not self.validate_file(f):
                                 errors.append('{}: {} is not a valid file path.'.format(param, f))
                     else:
                         if not self.validate_file(val):
