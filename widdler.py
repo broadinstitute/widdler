@@ -491,7 +491,7 @@ query.add_argument('workflow_id', nargs='?', default="None", help='workflow id f
 query.add_argument('-s', '--status', action='store_true', default=False, help='Print status for workflow to stdout')
 query.add_argument('-m', '--metadata', action='store_true', default=False, help='Print metadata for workflow to stdout')
 query.add_argument('-l', '--logs', action='store_true', default=False, help='Print logs for workflow to stdout')
-query.add_argument('-u', '--username', action='store', default=getpass.getuser(), help='Owner of workflows to monitor.')
+query.add_argument('-u', '--username', action='store', default=getpass.getuser(), help='Owner of workflows to query.')
 query.add_argument('-L', '--label', action='append', help='Query status of all workflows with specific label(s).')
 query.add_argument('-d', '--days', action='store', default=7, help='Last n days to query.')
 query.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
