@@ -608,6 +608,7 @@ def main():
         pass
     logger.info("\n-------------End Widdler Execution by {}-------------".format(user))
 
+
 if __name__ == "__main__":
     sys.exit(main())
 

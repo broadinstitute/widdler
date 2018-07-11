@@ -2,13 +2,12 @@
   "hello.name": "amr",
   "hello.out": "hello.txt",
   "hello.sleep": 1,
-  "hello.infile": "D:\\Dev\\Python\\widdler\\resources\\hello_input.txt",
-  "hello.fofn": "D:\\Dev\\Python\\widdler\\resources\\hello.fofn",
+  "hello.infile": "C:\\dev\\Python\\widdler\\resources\\hello_input.txt",
+  "hello.fofn": "C:\\dev\\Python\\widdler\\resources\\hello.fofn",
   "hello.file_array": [
-    "D:\\Dev\\Python\\widdler\\resources\\hello_amr.txt",
-    "D:\\Dev\\Python\\widdler\\resources\\hello_paul.txt",
-    "D:\\Dev\\Python\\widdler\\resources\\hello_gordon.txt"
+    "C:\\dev\\Python\\widdler\\resources\\hello_amr.txt",
+    "C:\\dev\\Python\\widdler\\resources\\hello_paul.txt",
+    "C:\\dev\\Python\\widdler\\resources\\hello_gordon.txt"
   ],
-  "hello.optional_file" : "D:\\Dev\\Python\\widdler\\resources\\labels.json",
-  "hello.gs_url": ["gs://broad-cil-devel-bucket/input_data/7g8_gb4.combined.final.vcf.gz.tbi"]
+  "hello.optional_file" : "C:\\dev\\Python\\widdler\\resources\\labels.json"
 }
