@@ -90,6 +90,10 @@ class QueryUnitTests(unittest.TestCase):
         self.assertTrue(wfid in r['results'][-1]['id'])
         self.cromwell.stop_workflow(wfid)
 
+    def test_query_user(self):
+        pass
+
+
     def test_query_backend(self):
         self.assertTrue('defaultBackend' in self.cromwell.query_backend())
 

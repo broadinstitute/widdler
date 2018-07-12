@@ -308,6 +308,8 @@ def call_list(args):
     q = m.get_user_workflows(raw=True, start_time=start_date_str)
     try:
         result = q["results"]
+        if args.filter:
+            result = [res for res in result if res['status'] in args.filter]
         result = map(lambda j: process_job(j), result)
         printer = pprint.PrettyPrinter()
         printer.format = my_safe_repr
