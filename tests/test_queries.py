@@ -118,7 +118,6 @@ class QueryUnitTests(unittest.TestCase):
         result = call_list(Namespace(server="btl-cromwell", all=False, no_notify=True, verbose=True, interval=None,
                                      username="*", days=1, filter=None))
         all_dates = set(d['start'].split('T')[0] for d in result)
-        print all_dates
         self.assertEqual(len(all_dates), 1)
 
     def test_query_backend(self):
