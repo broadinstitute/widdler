@@ -13,8 +13,8 @@ class QueryUnitTests(unittest.TestCase):
     def setUpClass(self):
         resources = c.resource_dir
         self.cromwell = Cromwell(host='btl-cromwell')
-        self.json = os.path.join(resources, 'hello.json')
-        self.wdl = os.path.join(resources, 'hello_world.wdl')
+        self.json = os.path.join(resources, 'hw.json')
+        self.wdl = os.path.join(resources, 'hw.wdl')
         self.labels = {'username': 'amr', 'foo': 'bar'}
 
     def _initiate_workflow(self):
@@ -90,13 +90,39 @@ class QueryUnitTests(unittest.TestCase):
         self.assertTrue(wfid in r['results'][-1]['id'])
         self.cromwell.stop_workflow(wfid)
 
-    def test_query_user(self):
-        pass
+    def test_query_filter_by_status(self):
+        from argparse import Namespace
+        from widdler import call_list
+        wf = self._initiate_workflow()
+        wfid = wf['id']
+        result = call_list(Namespace(server="btl-cromwell", all=False, no_notify=True, verbose=True, interval=None,
+                                     username="*", days=1, filter=['Succeeded']))
+        statuses = set(d['status'] for d in result)
+        self.assertEqual(len(statuses), 1)
+        self.cromwell.stop_workflow(wfid)
 
+    def test_query_filter_by_name(self):
+        from argparse import Namespace
+        from widdler import call_list
+        user_result = call_list(Namespace(server="btl-cromwell", all=False, no_notify=True, verbose=True, interval=None,
+                                          username="amr", days=1, filter=None))
+        user_wfids = set(d['id'] for d in user_result)
+        all_result = call_list(Namespace(server="btl-cromwell", all=False, no_notify=True, verbose=True, interval=None,
+                               username="*", days=1, filter=None))
+        all_wfids = set(d['id'] for d in all_result)
+        self.assertGreater(len(all_wfids), len(user_wfids))
+
+    def test_query_filter_by_days(self):
+        from argparse import Namespace
+        from widdler import call_list
+        result = call_list(Namespace(server="btl-cromwell", all=False, no_notify=True, verbose=True, interval=None,
+                                     username="*", days=1, filter=None))
+        all_dates = set(d['start'].split('T')[0] for d in result)
+        print all_dates
+        self.assertEqual(len(all_dates), 1)
 
     def test_query_backend(self):
         self.assertTrue('defaultBackend' in self.cromwell.query_backend())
-
 
     @classmethod
     def tearDownClass(self):
