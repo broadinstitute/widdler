@@ -90,15 +90,17 @@ class QueryUnitTests(unittest.TestCase):
         self.assertTrue(wfid in r['results'][-1]['id'])
         self.cromwell.stop_workflow(wfid)
 
-    def test_query_filter_by_status(self):
+    def test_query_filter_by_statuses(self):
         from argparse import Namespace
         from widdler import call_list
         wf = self._initiate_workflow()
         wfid = wf['id']
         result = call_list(Namespace(server="btl-cromwell", all=False, no_notify=True, verbose=True, interval=None,
-                                     username="*", days=1, filter=['Succeeded']))
+                                     username="*", days=1, filter=['Succeeded', 'Failed']))
         statuses = set(d['status'] for d in result)
-        self.assertEqual(len(statuses), 1)
+        self.assertEqual(len(statuses), 2)
+        self.assertIn('Succeeded', statuses)
+        self.assertIn('Failed', statuses)
         self.cromwell.stop_workflow(wfid)
 
     def test_query_filter_by_name(self):
