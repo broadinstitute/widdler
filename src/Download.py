@@ -5,6 +5,8 @@ import json
 from src.SingleBucket import SingleBucket, make_bucket, list_buckets
 from config import flatmap
 import config as c
+import os
+
 
 class Download(object):
 
@@ -18,7 +20,7 @@ class Download(object):
     def truncate_gs_prefix(path):
         return "/".join(path.split("/")[3:])
 
-    def download_file(self, remote_path, local_dir):
+    def download_file(self, remote_path, local_dir, permissions=0777):
         if local_dir == None:
             return
 
@@ -27,6 +29,8 @@ class Download(object):
         truncated_remote_path = Download.truncate_gs_prefix(remote_path)
 
         self.bucket.download_blob(truncated_remote_path, local_path)
+        # TODO: Proposed change to resolve issue where downloaded files are restricted to gaag user
+        os.chmod(local_path, permissions)
 
     def on_changed_workflow_status(self, workflow, metadata, host):
 

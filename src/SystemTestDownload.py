@@ -40,12 +40,14 @@ class SystemTestDownload(object):
     def truncate_gs_prefix(path):
         return "/".join(path.split("/")[3:])
 
-    def download_file(self, remote_path, local_dir):
+    def download_file(self, remote_path, local_dir, permissions=0777):
         filename = remote_path.split("/")[-1]
         local_path = local_dir + "/" + filename
         truncated_remote_path = SystemTestDownload.truncate_gs_prefix(remote_path)
 
         self.bucket.download_blob(truncated_remote_path, local_path)
+        # TODO: Proposed change to resolve issue where downloaded files are restricted to gaag user
+        os.chmod(local_path, permissions)
 
     def on_changed_workflow_status(self, workflow, metadata, host):
         if SystemTestDownload.is_systemtest_workflow(metadata):
