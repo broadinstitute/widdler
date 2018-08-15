@@ -29,10 +29,8 @@ class Download(object):
         truncated_remote_path = Download.truncate_gs_prefix(remote_path)
 
         self.bucket.download_blob(truncated_remote_path, local_path)
-        # TODO: Proposed change to resolve issue where downloaded files are restricted to gaag user
-        os.chmod(local_path, permissions)
 
-    def on_changed_workflow_status(self, workflow, metadata, host):
+    def on_changed_workflow_status(self, workflow, metadata, host, permissions=0775):
 
         if (workflow.status == "Succeeded"):
             workflow_name = metadata["workflowName"]
@@ -51,11 +49,14 @@ class Download(object):
                             local_path = onprem_path + "/" + base_fn
                             subpath = "/".join(subpath.split("/")[3:])
                             self.bucket.download_blob(subpath, local_path)
+                            os.chmod(local_path, permissions)
+
                     else:
                         base_fn = item.split("/")[-1]
                         local_path = onprem_path + "/" + base_fn
                         remote_path = "/".join(item.split("/")[3:])
                         self.bucket.download_blob(remote_path, local_path)
+                        os.chmod(local_path, permissions)
 
 class GATKDownload(object):
     def __init__(self):
