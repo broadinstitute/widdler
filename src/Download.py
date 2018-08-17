@@ -6,7 +6,6 @@ from src.SingleBucket import SingleBucket, make_bucket, list_buckets
 from config import flatmap
 import config as c
 import os
-import grp
 
 
 class Download(object):
@@ -39,6 +38,7 @@ class Download(object):
             :param path: the file/directory to change.
             :return:
             """
+            import grp
             group_id = grp.getgrnam(group_name)[2]
             os.chown(path, -1, group_id)
 
