@@ -6,6 +6,7 @@ from src.SingleBucket import SingleBucket, make_bucket, list_buckets
 from config import flatmap
 import config as c
 import os
+import grp
 
 
 class Download(object):
@@ -30,7 +31,16 @@ class Download(object):
 
         self.bucket.download_blob(truncated_remote_path, local_path)
 
-    def on_changed_workflow_status(self, workflow, metadata, host, permissions=0775):
+    def on_changed_workflow_status(self, workflow, metadata, host, permissions=0775, group='gscid'):
+        def change_group(group_name, path):
+            """
+            Change the group that a file is a member of.
+            :param group_name: The name of the group to change to
+            :param path: the file/directory to change.
+            :return:
+            """
+            group_id = grp.getgrnam(group_name)[2]
+            os.chown(path, -1, group_id)
 
         if (workflow.status == "Succeeded"):
             workflow_name = metadata["workflowName"]
@@ -50,6 +60,8 @@ class Download(object):
                             subpath = "/".join(subpath.split("/")[3:])
                             self.bucket.download_blob(subpath, local_path)
                             os.chmod(local_path, permissions)
+                            change_group(group, local_path)
+
 
                     else:
                         base_fn = item.split("/")[-1]
@@ -57,6 +69,8 @@ class Download(object):
                         remote_path = "/".join(item.split("/")[3:])
                         self.bucket.download_blob(remote_path, local_path)
                         os.chmod(local_path, permissions)
+                        change_group(group, local_path)
+
 
 class GATKDownload(object):
     def __init__(self):
