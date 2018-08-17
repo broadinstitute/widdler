@@ -308,12 +308,14 @@ def call_list(args):
     q = m.get_user_workflows(raw=True, start_time=start_date_str)
     try:
         result = q["results"]
+        if args.filter:
+            result = [res for res in result if res['status'] in args.filter]
         result = map(lambda j: process_job(j), result)
         printer = pprint.PrettyPrinter()
         printer.format = my_safe_repr
         printer.pprint(result)
         args.monitor = True
-        return None
+        return result
     except KeyError as e:
         logger.critical('KeyError: Unable to find key {}'.format(e))
 
@@ -372,7 +374,7 @@ def call_log(args):
         command = command + key + ":\n\n"
         command = command + command_log + "\n\n"
 
-    print(command) #print to stdout
+    print(command)  # print to stdout
     return None
 
 
@@ -491,7 +493,7 @@ query.add_argument('workflow_id', nargs='?', default="None", help='workflow id f
 query.add_argument('-s', '--status', action='store_true', default=False, help='Print status for workflow to stdout')
 query.add_argument('-m', '--metadata', action='store_true', default=False, help='Print metadata for workflow to stdout')
 query.add_argument('-l', '--logs', action='store_true', default=False, help='Print logs for workflow to stdout')
-query.add_argument('-u', '--username', action='store', default=getpass.getuser(), help='Owner of workflows to monitor.')
+query.add_argument('-u', '--username', action='store', default=getpass.getuser(), help='Owner of workflows to query.')
 query.add_argument('-L', '--label', action='append', help='Query status of all workflows with specific label(s).')
 query.add_argument('-d', '--days', action='store', default=7, help='Last n days to query.')
 query.add_argument('-S', '--server', action='store', required=True, type=str, choices=c.servers,
@@ -583,10 +585,8 @@ upload.add_argument('-d', '--dependencies', action='store', default=None, type=i
 upload.set_defaults(func=call_upload)
 
 
-args = parser.parse_args()
-
-
 def main():
+    args = parser.parse_args()
     # Get user's username so we can tag workflows and logs for them.
     user = getpass.getuser()
     try:

@@ -39,7 +39,7 @@ workflow hello {
     File fofn
     String name
     Int sleep
-    Array[File] file_array
+#    Array[File] file_array
     File ? optional_file
 
     String onprem_download_path = "/cil/shed/resources/jenkins_tests/"
@@ -58,14 +58,14 @@ workflow hello {
         }
     }
 
-    call print_contents {
-        input: input_file = fofn, optional_file = optional_file
-    }
-
-    scatter(f in file_array) {
-        call print_contents as pc2 {
-            input: input_file = f
-        }
-    }
+#    call print_contents {
+#        input: input_file = fofn, optional_file = optional_file
+#    }
+#
+#    scatter(f in file_array) {
+#        call print_contents as pc2 {
+#            input: input_file = f
+#        }
+#    }
 
 }
